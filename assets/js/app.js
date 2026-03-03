@@ -49,10 +49,10 @@ const state = {
   complimentIndex: -1,
   isAnimating: false,
   activeProfile: null,
-  galleryPhotos: ['', '', ''],
-  galleryCenterIndex: 0,
-  gallerySlots: null,
-  galleryAnimating: false,
+  galleryImages: ['', '', ''],
+  galleryOrder: [0, 1, 2],
+  galleryBusy: false,
+  galleryBound: false,
   backendMode: 'local',
   supabase: null
 };
@@ -177,7 +177,8 @@ async function uploadFileToStorage(file) {
 
   const { error } = await state.supabase.storage.from(SUPABASE_BUCKET).upload(path, file, {
     upsert: false,
-    cacheControl: '3600'
+    cacheControl: '3600',
+    contentType: file.type || undefined
   });
   if (error) throw error;
 
@@ -267,7 +268,6 @@ function renderGirlPage(profile) {
   showOnly('girlRoute');
   state.activeProfile = profile;
   state.complimentIndex = -1;
-  state.galleryCenterIndex = 0;
   applyTheme(profile.theme);
 
   document.getElementById('storyName').textContent = profile.name || 'Героиня';
@@ -323,197 +323,154 @@ function renderMedia(profile) {
 function renderGallery(profile) {
   const photos = normalizeLines(profile.photos).slice(0, 3);
   while (photos.length < 3) photos.push('');
-  state.galleryPhotos = photos;
-  state.galleryCenterIndex = wrappedIndex(state.galleryCenterIndex, state.galleryPhotos.length);
+  state.galleryImages = photos;
+  state.galleryOrder = [0, 1, 2];
+  state.galleryBusy = false;
 
+  const slides = getGallerySlides();
+  slides.forEach((slide, idx) => {
+    setSlideImage(slide, state.galleryImages[idx], idx);
+  });
+  slides[state.galleryOrder[0]].setAttribute('data-pos', 'left');
+  slides[state.galleryOrder[1]].setAttribute('data-pos', 'center');
+  slides[state.galleryOrder[2]].setAttribute('data-pos', 'right');
+
+  ensureGalleryDots();
+  syncGalleryDots();
   bindGalleryEvents();
-  initGallerySlots();
-  resetGalleryForCurrentCenter();
-  rebuildGalleryDots();
 }
 
-function bindGalleryEvents() {
-  const stage = document.getElementById('galleryGrid');
-  if (!stage || stage.dataset.bound === '1') return;
-  stage.dataset.bound = '1';
-
-  const prevBtn = document.getElementById('galleryPrevBtn');
-  const nextBtn = document.getElementById('galleryNextBtn');
-
-  prevBtn.onclick = () => shiftGallery(-1);
-  nextBtn.onclick = () => shiftGallery(1);
-
-  let touchStartX = 0;
-  let touchStartY = 0;
-
-  stage.addEventListener('touchstart', (e) => {
-    const t = e.changedTouches[0];
-    touchStartX = t.clientX;
-    touchStartY = t.clientY;
-  }, { passive: true });
-
-  stage.addEventListener('touchend', (e) => {
-    const t = e.changedTouches[0];
-    const dx = t.clientX - touchStartX;
-    const dy = t.clientY - touchStartY;
-    if (Math.abs(dx) < 32 || Math.abs(dx) < Math.abs(dy)) return;
-    if (dx < 0) shiftGallery(1);
-    else shiftGallery(-1);
-  }, { passive: true });
+function getGallerySlides() {
+  return Array.from(document.querySelectorAll('.slide'));
 }
 
-function shiftGallery(step) {
-  const count = state.galleryPhotos.length;
-  if (!count || state.galleryAnimating || !state.gallerySlots) return;
-
-  const leftEl = state.gallerySlots.left;
-  const centerEl = state.gallerySlots.center;
-  const rightEl = state.gallerySlots.right;
-
-  state.galleryAnimating = true;
-
-  if (step > 0) {
-    const incomingIdx = wrappedIndex(state.galleryCenterIndex + 2, count);
-    prepareIncomingCard(leftEl, 'off-right', incomingIdx);
-
-    requestAnimationFrame(() => {
-      setCardPosition(centerEl, 'left');
-      setCardPosition(rightEl, 'center');
-      setCardPosition(leftEl, 'right');
-    });
-
-    waitCardTransition(rightEl, () => {
-      state.galleryCenterIndex = wrappedIndex(state.galleryCenterIndex + 1, count);
-      state.gallerySlots = { left: centerEl, center: rightEl, right: leftEl };
-      updateGalleryDotsActive();
-      state.galleryAnimating = false;
-    });
-    return;
-  }
-
-  const incomingIdx = wrappedIndex(state.galleryCenterIndex - 2, count);
-  prepareIncomingCard(rightEl, 'off-left', incomingIdx);
-
-  requestAnimationFrame(() => {
-    setCardPosition(leftEl, 'center');
-    setCardPosition(centerEl, 'right');
-    setCardPosition(rightEl, 'left');
-  });
-
-  waitCardTransition(leftEl, () => {
-    state.galleryCenterIndex = wrappedIndex(state.galleryCenterIndex - 1, count);
-    state.gallerySlots = { left: rightEl, center: leftEl, right: centerEl };
-    updateGalleryDotsActive();
-    state.galleryAnimating = false;
-  });
-}
-
-function rebuildGalleryDots() {
-  const dots = document.getElementById('galleryDots');
-  if (!dots) return;
-  dots.innerHTML = '';
-  state.galleryPhotos.forEach((_, idx) => {
-    const dot = document.createElement('span');
-    dot.className = 'gallery-dot' + (idx === state.galleryCenterIndex ? ' active' : '');
-    dot.addEventListener('click', () => {
-      if (state.galleryAnimating) return;
-      state.galleryCenterIndex = idx;
-      resetGalleryForCurrentCenter();
-      updateGalleryDotsActive();
-    });
-    dots.appendChild(dot);
-  });
-}
-
-function initGallerySlots() {
-  if (state.gallerySlots) return;
-  state.gallerySlots = {
-    left: document.querySelector('.gallery-card[data-slot="left"]'),
-    center: document.querySelector('.gallery-card[data-slot="center"]'),
-    right: document.querySelector('.gallery-card[data-slot="right"]')
-  };
-}
-
-function resetGalleryForCurrentCenter() {
-  if (!state.gallerySlots) return;
-  const count = state.galleryPhotos.length;
-  const leftIdx = wrappedIndex(state.galleryCenterIndex - 1, count);
-  const centerIdx = wrappedIndex(state.galleryCenterIndex, count);
-  const rightIdx = wrappedIndex(state.galleryCenterIndex + 1, count);
-
-  setCardPosition(state.gallerySlots.left, 'left');
-  setCardPosition(state.gallerySlots.center, 'center');
-  setCardPosition(state.gallerySlots.right, 'right');
-  setCardPhoto(state.gallerySlots.left, leftIdx);
-  setCardPhoto(state.gallerySlots.center, centerIdx);
-  setCardPhoto(state.gallerySlots.right, rightIdx);
-  state.galleryAnimating = false;
-}
-
-function prepareIncomingCard(card, offPosition, photoIdx) {
-  setCardPhoto(card, photoIdx);
-  card.classList.add('gallery-card--no-transition');
-  setCardPosition(card, offPosition);
-  void card.offsetWidth;
-  card.classList.remove('gallery-card--no-transition');
-}
-
-function setCardPhoto(card, photoIdx) {
-  if (!card) return;
-  const img = card.querySelector('img');
-  const fallback = card.querySelector('.gallery-placeholder');
-  const src = state.galleryPhotos[photoIdx] || '';
-
-  img.alt = 'Фото ' + (photoIdx + 1);
+function setSlideImage(slide, src, idx) {
+  const img = slide.querySelector('img');
+  const ph = slide.querySelector('.gallery-placeholder');
+  img.alt = 'Фото ' + (idx + 1);
   if (src) {
     img.src = src;
     img.style.display = 'block';
-    fallback.style.display = 'none';
+    if (ph) ph.style.display = 'none';
   } else {
     img.removeAttribute('src');
     img.style.display = 'none';
-    fallback.style.display = 'flex';
-    fallback.textContent = 'Фото ' + (photoIdx + 1);
+    if (ph) {
+      ph.style.display = 'flex';
+      ph.textContent = 'Фото ' + (idx + 1);
+    }
   }
 }
 
-function setCardPosition(card, position) {
-  if (!card) return;
-  card.classList.remove('gallery-card--left', 'gallery-card--center', 'gallery-card--right', 'gallery-card--off-left', 'gallery-card--off-right');
-  card.classList.add('gallery-card--' + position);
-}
-
-function waitCardTransition(card, done) {
-  let called = false;
-  const finish = () => {
-    if (called) return;
-    called = true;
-    done();
-  };
-
-  const onEnd = (e) => {
-    if (e.target !== card || e.propertyName !== 'transform') return;
-    card.removeEventListener('transitionend', onEnd);
-    finish();
-  };
-
-  card.addEventListener('transitionend', onEnd);
-  setTimeout(() => {
-    card.removeEventListener('transitionend', onEnd);
-    finish();
-  }, 520);
-}
-
-function updateGalleryDotsActive() {
-  const dots = document.querySelectorAll('#galleryDots .gallery-dot');
-  dots.forEach((dot, idx) => {
-    dot.classList.toggle('active', idx === state.galleryCenterIndex);
+function ensureGalleryDots() {
+  const dotsWrap = document.getElementById('galleryDots');
+  if (!dotsWrap) return;
+  dotsWrap.innerHTML = '';
+  state.galleryImages.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'dot';
+    dot.type = 'button';
+    dot.setAttribute('aria-label', 'Слайд ' + (i + 1));
+    dot.dataset.i = String(i);
+    dot.addEventListener('click', () => {
+      if (state.galleryBusy || i === state.galleryOrder[1]) return;
+      goGallery(i === state.galleryOrder[2] ? 'next' : 'prev');
+    });
+    dotsWrap.appendChild(dot);
   });
 }
 
-function wrappedIndex(i, len) {
-  if (!len) return 0;
-  return ((i % len) + len) % len;
+function syncGalleryDots() {
+  const dots = Array.from(document.querySelectorAll('#galleryDots .dot'));
+  dots.forEach((d, i) => d.classList.toggle('on', i === state.galleryOrder[1]));
+}
+
+function bindGalleryEvents() {
+  if (state.galleryBound) return;
+  state.galleryBound = true;
+
+  const carousel = document.getElementById('carousel');
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+
+  if (prev) prev.addEventListener('click', () => goGallery('prev'));
+  if (next) next.addEventListener('click', () => goGallery('next'));
+
+  getGallerySlides().forEach((s) => s.addEventListener('click', () => {
+    const p = s.getAttribute('data-pos');
+    if (p === 'left') goGallery('prev');
+    if (p === 'right') goGallery('next');
+  }));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') goGallery('next');
+    if (e.key === 'ArrowLeft') goGallery('prev');
+  });
+
+  if (carousel) {
+    let sx = 0;
+    let sy = 0;
+    carousel.addEventListener('touchstart', (e) => {
+      sx = e.touches[0].clientX;
+      sy = e.touches[0].clientY;
+    }, { passive: true });
+    carousel.addEventListener('touchend', (e) => {
+      const dx = sx - e.changedTouches[0].clientX;
+      const dy = sy - e.changedTouches[0].clientY;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+        goGallery(dx > 0 ? 'next' : 'prev');
+      }
+    }, { passive: true });
+  }
+}
+
+function goGallery(dir) {
+  const slides = getGallerySlides();
+  if (slides.length < 3 || state.galleryBusy) return;
+  state.galleryBusy = true;
+
+  const order = state.galleryOrder;
+  let wrapIdx;
+  let targetPos;
+  let newOrder;
+
+  if (dir === 'next') {
+    wrapIdx = order[0];
+    targetPos = 'right';
+    newOrder = [order[1], order[2], order[0]];
+  } else {
+    wrapIdx = order[2];
+    targetPos = 'left';
+    newOrder = [order[2], order[0], order[1]];
+  }
+
+  const wrapEl = slides[wrapIdx];
+  const FADE_OUT = 200;
+  const FADE_IN = 360;
+
+  wrapEl.style.transition = `opacity ${FADE_OUT}ms ease-out`;
+  wrapEl.style.opacity = '0';
+
+  slides[newOrder[0]].setAttribute('data-pos', 'left');
+  slides[newOrder[1]].setAttribute('data-pos', 'center');
+  state.galleryOrder = newOrder;
+  syncGalleryDots();
+
+  setTimeout(() => {
+    wrapEl.style.transition = 'none';
+    wrapEl.setAttribute('data-pos', targetPos);
+    void wrapEl.offsetHeight;
+
+    requestAnimationFrame(() => {
+      wrapEl.style.transition = `opacity ${FADE_IN}ms ease-in`;
+      wrapEl.style.opacity = '';
+      setTimeout(() => {
+        wrapEl.style.transition = '';
+        wrapEl.style.opacity = '';
+        state.galleryBusy = false;
+      }, FADE_IN + 40);
+    });
+  }, FADE_OUT + 20);
 }
 
 function nextCompliment() {
@@ -753,7 +710,8 @@ function bindAdminEvents() {
       uploadMsg.textContent = 'Загрузка завершена, ссылка(и) подставлена(ы) в форму.';
     } catch (err) {
       console.error(err);
-      uploadMsg.textContent = 'Ошибка загрузки. Проверь bucket "media" (public) и права Storage.';
+      const reason = err?.message ? String(err.message) : 'Неизвестная ошибка';
+      uploadMsg.textContent = 'Ошибка загрузки: ' + reason + '. Проверь bucket "media" (public) и Storage policy для anon.';
     }
   };
 }

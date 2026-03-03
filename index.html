@@ -72,26 +72,30 @@
 
     <section class="gallery-section reveal">
       <div class="gallery-title">Фотосессия • Backstage</div>
-      <div class="gallery-showcase" id="galleryShowcase">
-        <button class="gallery-nav gallery-nav--left" id="galleryPrevBtn" type="button" aria-label="Предыдущее фото">‹</button>
-        <div class="gallery-stage" id="galleryGrid">
-          <article class="gallery-card gallery-card--left" data-slot="left">
-            <img alt="Левое фото витрины">
-            <div class="gallery-placeholder">Фото 1</div>
-          </article>
-          <article class="gallery-card gallery-card--center" data-slot="center">
-            <img alt="Центральное фото витрины">
-            <div class="gallery-placeholder">Фото 2</div>
-          </article>
-          <article class="gallery-card gallery-card--right" data-slot="right">
-            <img alt="Правое фото витрины">
-            <div class="gallery-placeholder">Фото 3</div>
-          </article>
+      <div class="carousel" id="carousel">
+        <button class="arrow arrow--l" id="prev" type="button" aria-label="Назад">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+
+        <div class="slide" data-pos="left" data-idx="0">
+          <img alt="Фото 1" draggable="false">
+          <div class="gallery-placeholder">Фото 1</div>
         </div>
-        <button class="gallery-nav gallery-nav--right" id="galleryNextBtn" type="button" aria-label="Следующее фото">›</button>
+        <div class="slide" data-pos="center" data-idx="1">
+          <img alt="Фото 2" draggable="false">
+          <div class="gallery-placeholder">Фото 2</div>
+        </div>
+        <div class="slide" data-pos="right" data-idx="2">
+          <img alt="Фото 3" draggable="false">
+          <div class="gallery-placeholder">Фото 3</div>
+        </div>
+
+        <button class="arrow arrow--r" id="next" type="button" aria-label="Вперед">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
       </div>
-      <div class="gallery-dots" id="galleryDots"></div>
-      <p class="gallery-hint">Свайп или кнопки</p>
+      <div class="dots" id="galleryDots"></div>
+      <p class="gallery-hint">← → или свайп</p>
     </section>
 
     <section class="quote-section reveal">

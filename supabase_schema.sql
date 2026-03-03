@@ -37,3 +37,37 @@ create policy "march8_profiles_delete" on public.march8_profiles
 for delete
 to anon
 using (true);
+
+-- Storage bucket and policies for media upload from frontend.
+insert into storage.buckets (id, name, public)
+values ('media', 'media', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "media_public_read" on storage.objects;
+create policy "media_public_read"
+on storage.objects
+for select
+to public
+using (bucket_id = 'media');
+
+drop policy if exists "media_anon_insert" on storage.objects;
+create policy "media_anon_insert"
+on storage.objects
+for insert
+to anon
+with check (bucket_id = 'media');
+
+drop policy if exists "media_anon_update" on storage.objects;
+create policy "media_anon_update"
+on storage.objects
+for update
+to anon
+using (bucket_id = 'media')
+with check (bucket_id = 'media');
+
+drop policy if exists "media_anon_delete" on storage.objects;
+create policy "media_anon_delete"
+on storage.objects
+for delete
+to anon
+using (bucket_id = 'media');
