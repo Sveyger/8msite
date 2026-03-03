@@ -597,69 +597,135 @@ body {
   letter-spacing: 0.5em;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
-.gallery-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px;
-}
-
-.gallery-item {
-  aspect-ratio: 3/4;
-  background: var(--bg-card);
+.gallery-showcase {
   position: relative;
-  overflow: hidden;
-  cursor: pointer;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0 2.1rem;
 }
 
-.gallery-item::after {
+.gallery-stage {
+  position: relative;
+  height: clamp(340px, 78vw, 540px);
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.gallery-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(180px, 56vw, 270px);
+  aspect-ratio: 9 / 16;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 26px 50px rgba(0,0,0,0.44);
+  background: linear-gradient(180deg, rgba(30,27,24,1) 0%, var(--bg-card) 100%);
+  transition: transform 430ms ease, filter 430ms ease, opacity 430ms ease, box-shadow 430ms ease;
+  will-change: transform, filter, opacity;
+}
+
+.gallery-card::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 50%, rgba(10,10,10,0.5) 100%);
-  transition: opacity 0.3s ease;
+  background: linear-gradient(180deg, transparent 58%, rgba(10,10,10,0.55) 100%);
 }
 
-.gallery-item:hover::after {
-  opacity: 0.5;
-}
-
-.gallery-item img {
+.gallery-card img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s ease;
+  display: block;
 }
 
-.gallery-item:hover img {
-  transform: scale(1.05);
+.gallery-card--left {
+  transform: translate(-104%, -50%) scale(0.86);
+  filter: blur(2px) saturate(0.85) brightness(0.72);
+  opacity: 0.72;
+  z-index: 1;
+}
+
+.gallery-card--center {
+  transform: translate(-50%, -50%) scale(1);
+  filter: none;
+  opacity: 1;
+  z-index: 3;
+}
+
+.gallery-card--right {
+  transform: translate(4%, -50%) scale(0.86);
+  filter: blur(2px) saturate(0.85) brightness(0.72);
+  opacity: 0.72;
+  z-index: 1;
 }
 
 .gallery-placeholder {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    var(--bg-card) 0%,
-    rgba(30,27,24,1) 100%
-  );
-}
-
-.gallery-placeholder-num {
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(30,27,24,1) 100%);
+  color: rgba(255,255,255,0.18);
   font-family: 'Playfair Display', serif;
-  font-size: 2rem;
-  font-weight: 300;
-  color: rgba(255,255,255,0.06);
+  font-size: 1.6rem;
+  z-index: 1;
 }
 
-.gallery-item--wide {
-  grid-column: span 2;
-  aspect-ratio: 16/9;
+.gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(20,20,20,0.72);
+  color: var(--text-primary);
+  border-radius: 999px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 6;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gallery-nav--left { left: 0; }
+.gallery-nav--right { right: 0; }
+
+.gallery-dots {
+  margin-top: 0.9rem;
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+}
+
+.gallery-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.2);
+  transition: transform 220ms ease, background-color 220ms ease;
+}
+
+.gallery-dot.active {
+  background: var(--accent);
+  transform: scale(1.35);
+}
+
+.gallery-hint {
+  margin-top: 0.7rem;
+  text-align: center;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.52rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 /* ============================================
@@ -978,7 +1044,26 @@ body {
 
     <section class="gallery-section reveal">
       <div class="gallery-title">Фотосессия • Backstage</div>
-      <div class="gallery-grid" id="galleryGrid"></div>
+      <div class="gallery-showcase" id="galleryShowcase">
+        <button class="gallery-nav gallery-nav--left" id="galleryPrevBtn" type="button" aria-label="Предыдущее фото">‹</button>
+        <div class="gallery-stage" id="galleryGrid">
+          <article class="gallery-card gallery-card--left" data-slot="left">
+            <img alt="Левое фото витрины">
+            <div class="gallery-placeholder">Фото 1</div>
+          </article>
+          <article class="gallery-card gallery-card--center" data-slot="center">
+            <img alt="Центральное фото витрины">
+            <div class="gallery-placeholder">Фото 2</div>
+          </article>
+          <article class="gallery-card gallery-card--right" data-slot="right">
+            <img alt="Правое фото витрины">
+            <div class="gallery-placeholder">Фото 3</div>
+          </article>
+        </div>
+        <button class="gallery-nav gallery-nav--right" id="galleryNextBtn" type="button" aria-label="Следующее фото">›</button>
+      </div>
+      <div class="gallery-dots" id="galleryDots"></div>
+      <p class="gallery-hint">Свайп или кнопки</p>
     </section>
 
     <section class="quote-section reveal">
@@ -1024,7 +1109,7 @@ body {
             <div class="admin-row"><div><label class="admin-label" for="nameInput">Имя</label><input class="admin-input" id="nameInput" required></div><div><label class="admin-label" for="themeInput">Тема</label><select class="admin-select" id="themeInput"><option value="warm">warm</option><option value="brunette">brunette</option><option value="blonde">blonde</option><option value="black">black</option></select></div></div>
             <div><label class="admin-label" for="videoInput">Видео URL</label><input class="admin-input" id="videoInput" placeholder="assets/kling-story.mp4"></div>
             <div><label class="admin-label" for="posterInput">Постер URL</label><input class="admin-input" id="posterInput" placeholder="assets/poster.jpg"></div>
-            <div><label class="admin-label" for="photosInput">Фото (по строкам)</label><textarea class="admin-textarea" id="photosInput" placeholder="assets/photo1.jpg&#10;assets/photo2.jpg"></textarea></div>
+            <div><label class="admin-label" for="photosInput">Фото (3 ссылки, по строкам)</label><textarea class="admin-textarea" id="photosInput" placeholder="assets/photo1.jpg&#10;assets/photo2.jpg&#10;assets/photo3.jpg"></textarea></div>
             <div><label class="admin-label" for="buttonInput">Текст кнопки</label><input class="admin-input" id="buttonInput"></div>
             <div><label class="admin-label" for="complimentsInput">Комплименты (по строкам)</label><textarea class="admin-textarea" id="complimentsInput"></textarea></div>
             <div><label class="admin-label" for="tipInput">Подпись видео/медиа</label><input class="admin-input" id="tipInput"></div>
@@ -1121,6 +1206,8 @@ const state = {
   complimentIndex: -1,
   isAnimating: false,
   activeProfile: null,
+  galleryPhotos: ['', '', ''],
+  galleryCenterIndex: 0,
   backendMode: 'local',
   supabase: null
 };
@@ -1335,6 +1422,7 @@ function renderGirlPage(profile) {
   showOnly('girlRoute');
   state.activeProfile = profile;
   state.complimentIndex = -1;
+  state.galleryCenterIndex = 0;
   applyTheme(profile.theme);
 
   document.getElementById('storyName').textContent = profile.name || 'Героиня';
@@ -1388,22 +1476,109 @@ function renderMedia(profile) {
 }
 
 function renderGallery(profile) {
-  const grid = document.getElementById('galleryGrid');
-  const photos = normalizeLines(profile.photos);
-  const items = photos.length ? photos.slice(0, 6) : ['', '', '', '', ''];
-  grid.innerHTML = '';
+  const photos = normalizeLines(profile.photos).slice(0, 3);
+  while (photos.length < 3) photos.push('');
+  state.galleryPhotos = photos;
+  state.galleryCenterIndex = wrappedIndex(state.galleryCenterIndex, state.galleryPhotos.length);
 
-  items.forEach((src, idx) => {
-    const item = document.createElement('div');
-    item.className = 'gallery-item' + (idx === 2 ? ' gallery-item--wide' : '');
-    if (src) {
-      item.innerHTML = '<img src="' + escapeHtml(src) + '" alt="Фото ' + (idx + 1) + '">';
-    } else {
-      const roman = ['I', 'II', 'III', 'IV', 'V', 'VI'][idx] || String(idx + 1);
-      item.innerHTML = '<div class="gallery-placeholder"><span class="gallery-placeholder-num">' + roman + '</span></div>';
-    }
-    grid.appendChild(item);
+  bindGalleryEvents();
+  rebuildGalleryDots();
+  applyGalleryState();
+}
+
+function bindGalleryEvents() {
+  const stage = document.getElementById('galleryGrid');
+  if (!stage || stage.dataset.bound === '1') return;
+  stage.dataset.bound = '1';
+
+  const prevBtn = document.getElementById('galleryPrevBtn');
+  const nextBtn = document.getElementById('galleryNextBtn');
+
+  prevBtn.onclick = () => shiftGallery(-1);
+  nextBtn.onclick = () => shiftGallery(1);
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  stage.addEventListener('touchstart', (e) => {
+    const t = e.changedTouches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+  }, { passive: true });
+
+  stage.addEventListener('touchend', (e) => {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    if (Math.abs(dx) < 32 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < 0) shiftGallery(1);
+    else shiftGallery(-1);
+  }, { passive: true });
+}
+
+function shiftGallery(step) {
+  const count = state.galleryPhotos.length;
+  if (!count) return;
+  state.galleryCenterIndex = wrappedIndex(state.galleryCenterIndex + step, count);
+  applyGalleryState();
+}
+
+function rebuildGalleryDots() {
+  const dots = document.getElementById('galleryDots');
+  if (!dots) return;
+  dots.innerHTML = '';
+  state.galleryPhotos.forEach((_, idx) => {
+    const dot = document.createElement('span');
+    dot.className = 'gallery-dot' + (idx === state.galleryCenterIndex ? ' active' : '');
+    dot.addEventListener('click', () => {
+      state.galleryCenterIndex = idx;
+      applyGalleryState();
+    });
+    dots.appendChild(dot);
   });
+}
+
+function applyGalleryState() {
+  const count = state.galleryPhotos.length;
+  if (!count) return;
+
+  const leftIdx = wrappedIndex(state.galleryCenterIndex - 1, count);
+  const centerIdx = wrappedIndex(state.galleryCenterIndex, count);
+  const rightIdx = wrappedIndex(state.galleryCenterIndex + 1, count);
+
+  setGalleryCard('left', leftIdx);
+  setGalleryCard('center', centerIdx);
+  setGalleryCard('right', rightIdx);
+
+  const dots = document.querySelectorAll('#galleryDots .gallery-dot');
+  dots.forEach((dot, idx) => {
+    dot.classList.toggle('active', idx === centerIdx);
+  });
+}
+
+function setGalleryCard(slot, photoIdx) {
+  const card = document.querySelector('.gallery-card[data-slot="' + slot + '"]');
+  if (!card) return;
+  const img = card.querySelector('img');
+  const fallback = card.querySelector('.gallery-placeholder');
+  const src = state.galleryPhotos[photoIdx] || '';
+
+  img.alt = 'Фото ' + (photoIdx + 1);
+  if (src) {
+    img.src = src;
+    img.style.display = 'block';
+    fallback.style.display = 'none';
+  } else {
+    img.removeAttribute('src');
+    img.style.display = 'none';
+    fallback.style.display = 'flex';
+    fallback.textContent = 'Фото ' + (photoIdx + 1);
+  }
+}
+
+function wrappedIndex(i, len) {
+  if (!len) return 0;
+  return ((i % len) + len) % len;
 }
 
 function nextCompliment() {
