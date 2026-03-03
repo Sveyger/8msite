@@ -53,6 +53,7 @@ const state = {
   galleryOrder: [0, 1, 2],
   galleryBusy: false,
   galleryBound: false,
+  backendFallbackReason: '',
   backendMode: 'local',
   supabase: null
 };
@@ -114,6 +115,7 @@ async function loadProfiles() {
   if (error) {
     console.error('Supabase load failed, fallback to localStorage.', error);
     state.backendMode = 'local';
+    state.backendFallbackReason = String(error.message || 'Supabase query failed');
     state.db = loadLocalDb();
     return;
   }
@@ -684,7 +686,8 @@ function bindAdminEvents() {
       return;
     }
     if (state.backendMode !== 'supabase') {
-      uploadMsg.textContent = 'Сейчас включен localStorage. Для загрузки укажите SUPABASE_URL и SUPABASE_ANON_KEY.';
+      const reason = state.backendFallbackReason ? (' Причина fallback: ' + state.backendFallbackReason + '.') : '';
+      uploadMsg.textContent = 'Сейчас включен localStorage.' + reason + ' Для Supabase-режима проверь SUPABASE_URL/SUPABASE_ANON_KEY и выполни SQL из supabase_schema.sql.';
       return;
     }
 
