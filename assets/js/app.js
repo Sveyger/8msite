@@ -16,6 +16,7 @@ const THEMES = {
   girl_pink_white_black: { '--accent': '#FF4FA0', '--accent-light': '#FFE8F3', '--accent-dark': '#2A0D1D', '--accent-glow': 'rgba(255, 79, 160, 0.45)', '--bg-primary': '#060607', '--bg-secondary': '#101015', '--bg-gradient-start': '#13060F', '--bg-gradient-end': '#0A0A12', '--bg-card': '#17171D', '--text-primary': '#FFFFFF', '--text-secondary': '#F3D5E7', '--text-muted': '#B190A7', '--gold': '#FF83B8', '--gold-light': '#FFD1E7' },
   girl_pink: { '--accent': '#FF5DAF', '--accent-light': '#FFC2E0', '--accent-dark': '#A01D5E', '--accent-glow': 'rgba(255, 93, 175, 0.45)', '--bg-primary': '#130A12', '--bg-secondary': '#1A1020', '--bg-gradient-start': '#2A0E22', '--bg-gradient-end': '#13091A', '--bg-card': '#241425', '--text-primary': '#FFF0F7', '--text-secondary': '#E2B5CB', '--text-muted': '#A47D94', '--gold': '#FF75BA', '--gold-light': '#FFBFE0' },
   girl_violet: { '--accent': '#8E58FF', '--accent-light': '#C8ADFF', '--accent-dark': '#4B2A96', '--accent-glow': 'rgba(142, 88, 255, 0.45)', '--bg-primary': '#0E0A1A', '--bg-secondary': '#151126', '--bg-gradient-start': '#22133E', '--bg-gradient-end': '#120F24', '--bg-card': '#1E1735', '--text-primary': '#F3EEFF', '--text-secondary': '#C7B9EB', '--text-muted': '#8B7EAE', '--gold': '#9A6CFF', '--gold-light': '#D4C1FF' },
+  girl_lilac_soft: { '--accent': '#E7C6FF', '--accent-light': '#F4E5FF', '--accent-dark': '#A17BBE', '--accent-glow': 'rgba(231, 198, 255, 0.45)', '--bg-primary': '#140F1D', '--bg-secondary': '#1D1529', '--bg-gradient-start': '#2C1F3A', '--bg-gradient-end': '#171223', '--bg-card': '#231A31', '--text-primary': '#FBF5FF', '--text-secondary': '#DCC8EC', '--text-muted': '#A58BB8', '--gold': '#E7C6FF', '--gold-light': '#F6EAFF' },
   girl_light_blue: { '--accent': '#6EC9FF', '--accent-light': '#D9F2FF', '--accent-dark': '#2A6C96', '--accent-glow': 'rgba(110, 201, 255, 0.45)', '--bg-primary': '#07131D', '--bg-secondary': '#0D1D2A', '--bg-gradient-start': '#0D2A3A', '--bg-gradient-end': '#0A1826', '--bg-card': '#142A3A', '--text-primary': '#ECF8FF', '--text-secondary': '#B9D6E8', '--text-muted': '#7F9EB2', '--gold': '#7ED0FF', '--gold-light': '#CDEEFF' },
   girl_black: { '--accent': '#FFFFFF', '--accent-light': '#FFFFFF', '--accent-dark': '#8A8A8A', '--accent-glow': 'rgba(255, 255, 255, 0.34)', '--bg-primary': '#000000', '--bg-secondary': '#080808', '--bg-gradient-start': '#262626', '--bg-gradient-end': '#020202', '--bg-card': '#121212', '--text-primary': '#FFFFFF', '--text-secondary': '#D4D4D4', '--text-muted': '#8E8E8E', '--gold': '#FFFFFF', '--gold-light': '#DCDCDC' }
 };
@@ -656,8 +657,8 @@ function initFlowers() {
     el.textContent = flowers[Math.floor(Math.random() * flowers.length)];
     el.style.left = Math.random() * 100 + '%';
     el.style.fontSize = Math.random() * 1.2 + 0.8 + 'rem';
-    el.style.animationDuration = Math.random() * 4 + 5 + 's';
-    el.style.animationDelay = '-' + (Math.random() * 6).toFixed(2) + 's';
+    el.style.animationDuration = Math.random() * 6 + 10 + 's';
+    el.style.animationDelay = '-' + (Math.random() * 10).toFixed(2) + 's';
     el.style.color = palette[Math.floor(Math.random() * palette.length)] || 'rgba(255,255,255,.75)';
     el.style.textShadow = '0 0 12px color-mix(in srgb, var(--accent-glow) 50%, transparent)';
     container.appendChild(el);
