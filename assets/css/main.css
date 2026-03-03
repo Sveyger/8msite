@@ -940,31 +940,26 @@ body.splash-lock {
 @media (hover: hover) and (pointer: fine) {
   .hover-chunk {
     display: inline-block;
-    transition: text-shadow 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    transition: text-shadow 0.22s ease, color 0.22s ease, transform 0.22s ease;
   }
 
-  .hover-chunk.glow-0 {
+  .hover-chunk:hover {
     transform: translateY(-1px);
     text-shadow:
-      0 0 12px color-mix(in srgb, var(--accent-light) 55%, transparent),
-      0 0 24px color-mix(in srgb, var(--accent-glow) 50%, transparent);
-  }
-
-  .hover-chunk.glow-1 {
-    text-shadow:
-      0 0 8px color-mix(in srgb, var(--accent-light) 38%, transparent),
-      0 0 16px color-mix(in srgb, var(--accent-glow) 32%, transparent);
-  }
-
-  .hover-chunk.glow-2 {
-    text-shadow:
-      0 0 5px color-mix(in srgb, var(--accent-light) 22%, transparent),
-      0 0 10px color-mix(in srgb, var(--accent-glow) 18%, transparent);
+      0 0 10px color-mix(in srgb, var(--accent-light) 40%, transparent),
+      0 0 18px color-mix(in srgb, var(--accent-glow) 35%, transparent);
   }
 
   .main :is(h1, h2, h3, p, span, em, mark),
   .admin-shell :is(h2, h3, p, label) {
     transition: text-shadow 0.22s ease, color 0.22s ease;
+  }
+
+  .main :is(h1, h2, h3, p, span, em, mark):hover,
+  .admin-shell :is(h2, h3, p, label):hover {
+    text-shadow:
+      0 0 10px color-mix(in srgb, var(--accent-light) 40%, transparent),
+      0 0 18px color-mix(in srgb, var(--accent-glow) 35%, transparent);
   }
 }
 
