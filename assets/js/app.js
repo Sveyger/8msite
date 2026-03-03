@@ -340,6 +340,7 @@ function renderGallery(profile) {
   ensureGalleryDots();
   syncGalleryDots();
   bindGalleryEvents();
+  renderPhotoManager();
 }
 
 function getGallerySlides() {
@@ -453,8 +454,13 @@ function goGallery(dir) {
   wrapEl.style.transition = `opacity ${FADE_OUT}ms ease-out`;
   wrapEl.style.opacity = '0';
 
-  slides[newOrder[0]].setAttribute('data-pos', 'left');
-  slides[newOrder[1]].setAttribute('data-pos', 'center');
+  if (dir === 'next') {
+    slides[order[1]].setAttribute('data-pos', 'left');
+    slides[order[2]].setAttribute('data-pos', 'center');
+  } else {
+    slides[order[0]].setAttribute('data-pos', 'center');
+    slides[order[1]].setAttribute('data-pos', 'right');
+  }
   state.galleryOrder = newOrder;
   syncGalleryDots();
 
@@ -473,6 +479,56 @@ function goGallery(dir) {
       }, FADE_IN + 40);
     });
   }, FADE_OUT + 20);
+}
+
+function readPhotosFromInput() {
+  return normalizeLines(document.getElementById('photosInput').value).slice(0, 3);
+}
+
+function writePhotosToInput(photos) {
+  document.getElementById('photosInput').value = photos.join('\n');
+}
+
+function renderPhotoManager() {
+  const list = document.getElementById('photoManagerList');
+  if (!list) return;
+  const photos = readPhotosFromInput();
+  list.innerHTML = '';
+
+  if (!photos.length) {
+    list.innerHTML = '<p class="admin-hint">Фото пока не добавлены.</p>';
+    return;
+  }
+
+  photos.forEach((url, i) => {
+    const row = document.createElement('div');
+    row.className = 'photo-row';
+    row.innerHTML = [
+      '<div class="photo-thumb"><img src="' + escapeHtml(url) + '" alt="Фото ' + (i + 1) + '"></div>',
+      '<div class="photo-url">' + escapeHtml(url) + '</div>',
+      '<div class="photo-actions">',
+      '<button class="photo-btn" data-act="up" data-i="' + i + '" title="Выше">↑</button>',
+      '<button class="photo-btn" data-act="down" data-i="' + i + '" title="Ниже">↓</button>',
+      '<button class="photo-btn" data-act="center" data-i="' + i + '" title="Сделать центральной">⦿</button>',
+      '<button class="photo-btn danger" data-act="remove" data-i="' + i + '" title="Удалить">×</button>',
+      '</div>'
+    ].join('');
+    list.appendChild(row);
+  });
+}
+
+function updatePhotoManagerAndGallery() {
+  const photos = readPhotosFromInput();
+  state.galleryImages = [...photos, ...Array(Math.max(0, 3 - photos.length)).fill('')];
+  state.galleryOrder = [0, 1, 2];
+  const slides = getGallerySlides();
+  slides.forEach((slide, idx) => setSlideImage(slide, state.galleryImages[idx], idx));
+  slides[state.galleryOrder[0]].setAttribute('data-pos', 'left');
+  slides[state.galleryOrder[1]].setAttribute('data-pos', 'center');
+  slides[state.galleryOrder[2]].setAttribute('data-pos', 'right');
+  ensureGalleryDots();
+  syncGalleryDots();
+  renderPhotoManager();
 }
 
 function nextCompliment() {
@@ -604,6 +660,33 @@ function bindAdminEvents() {
   if (form.dataset.bound === '1') return;
   form.dataset.bound = '1';
 
+  const photosInput = document.getElementById('photosInput');
+  photosInput.addEventListener('input', () => renderPhotoManager());
+
+  const manager = document.getElementById('photoManagerList');
+  manager.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const act = btn.dataset.act;
+    const idx = Number(btn.dataset.i);
+    const photos = readPhotosFromInput();
+    if (!Number.isFinite(idx) || idx < 0 || idx >= photos.length) return;
+
+    if (act === 'remove') {
+      photos.splice(idx, 1);
+    } else if (act === 'up' && idx > 0) {
+      [photos[idx - 1], photos[idx]] = [photos[idx], photos[idx - 1]];
+    } else if (act === 'down' && idx < photos.length - 1) {
+      [photos[idx + 1], photos[idx]] = [photos[idx], photos[idx + 1]];
+    } else if (act === 'center' && idx !== 1) {
+      const picked = photos.splice(idx, 1)[0];
+      photos.splice(1, 0, picked);
+    }
+
+    writePhotosToInput(photos.slice(0, 3));
+    updatePhotoManagerAndGallery();
+  });
+
   document.getElementById('newProfileBtn').onclick = async () => {
     const key = generateKey();
     const profile = makeProfile(key, DEFAULT_PROFILE);
@@ -611,6 +694,7 @@ function bindAdminEvents() {
     state.db.profiles[key] = profile;
     refreshList();
     selectProfile(key);
+    renderPhotoManager();
   };
 
   form.addEventListener('submit', async (e) => {
@@ -634,6 +718,7 @@ function bindAdminEvents() {
     state.db.profiles[profile.id] = profile;
     refreshList();
     selectProfile(profile.id);
+    renderPhotoManager();
     flashSaved('Сохранено');
   });
 
@@ -654,6 +739,7 @@ function bindAdminEvents() {
       document.getElementById('profileForm').reset();
       document.getElementById('profileLink').textContent = 'Профилей пока нет';
       document.getElementById('adminPreview').innerHTML = '';
+      renderPhotoManager();
     }
   };
 
@@ -704,9 +790,9 @@ function bindAdminEvents() {
       } else if (mediaTarget.value === 'poster') {
         document.getElementById('posterInput').value = urls[0];
       } else {
-        const photosInput = document.getElementById('photosInput');
         const oldLines = normalizeLines(photosInput.value);
         photosInput.value = [...oldLines, ...urls].join('\n');
+        updatePhotoManagerAndGallery();
       }
 
       mediaInput.value = '';
@@ -748,6 +834,7 @@ function selectProfile(key) {
   document.getElementById('quoteInput').value = p.quoteText || DEFAULT_PROFILE.quoteText;
   document.getElementById('profileLink').textContent = currentProfileLink();
   renderAdminPreview(p);
+  renderPhotoManager();
 }
 
 function renderAdminPreview(profile) {
