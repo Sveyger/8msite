@@ -930,6 +930,18 @@ body.splash-lock {
 }
 
 @media (hover: hover) and (pointer: fine) {
+  .hover-chunk {
+    display: inline-block;
+    transition: text-shadow 0.22s ease, color 0.22s ease, transform 0.22s ease;
+  }
+
+  .hover-chunk:hover {
+    transform: translateY(-1px);
+    text-shadow:
+      0 0 10px color-mix(in srgb, var(--accent-light) 40%, transparent),
+      0 0 18px color-mix(in srgb, var(--accent-glow) 35%, transparent);
+  }
+
   .main :is(h1, h2, h3, p, span, em, mark),
   .admin-shell :is(h2, h3, p, label) {
     transition: text-shadow 0.22s ease, color 0.22s ease;

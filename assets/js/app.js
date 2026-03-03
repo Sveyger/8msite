@@ -72,7 +72,6 @@ bootstrap().catch((err) => {
 });
 
 async function bootstrap() {
-  initFlowers();
   await initBackend();
   setSplashScrollLock(false);
 
@@ -273,11 +272,12 @@ function applyTheme(themeName) {
 }
 
 function renderGirlPage(profile) {
+  applyTheme(profile.theme);
+  initFlowers();
   showOnly('girlRoute');
   setSplashScrollLock(true);
   state.activeProfile = profile;
   state.complimentIndex = -1;
-  applyTheme(profile.theme);
 
   document.getElementById('storyName').textContent = profile.name || 'Героиня';
   document.title = 'История одной обложки: ' + (profile.name || 'Героиня');
@@ -287,11 +287,12 @@ function renderGirlPage(profile) {
   const complimentText = document.getElementById('complimentText');
   const complimentSource = document.getElementById('complimentSource');
   complimentBtn.textContent = profile.buttonLabel || 'Узнать правду о себе';
-  complimentText.textContent = compliments[0] || DEFAULT_COMPLIMENTS[0];
+  setChunkedText(complimentText, compliments[0] || DEFAULT_COMPLIMENTS[0]);
   complimentSource.classList.add('visible');
 
   document.getElementById('videoOverlayBottom').textContent = profile.mediaTip || 'From little girl to cover star';
   document.getElementById('quoteBig').innerHTML = profile.quoteText || DEFAULT_PROFILE.quoteText;
+  applyStaticChunkHover();
 
   renderMedia(profile);
   renderGallery(profile);
@@ -552,7 +553,7 @@ function nextCompliment() {
 
   setTimeout(() => {
     state.complimentIndex = (state.complimentIndex + 1) % Math.max(compliments.length, 1);
-    textEl.textContent = compliments[state.complimentIndex] || DEFAULT_COMPLIMENTS[0];
+    setChunkedText(textEl, compliments[state.complimentIndex] || DEFAULT_COMPLIMENTS[0]);
     textEl.classList.remove('fading');
     sourceEl.classList.add('visible');
     btn.textContent = 'Еще комплимент ✨';
@@ -580,6 +581,40 @@ function createSparkles(element) {
   }
 }
 
+function setChunkedText(el, text) {
+  const raw = String(text || '').trim();
+  if (!raw) {
+    el.textContent = '';
+    return;
+  }
+  const html = raw
+    .split(/(\s+)/)
+    .map((part) => (/^\s+$/.test(part) ? part : '<span class="hover-chunk">' + escapeHtml(part) + '</span>'))
+    .join('');
+  el.innerHTML = html;
+}
+
+function applyStaticChunkHover() {
+  const candidates = [
+    '.brand-top',
+    '.brand-date',
+    '.story-label',
+    '#videoOverlayTop',
+    '#videoOverlayBottom',
+    '.quote-author',
+    '.secret-trigger'
+  ];
+
+  candidates.forEach((sel) => {
+    document.querySelectorAll(sel).forEach((el) => {
+      if (el.dataset.chunked === '1' && el.children.length > 0) return;
+      if (el.children.length > 0) return;
+      setChunkedText(el, el.textContent || '');
+      el.dataset.chunked = '1';
+    });
+  });
+}
+
 function closeSplash() {
   const splash = document.getElementById('splash');
   if (!splash || splash.classList.contains('closing')) return;
@@ -601,6 +636,15 @@ function initFlowers() {
   const container = document.getElementById('splashFlowers');
   if (!container) return;
   const flowers = ['✿', '❀', '✾', '❁', '✽', '♡', '⚘', '❋'];
+  const cs = getComputedStyle(document.documentElement);
+  const palette = [
+    cs.getPropertyValue('--accent').trim(),
+    cs.getPropertyValue('--accent-light').trim(),
+    cs.getPropertyValue('--text-primary').trim(),
+    cs.getPropertyValue('--text-secondary').trim(),
+    cs.getPropertyValue('--text-muted').trim(),
+    cs.getPropertyValue('--gold-light').trim()
+  ].filter(Boolean);
   container.innerHTML = '';
   for (let i = 0; i < 20; i++) {
     const el = document.createElement('div');
@@ -610,7 +654,7 @@ function initFlowers() {
     el.style.fontSize = Math.random() * 1.2 + 0.8 + 'rem';
     el.style.animationDuration = Math.random() * 4 + 5 + 's';
     el.style.animationDelay = Math.random() * 6 + 's';
-    el.style.color = `hsl(${Math.random() * 40 + 15}, ${Math.random() * 30 + 40}%, ${Math.random() * 20 + 60}%)`;
+    el.style.color = palette[Math.floor(Math.random() * palette.length)] || 'rgba(255,255,255,.75)';
     container.appendChild(el);
   }
 }
