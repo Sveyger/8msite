@@ -1033,7 +1033,33 @@ body {
             <p id="savedMsg" class="admin-hint"></p>
           </form>
         </section>
-        <section class="admin-card"><h3 class="admin-panel-title">Проверка и QR-ключ</h3><p class="admin-hint">Ссылка для QR:</p><p id="profileLink" class="admin-token">Выберите профиль</p><p class="admin-hint">Передавайте только эту ссылку конкретной девушке.</p><div id="adminPreview" style="margin-top:.7rem;"></div></section>
+        <section class="admin-card">
+          <h3 class="admin-panel-title">Проверка и QR-ключ</h3>
+          <p class="admin-hint">Ссылка для QR:</p>
+          <p id="profileLink" class="admin-token">Выберите профиль</p>
+          <p class="admin-hint">Передавайте только эту ссылку конкретной девушке.</p>
+          <div id="adminPreview" style="margin-top:.7rem;"></div>
+
+          <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.12);padding-top:12px;">
+            <h3 class="admin-panel-title">Загрузка в Supabase Storage</h3>
+            <p class="admin-hint">Bucket: <code>media</code> (должен быть public).</p>
+            <div>
+              <label class="admin-label" for="mediaTarget">Куда подставить ссылку</label>
+              <select class="admin-select" id="mediaTarget">
+                <option value="video">Видео URL</option>
+                <option value="poster">Постер URL</option>
+                <option value="gallery">Фото (добавить в список)</option>
+              </select>
+            </div>
+            <div style="margin-top:8px;">
+              <input class="admin-input" id="mediaFileInput" type="file" multiple accept="image/*,video/*">
+            </div>
+            <div class="admin-actions" style="margin-top:8px;">
+              <button class="admin-btn" id="uploadMediaBtn" type="button">Загрузить файл(ы)</button>
+            </div>
+            <p id="uploadMsg" class="admin-hint"></p>
+          </div>
+        </section>
       </div>
     </div>
   </div>
@@ -1052,6 +1078,7 @@ const ADMIN_CODE = 'M8';
 const SUPABASE_URL = 'https://xpfaragwxgmstrkaizcv.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_aJQbRNVHoJ_VmhAfx33m1Q_L_h3ujnY';
 const SUPABASE_TABLE = 'march8_profiles';
+const SUPABASE_BUCKET = 'media';
 
 const THEMES = {
   warm: { '--accent': '#C4956A', '--accent-light': '#E8CEB5', '--accent-dark': '#8B6914', '--accent-glow': 'rgba(196, 149, 106, 0.4)', '--bg-primary': '#0A0A0A', '--bg-secondary': '#111111', '--bg-card': '#1A1A1A', '--text-primary': '#F5F0EB', '--text-secondary': '#B8AFA6', '--text-muted': '#6B6460', '--gold': '#D4AF37', '--gold-light': '#F0D879' },
@@ -1204,6 +1231,26 @@ async function removeProfile(key) {
 
   delete state.db.profiles[key];
   saveLocalDb();
+}
+
+async function uploadFileToStorage(file) {
+  if (state.backendMode !== 'supabase') {
+    throw new Error('Storage upload works only with Supabase backend.');
+  }
+
+  const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+  const cleanBase = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 40) || 'file';
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${cleanBase}.${ext}`;
+  const path = `uploads/${filename}`;
+
+  const { error } = await state.supabase.storage.from(SUPABASE_BUCKET).upload(path, file, {
+    upsert: false,
+    cacheControl: '3600'
+  });
+  if (error) throw error;
+
+  const { data } = state.supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
 }
 
 function makeProfile(key, source) {
@@ -1481,6 +1528,10 @@ function renderAdmin() {
 
 function bindAdminEvents() {
   const form = document.getElementById('profileForm');
+  const uploadBtn = document.getElementById('uploadMediaBtn');
+  const mediaInput = document.getElementById('mediaFileInput');
+  const mediaTarget = document.getElementById('mediaTarget');
+  const uploadMsg = document.getElementById('uploadMsg');
   if (form.dataset.bound === '1') return;
   form.dataset.bound = '1';
 
@@ -1557,6 +1608,43 @@ function bindAdminEvents() {
   document.getElementById('logoutBtn').onclick = () => {
     sessionStorage.removeItem(AUTH_KEY);
     location.href = location.pathname;
+  };
+
+  uploadBtn.onclick = async () => {
+    const files = Array.from(mediaInput.files || []);
+    if (!files.length) {
+      uploadMsg.textContent = 'Выберите файл для загрузки.';
+      return;
+    }
+    if (state.backendMode !== 'supabase') {
+      uploadMsg.textContent = 'Сейчас включен localStorage. Для загрузки укажите SUPABASE_URL и SUPABASE_ANON_KEY.';
+      return;
+    }
+
+    uploadMsg.textContent = 'Загрузка...';
+    try {
+      const urls = [];
+      for (const file of files) {
+        const url = await uploadFileToStorage(file);
+        urls.push(url);
+      }
+
+      if (mediaTarget.value === 'video') {
+        document.getElementById('videoInput').value = urls[0];
+      } else if (mediaTarget.value === 'poster') {
+        document.getElementById('posterInput').value = urls[0];
+      } else {
+        const photosInput = document.getElementById('photosInput');
+        const oldLines = normalizeLines(photosInput.value);
+        photosInput.value = [...oldLines, ...urls].join('\n');
+      }
+
+      mediaInput.value = '';
+      uploadMsg.textContent = 'Загрузка завершена, ссылка(и) подставлена(ы) в форму.';
+    } catch (err) {
+      console.error(err);
+      uploadMsg.textContent = 'Ошибка загрузки. Проверь bucket "media" (public) и права Storage.';
+    }
   };
 }
 
