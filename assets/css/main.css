@@ -67,6 +67,14 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+html.splash-lock,
+body.splash-lock {
+  overflow: hidden !important;
+  height: 100vh;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
 /* ============================================
    SPLASH SCREEN вЂ” "РЎ РџСЂР°Р·РґРЅРёРєРѕРј!"
    ============================================ */

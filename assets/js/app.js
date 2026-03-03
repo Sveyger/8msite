@@ -12,7 +12,11 @@ const THEMES = {
   warm: { '--accent': '#C4956A', '--accent-light': '#E8CEB5', '--accent-dark': '#8B6914', '--accent-glow': 'rgba(196, 149, 106, 0.4)', '--bg-primary': '#0A0A0A', '--bg-secondary': '#111111', '--bg-card': '#1A1A1A', '--text-primary': '#F5F0EB', '--text-secondary': '#B8AFA6', '--text-muted': '#6B6460', '--gold': '#D4AF37', '--gold-light': '#F0D879' },
   brunette: { '--accent': '#A97A50', '--accent-light': '#D9B28B', '--accent-dark': '#6F4C2A', '--accent-glow': 'rgba(169, 122, 80, 0.42)', '--bg-primary': '#0C0B0B', '--bg-secondary': '#141212', '--bg-card': '#1B1715', '--text-primary': '#F2ECE6', '--text-secondary': '#BFAE9F', '--text-muted': '#76675E', '--gold': '#C7A04E', '--gold-light': '#E4C57A' },
   blonde: { '--accent': '#B8A9C9', '--accent-light': '#DDD3E8', '--accent-dark': '#7B6B8A', '--accent-glow': 'rgba(184, 169, 201, 0.42)', '--bg-primary': '#0D0C11', '--bg-secondary': '#15131A', '--bg-card': '#1D1B23', '--text-primary': '#F3EEF8', '--text-secondary': '#BCB2CA', '--text-muted': '#7A7288', '--gold': '#C9B277', '--gold-light': '#E6D7AD' },
-  black: { '--accent': '#7A9EB8', '--accent-light': '#B5D1E3', '--accent-dark': '#4A7A99', '--accent-glow': 'rgba(122, 158, 184, 0.42)', '--bg-primary': '#090E12', '--bg-secondary': '#10171D', '--bg-card': '#152028', '--text-primary': '#ECF3F8', '--text-secondary': '#AFC2CF', '--text-muted': '#6D818F', '--gold': '#C5A96C', '--gold-light': '#E2CFA2' }
+  black: { '--accent': '#7A9EB8', '--accent-light': '#B5D1E3', '--accent-dark': '#4A7A99', '--accent-glow': 'rgba(122, 158, 184, 0.42)', '--bg-primary': '#090E12', '--bg-secondary': '#10171D', '--bg-card': '#152028', '--text-primary': '#ECF3F8', '--text-secondary': '#AFC2CF', '--text-muted': '#6D818F', '--gold': '#C5A96C', '--gold-light': '#E2CFA2' },
+  girl_pink_white_black: { '--accent': '#FF4FA0', '--accent-light': '#FFE8F3', '--accent-dark': '#2A0D1D', '--accent-glow': 'rgba(255, 79, 160, 0.45)', '--bg-primary': '#060607', '--bg-secondary': '#101015', '--bg-card': '#17171D', '--text-primary': '#FFFFFF', '--text-secondary': '#F3D5E7', '--text-muted': '#B190A7', '--gold': '#FF83B8', '--gold-light': '#FFD1E7' },
+  girl_pink: { '--accent': '#FF5DAF', '--accent-light': '#FFC2E0', '--accent-dark': '#A01D5E', '--accent-glow': 'rgba(255, 93, 175, 0.45)', '--bg-primary': '#130A12', '--bg-secondary': '#1A1020', '--bg-card': '#241425', '--text-primary': '#FFF0F7', '--text-secondary': '#E2B5CB', '--text-muted': '#A47D94', '--gold': '#FF75BA', '--gold-light': '#FFBFE0' },
+  girl_violet: { '--accent': '#8E58FF', '--accent-light': '#C8ADFF', '--accent-dark': '#4B2A96', '--accent-glow': 'rgba(142, 88, 255, 0.45)', '--bg-primary': '#0E0A1A', '--bg-secondary': '#151126', '--bg-card': '#1E1735', '--text-primary': '#F3EEFF', '--text-secondary': '#C7B9EB', '--text-muted': '#8B7EAE', '--gold': '#9A6CFF', '--gold-light': '#D4C1FF' },
+  girl_light_blue: { '--accent': '#6EC9FF', '--accent-light': '#D9F2FF', '--accent-dark': '#2A6C96', '--accent-glow': 'rgba(110, 201, 255, 0.45)', '--bg-primary': '#07131D', '--bg-secondary': '#0D1D2A', '--bg-card': '#142A3A', '--text-primary': '#ECF8FF', '--text-secondary': '#B9D6E8', '--text-muted': '#7F9EB2', '--gold': '#7ED0FF', '--gold-light': '#CDEEFF' }
 };
 
 const DEFAULT_COMPLIMENTS = [
@@ -69,6 +73,7 @@ bootstrap().catch((err) => {
 async function bootstrap() {
   initFlowers();
   await initBackend();
+  setSplashScrollLock(false);
 
   if (routeKey) {
     const profile = await findProfile(routeKey);
@@ -268,6 +273,7 @@ function applyTheme(themeName) {
 
 function renderGirlPage(profile) {
   showOnly('girlRoute');
+  setSplashScrollLock(true);
   state.activeProfile = profile;
   state.complimentIndex = -1;
   applyTheme(profile.theme);
@@ -579,9 +585,15 @@ function closeSplash() {
   splash.classList.add('closing');
   setTimeout(() => {
     splash.style.display = 'none';
+    setSplashScrollLock(false);
     document.getElementById('mainContent').classList.add('visible');
     initScrollReveal();
   }, 900);
+}
+
+function setSplashScrollLock(locked) {
+  document.documentElement.classList.toggle('splash-lock', locked);
+  document.body.classList.toggle('splash-lock', locked);
 }
 
 function initFlowers() {
