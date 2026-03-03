@@ -58,6 +58,7 @@ const state = {
   galleryOrder: [0, 1, 2],
   galleryBusy: false,
   galleryBound: false,
+  chunkGlowBound: false,
   backendFallbackReason: '',
   backendMode: 'local',
   supabase: null
@@ -69,23 +70,28 @@ const routeKey = params.get('key');
 bootstrap().catch((err) => {
   console.error(err);
   showOnly('emptyView');
+  setAppReady(true);
 });
 
 async function bootstrap() {
   await initBackend();
   setSplashScrollLock(false);
+  setAppReady(false);
 
   if (routeKey) {
     const profile = await findProfile(routeKey);
     if (!profile) {
       showOnly('invalidView');
+      setAppReady(true);
       return;
     }
     renderGirlPage(profile);
+    setAppReady(true);
     return;
   }
 
   renderAdminEntry();
+  setAppReady(true);
 }
 
 async function initBackend() {
@@ -293,6 +299,7 @@ function renderGirlPage(profile) {
   document.getElementById('videoOverlayBottom').textContent = profile.mediaTip || 'From little girl to cover star';
   document.getElementById('quoteBig').innerHTML = profile.quoteText || DEFAULT_PROFILE.quoteText;
   applyStaticChunkHover();
+  bindChunkCursorGlow();
 
   renderMedia(profile);
   renderGallery(profile);
@@ -587,6 +594,7 @@ function setChunkedText(el, text) {
     el.textContent = '';
     return;
   }
+  el.classList.add('chunk-glow-scope');
   const html = raw
     .split(/(\s+)/)
     .map((part) => (/^\s+$/.test(part) ? part : '<span class="hover-chunk">' + escapeHtml(part) + '</span>'))
@@ -615,6 +623,46 @@ function applyStaticChunkHover() {
   });
 }
 
+function bindChunkCursorGlow() {
+  if (state.chunkGlowBound) return;
+  state.chunkGlowBound = true;
+
+  let activeScope = null;
+
+  const clearScope = (scope) => {
+    if (!scope) return;
+    scope.querySelectorAll('.hover-chunk').forEach((el) => {
+      el.classList.remove('glow-0', 'glow-1', 'glow-2');
+    });
+  };
+
+  document.addEventListener('mousemove', (e) => {
+    const chunk = e.target.closest('.hover-chunk');
+    const scope = chunk ? chunk.closest('.chunk-glow-scope') : null;
+
+    if (!chunk || !scope) {
+      if (activeScope) {
+        clearScope(activeScope);
+        activeScope = null;
+      }
+      return;
+    }
+
+    if (activeScope && activeScope !== scope) clearScope(activeScope);
+    activeScope = scope;
+
+    const chunks = Array.from(scope.querySelectorAll('.hover-chunk'));
+    const idx = chunks.indexOf(chunk);
+    chunks.forEach((el, i) => {
+      const d = Math.abs(i - idx);
+      el.classList.remove('glow-0', 'glow-1', 'glow-2');
+      if (d === 0) el.classList.add('glow-0');
+      else if (d === 1) el.classList.add('glow-1');
+      else if (d === 2) el.classList.add('glow-2');
+    });
+  }, { passive: true });
+}
+
 function closeSplash() {
   const splash = document.getElementById('splash');
   if (!splash || splash.classList.contains('closing')) return;
@@ -640,9 +688,7 @@ function initFlowers() {
   const palette = [
     cs.getPropertyValue('--accent').trim(),
     cs.getPropertyValue('--accent-light').trim(),
-    cs.getPropertyValue('--text-primary').trim(),
-    cs.getPropertyValue('--text-secondary').trim(),
-    cs.getPropertyValue('--text-muted').trim(),
+    cs.getPropertyValue('--gold').trim(),
     cs.getPropertyValue('--gold-light').trim()
   ].filter(Boolean);
   container.innerHTML = '';
@@ -655,8 +701,14 @@ function initFlowers() {
     el.style.animationDuration = Math.random() * 4 + 5 + 's';
     el.style.animationDelay = Math.random() * 6 + 's';
     el.style.color = palette[Math.floor(Math.random() * palette.length)] || 'rgba(255,255,255,.75)';
+    el.style.opacity = String(0.45 + Math.random() * 0.45);
+    el.style.textShadow = '0 0 12px color-mix(in srgb, var(--accent-glow) 50%, transparent)';
     container.appendChild(el);
   }
+}
+
+function setAppReady(ready) {
+  document.body.classList.toggle('app-ready', !!ready);
 }
 
 function initScrollReveal() {
