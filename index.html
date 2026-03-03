@@ -665,6 +665,24 @@ body {
   z-index: 1;
 }
 
+.gallery-card--off-left {
+  transform: translate(-178%, -50%) scale(0.72);
+  filter: blur(5px) saturate(0.7) brightness(0.56);
+  opacity: 0;
+  z-index: 0;
+}
+
+.gallery-card--off-right {
+  transform: translate(78%, -50%) scale(0.72);
+  filter: blur(5px) saturate(0.7) brightness(0.56);
+  opacity: 0;
+  z-index: 0;
+}
+
+.gallery-card--no-transition {
+  transition: none !important;
+}
+
 .gallery-placeholder {
   position: absolute;
   inset: 0;
@@ -1208,6 +1226,8 @@ const state = {
   activeProfile: null,
   galleryPhotos: ['', '', ''],
   galleryCenterIndex: 0,
+  gallerySlots: null,
+  galleryAnimating: false,
   backendMode: 'local',
   supabase: null
 };
@@ -1482,8 +1502,9 @@ function renderGallery(profile) {
   state.galleryCenterIndex = wrappedIndex(state.galleryCenterIndex, state.galleryPhotos.length);
 
   bindGalleryEvents();
+  initGallerySlots();
+  resetGalleryForCurrentCenter();
   rebuildGalleryDots();
-  applyGalleryState();
 }
 
 function bindGalleryEvents() {
@@ -1518,9 +1539,48 @@ function bindGalleryEvents() {
 
 function shiftGallery(step) {
   const count = state.galleryPhotos.length;
-  if (!count) return;
-  state.galleryCenterIndex = wrappedIndex(state.galleryCenterIndex + step, count);
-  applyGalleryState();
+  if (!count || state.galleryAnimating || !state.gallerySlots) return;
+
+  const leftEl = state.gallerySlots.left;
+  const centerEl = state.gallerySlots.center;
+  const rightEl = state.gallerySlots.right;
+
+  state.galleryAnimating = true;
+
+  if (step > 0) {
+    const incomingIdx = wrappedIndex(state.galleryCenterIndex + 2, count);
+    prepareIncomingCard(leftEl, 'off-right', incomingIdx);
+
+    requestAnimationFrame(() => {
+      setCardPosition(centerEl, 'left');
+      setCardPosition(rightEl, 'center');
+      setCardPosition(leftEl, 'right');
+    });
+
+    waitCardTransition(rightEl, () => {
+      state.galleryCenterIndex = wrappedIndex(state.galleryCenterIndex + 1, count);
+      state.gallerySlots = { left: centerEl, center: rightEl, right: leftEl };
+      updateGalleryDotsActive();
+      state.galleryAnimating = false;
+    });
+    return;
+  }
+
+  const incomingIdx = wrappedIndex(state.galleryCenterIndex - 2, count);
+  prepareIncomingCard(rightEl, 'off-left', incomingIdx);
+
+  requestAnimationFrame(() => {
+    setCardPosition(leftEl, 'center');
+    setCardPosition(centerEl, 'right');
+    setCardPosition(rightEl, 'left');
+  });
+
+  waitCardTransition(leftEl, () => {
+    state.galleryCenterIndex = wrappedIndex(state.galleryCenterIndex - 1, count);
+    state.gallerySlots = { left: rightEl, center: leftEl, right: centerEl };
+    updateGalleryDotsActive();
+    state.galleryAnimating = false;
+  });
 }
 
 function rebuildGalleryDots() {
@@ -1531,33 +1591,49 @@ function rebuildGalleryDots() {
     const dot = document.createElement('span');
     dot.className = 'gallery-dot' + (idx === state.galleryCenterIndex ? ' active' : '');
     dot.addEventListener('click', () => {
+      if (state.galleryAnimating) return;
       state.galleryCenterIndex = idx;
-      applyGalleryState();
+      resetGalleryForCurrentCenter();
+      updateGalleryDotsActive();
     });
     dots.appendChild(dot);
   });
 }
 
-function applyGalleryState() {
-  const count = state.galleryPhotos.length;
-  if (!count) return;
+function initGallerySlots() {
+  if (state.gallerySlots) return;
+  state.gallerySlots = {
+    left: document.querySelector('.gallery-card[data-slot="left"]'),
+    center: document.querySelector('.gallery-card[data-slot="center"]'),
+    right: document.querySelector('.gallery-card[data-slot="right"]')
+  };
+}
 
+function resetGalleryForCurrentCenter() {
+  if (!state.gallerySlots) return;
+  const count = state.galleryPhotos.length;
   const leftIdx = wrappedIndex(state.galleryCenterIndex - 1, count);
   const centerIdx = wrappedIndex(state.galleryCenterIndex, count);
   const rightIdx = wrappedIndex(state.galleryCenterIndex + 1, count);
 
-  setGalleryCard('left', leftIdx);
-  setGalleryCard('center', centerIdx);
-  setGalleryCard('right', rightIdx);
-
-  const dots = document.querySelectorAll('#galleryDots .gallery-dot');
-  dots.forEach((dot, idx) => {
-    dot.classList.toggle('active', idx === centerIdx);
-  });
+  setCardPosition(state.gallerySlots.left, 'left');
+  setCardPosition(state.gallerySlots.center, 'center');
+  setCardPosition(state.gallerySlots.right, 'right');
+  setCardPhoto(state.gallerySlots.left, leftIdx);
+  setCardPhoto(state.gallerySlots.center, centerIdx);
+  setCardPhoto(state.gallerySlots.right, rightIdx);
+  state.galleryAnimating = false;
 }
 
-function setGalleryCard(slot, photoIdx) {
-  const card = document.querySelector('.gallery-card[data-slot="' + slot + '"]');
+function prepareIncomingCard(card, offPosition, photoIdx) {
+  setCardPhoto(card, photoIdx);
+  card.classList.add('gallery-card--no-transition');
+  setCardPosition(card, offPosition);
+  void card.offsetWidth;
+  card.classList.remove('gallery-card--no-transition');
+}
+
+function setCardPhoto(card, photoIdx) {
   if (!card) return;
   const img = card.querySelector('img');
   const fallback = card.querySelector('.gallery-placeholder');
@@ -1574,6 +1650,40 @@ function setGalleryCard(slot, photoIdx) {
     fallback.style.display = 'flex';
     fallback.textContent = 'Фото ' + (photoIdx + 1);
   }
+}
+
+function setCardPosition(card, position) {
+  if (!card) return;
+  card.classList.remove('gallery-card--left', 'gallery-card--center', 'gallery-card--right', 'gallery-card--off-left', 'gallery-card--off-right');
+  card.classList.add('gallery-card--' + position);
+}
+
+function waitCardTransition(card, done) {
+  let called = false;
+  const finish = () => {
+    if (called) return;
+    called = true;
+    done();
+  };
+
+  const onEnd = (e) => {
+    if (e.target !== card || e.propertyName !== 'transform') return;
+    card.removeEventListener('transitionend', onEnd);
+    finish();
+  };
+
+  card.addEventListener('transitionend', onEnd);
+  setTimeout(() => {
+    card.removeEventListener('transitionend', onEnd);
+    finish();
+  }, 520);
+}
+
+function updateGalleryDotsActive() {
+  const dots = document.querySelectorAll('#galleryDots .gallery-dot');
+  dots.forEach((dot, idx) => {
+    dot.classList.toggle('active', idx === state.galleryCenterIndex);
+  });
 }
 
 function wrappedIndex(i, len) {
