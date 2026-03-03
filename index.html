@@ -72,6 +72,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ============================================
@@ -89,6 +90,17 @@ body {
   background: var(--bg-primary);
   cursor: pointer;
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.splash:focus,
+.splash:active,
+.compliment-button:focus,
+.admin-btn:focus,
+.admin-item:focus {
+  outline: none;
 }
 
 .splash::before {
@@ -535,15 +547,7 @@ body {
 }
 
 .compliment-quote::before {
-  content: 'В«';
-  font-family: 'Playfair Display', serif;
-  font-size: 4rem;
-  color: var(--accent);
-  opacity: 0.3;
-  position: absolute;
-  top: -2rem;
-  left: -0.5rem;
-  line-height: 1;
+  content: none;
 }
 
 .compliment-text {
