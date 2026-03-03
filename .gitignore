@@ -1,0 +1,11 @@
+﻿# OS/editor
+.DS_Store
+Thumbs.db
+*.tmp
+
+# local env secrets
+.env
+.env.*
+
+# logs
+*.log
