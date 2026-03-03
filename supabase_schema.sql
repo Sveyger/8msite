@@ -17,22 +17,26 @@ alter table public.march8_profiles enable row level security;
 
 -- Demo mode policies for frontend-only app (anon key in browser).
 -- This is convenient, but not fully secure against enumeration.
+drop policy if exists "march8_profiles_select" on public.march8_profiles;
 create policy "march8_profiles_select" on public.march8_profiles
 for select
 to anon
 using (true);
 
+drop policy if exists "march8_profiles_insert" on public.march8_profiles;
 create policy "march8_profiles_insert" on public.march8_profiles
 for insert
 to anon
 with check (true);
 
+drop policy if exists "march8_profiles_update" on public.march8_profiles;
 create policy "march8_profiles_update" on public.march8_profiles
 for update
 to anon
 using (true)
 with check (true);
 
+drop policy if exists "march8_profiles_delete" on public.march8_profiles;
 create policy "march8_profiles_delete" on public.march8_profiles
 for delete
 to anon
