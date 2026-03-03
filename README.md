@@ -4,22 +4,29 @@
 - Админка (по умолчанию): `index.html`
 - Личная страница девушки: `index.html?key=<уникальный_ключ>`
 
+## Структура
+- `index.html` — разметка страниц и блоков.
+- `assets/css/main.css` — стили (включая витрину-карусель).
+- `assets/js/app.js` — логика приложения (админка, Supabase, карусель).
+- `archive/` — старые концепты/черновики.
+
 ## 1) Вход в админку
 1. Откройте `index.html`
 2. Код доступа по умолчанию: `M8`
 3. После входа создавайте/редактируйте профили и копируйте персональные ссылки для QR.
 
-> Код меняется в `index.html` в константе `ADMIN_CODE`.
+> Код меняется в `assets/js/app.js` в константе `ADMIN_CODE`.
 
 ## 2) Backend режимы
 Сайт поддерживает 2 режима хранения:
 - `localStorage` (автоматически, если Supabase не настроен)
 - `Supabase` (если заполнены `SUPABASE_URL` и `SUPABASE_ANON_KEY`)
 
-Константы в `index.html`:
+Константы в `assets/js/app.js`:
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_TABLE` (по умолчанию `march8_profiles`)
+- `SUPABASE_BUCKET` (по умолчанию `media`)
 
 ## 3) Подготовка Supabase
 1. Создайте проект в Supabase.
@@ -27,11 +34,11 @@
 3. В `Project Settings -> API` скопируйте:
    - `Project URL`
    - `anon public key`
-4. Вставьте их в `index.html` в `SUPABASE_URL` и `SUPABASE_ANON_KEY`.
+4. Вставьте их в `assets/js/app.js` в `SUPABASE_URL` и `SUPABASE_ANON_KEY`.
 
 ## 4) GitHub Pages деплой
 1. Запушьте репозиторий на GitHub.
-2. В `Settings -> Pages` выберите branch (`main`) и root (`/`).
+2. В `Settings -> Pages` выберите source `GitHub Actions`.
 3. Дождитесь публикации.
 4. Проверьте:
    - главная ссылка открывает админку,

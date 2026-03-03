@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Витрина-Карусель</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #08080e;
+            background-image:
+                radial-gradient(ellipse at 25% 50%, rgba(90, 60, 180, 0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 75% 50%, rgba(60, 110, 200, 0.10) 0%, transparent 60%);
+            font-family: 'SF Pro Display', -apple-system, 'Segoe UI', sans-serif;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* ========== TITLE ========== */
+        .title {
+            color: rgba(255, 255, 255, 0.82);
+            font-weight: 200;
+            font-size: 1.5rem;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            margin-bottom: 55px;
+        }
+
+        /* ========== CAROUSEL ========== */
+        .carousel {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            height: 540px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1200px;
+        }
+
+        .slide {
+            position: absolute;
+            border-radius: 18px;
+            overflow: hidden;
+            cursor: pointer;
+            will-change: transform, filter, opacity;
+            transition:
+                transform 0.65s cubic-bezier(0.32, 0.72, 0, 1),
+                filter 0.65s cubic-bezier(0.32, 0.72, 0, 1),
+                opacity 0.65s cubic-bezier(0.32, 0.72, 0, 1),
+                box-shadow 0.65s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+
+        .slide img {
+            width: 300px;
+            height: 450px;
+            object-fit: cover;
+            display: block;
+            pointer-events: none;
+        }
+
+        /* --- Позиции --- */
+        .slide[data-pos="left"] {
+            transform: translateX(-290px) scale(0.78);
+            filter: blur(4px) brightness(0.55);
+            opacity: 0.8;
+            z-index: 1;
+            box-shadow: 0 14px 36px rgba(0,0,0,0.45);
+        }
+
+        .slide[data-pos="center"] {
+            transform: translateX(0) scale(1);
+            filter: blur(0) brightness(1);
+            opacity: 1;
+            z-index: 3;
+            box-shadow:
+                0 30px 80px rgba(0,0,0,0.55),
+                0 0 60px rgba(110,80,220,0.08);
+        }
+
+        .slide[data-pos="right"] {
+            transform: translateX(290px) scale(0.78);
+            filter: blur(4px) brightness(0.55);
+            opacity: 0.8;
+            z-index: 1;
+            box-shadow: 0 14px 36px rgba(0,0,0,0.45);
+        }
+
+        /* Тонкая рамка у центральной карточки */
+        .slide[data-pos="center"]::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.12);
+            pointer-events: none;
+        }
+
+        /* ========== НАВИГАЦИЯ ========== */
+        .arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            color: rgba(255,255,255,0.8);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        .arrow:hover {
+            background: rgba(255,255,255,0.16);
+            border-color: rgba(255,255,255,0.4);
+            color: #fff;
+            transform: translateY(-50%) scale(1.07);
+        }
+        .arrow:active { transform: translateY(-50%) scale(0.94); }
+        .arrow--l { left: 24px; }
+        .arrow--r { right: 24px; }
+        .arrow svg {
+            width: 18px; height: 18px;
+            fill: none; stroke: currentColor;
+            stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+        }
+
+        /* ========== ИНДИКАТОРЫ ========== */
+        .dots {
+            display: flex;
+            gap: 14px;
+            margin-top: 48px;
+        }
+        .dot {
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.18);
+            border: none; outline: none; padding: 0;
+            cursor: pointer;
+            transition: all 0.45s cubic-bezier(0.32,0.72,0,1);
+        }
+        .dot.on {
+            background: #fff;
+            transform: scale(1.55);
+            box-shadow: 0 0 12px rgba(255,255,255,0.35);
+        }
+        .dot:hover:not(.on) {
+            background: rgba(255,255,255,0.42);
+            transform: scale(1.2);
+        }
+
+        /* ========== ПОДСКАЗКА ========== */
+        .hint {
+            margin-top: 28px;
+            color: rgba(255,255,255,0.22);
+            font-size: 0.78rem;
+            letter-spacing: 1px;
+        }
+
+        /* ========== АДАПТИВ ========== */
+        @media (max-width: 820px) {
+            .slide img { width: 240px; height: 360px; }
+            .carousel { height: 440px; }
+            .slide[data-pos="left"]  { transform: translateX(-220px) scale(0.75); }
+            .slide[data-pos="right"] { transform: translateX(220px) scale(0.75); }
+            .arrow { width: 42px; height: 42px; }
+            .arrow--l { left: 10px; }
+            .arrow--r { right: 10px; }
+        }
+
+        @media (max-width: 520px) {
+            .slide img { width: 190px; height: 285px; }
+            .carousel { height: 370px; }
+            .slide[data-pos="left"]  { transform: translateX(-160px) scale(0.72); }
+            .slide[data-pos="right"] { transform: translateX(160px) scale(0.72); }
+            .title { font-size: 1.1rem; margin-bottom: 36px; }
+        }
+    </style>
+</head>
+<body>
+
+<p class="title">Галерея</p>
+
+<!-- ===== КАРУСЕЛЬ ===== -->
+<div class="carousel" id="carousel">
+    <button class="arrow arrow--l" id="prev" aria-label="Назад">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+
+    <div class="slide" data-pos="left" data-idx="0">
+        <img src="https://picsum.photos/id/1015/600/900" alt="Фото 1" draggable="false">
+    </div>
+    <div class="slide" data-pos="center" data-idx="1">
+        <img src="https://picsum.photos/id/1016/600/900" alt="Фото 2" draggable="false">
+    </div>
+    <div class="slide" data-pos="right" data-idx="2">
+        <img src="https://picsum.photos/id/1018/600/900" alt="Фото 3" draggable="false">
+    </div>
+
+    <button class="arrow arrow--r" id="next" aria-label="Вперёд">
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+</div>
+
+<!-- ===== ТОЧКИ ===== -->
+<div class="dots">
+    <button class="dot on"  data-i="0" aria-label="Слайд 1"></button>
+    <button class="dot"     data-i="1" aria-label="Слайд 2"></button>
+    <button class="dot"     data-i="2" aria-label="Слайд 3"></button>
+</div>
+
+<p class="hint">← → или свайп</p>
+
+<script>
+(() => {
+    /* ---------- элементы ---------- */
+    const slides     = [...document.querySelectorAll('.slide')];
+    const dots       = [...document.querySelectorAll('.dot')];
+    const carousel   = document.getElementById('carousel');
+
+    /* ---------- состояние ---------- */
+    // order[0]=left  order[1]=center  order[2]=right  (индексы слайдов)
+    let order     = [0, 1, 2];
+    let busy      = false;
+    const FADE_OUT = 200;   // мс  — исчезание «перебрасываемого» слайда
+    const FADE_IN  = 360;   // мс  — появление на новом месте
+
+    /* ---------- обновить точки ---------- */
+    function syncDots() {
+        dots.forEach((d, i) => d.classList.toggle('on', i === order[1]));
+    }
+
+    /* ---------- главная навигация ---------- */
+    function go(dir) {                // dir: 'next' | 'prev'
+        if (busy) return;
+        busy = true;
+
+        /* определяем, какой слайд «перепрыгивает» */
+        let wrapIdx, targetPos, newOrder;
+
+        if (dir === 'next') {
+            wrapIdx   = order[0];                       // левый → правый
+            targetPos = 'right';
+            newOrder  = [order[1], order[2], order[0]];
+        } else {
+            wrapIdx   = order[2];                       // правый → левый
+            targetPos = 'left';
+            newOrder  = [order[2], order[0], order[1]];
+        }
+
+        const wrapEl = slides[wrapIdx];
+
+        /* 1. быстро прячем «перепрыгивающий» слайд */
+        wrapEl.style.transition = `opacity ${FADE_OUT}ms ease-out`;
+        wrapEl.style.opacity    = '0';
+
+        /* 2. два остальных плавно едут по CSS-переходу */
+        slides[newOrder[0]].setAttribute('data-pos', 'left');
+        slides[newOrder[1]].setAttribute('data-pos', 'center');
+        /* ↑ wrapping-слайд пока НЕ перемещаем — он просто гаснет */
+
+        order = newOrder;
+        syncDots();
+
+        /* 3. когда гаснет — телепортируем без анимации */
+        setTimeout(() => {
+            wrapEl.style.transition = 'none';
+            wrapEl.setAttribute('data-pos', targetPos);
+            void wrapEl.offsetHeight;                    // force reflow
+
+            /* 4. плавно показываем на новом месте */
+            requestAnimationFrame(() => {
+                wrapEl.style.transition = `opacity ${FADE_IN}ms ease-in`;
+                wrapEl.style.opacity    = '';
+
+                setTimeout(() => {
+                    wrapEl.style.transition = '';
+                    wrapEl.style.opacity    = '';
+                    busy = false;
+                }, FADE_IN + 40);
+            });
+        }, FADE_OUT + 20);
+    }
+
+    /* ---------- кнопки ---------- */
+    document.getElementById('prev').addEventListener('click', () => go('prev'));
+    document.getElementById('next').addEventListener('click', () => go('next'));
+
+    /* ---------- клик по боковым слайдам ---------- */
+    slides.forEach(s => s.addEventListener('click', () => {
+        const p = s.getAttribute('data-pos');
+        if (p === 'left')  go('prev');
+        if (p === 'right') go('next');
+    }));
+
+    /* ---------- точки ---------- */
+    dots.forEach((d, i) => d.addEventListener('click', () => {
+        if (busy || i === order[1]) return;
+        go(i === order[2] ? 'next' : 'prev');
+    }));
+
+    /* ---------- клавиатура ---------- */
+    document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight') go('next');
+        if (e.key === 'ArrowLeft')  go('prev');
+    });
+
+    /* ---------- свайп ---------- */
+    let sx = 0, sy = 0;
+    carousel.addEventListener('touchstart',  e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive:true});
+    carousel.addEventListener('touchend', e => {
+        const dx = sx - e.changedTouches[0].clientX;
+        const dy = sy - e.changedTouches[0].clientY;
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40)
+            go(dx > 0 ? 'next' : 'prev');
+    }, {passive:true});
+
+    /* ---------- мышь (drag) ---------- */
+    let md = false, mx = 0;
+    carousel.addEventListener('mousedown', e => {
+        if (e.target.closest('.arrow')) return;
+        md = true; mx = e.clientX;
+        carousel.style.cursor = 'grabbing';
+    });
+    document.addEventListener('mouseup', e => {
+        if (!md) return; md = false;
+        carousel.style.cursor = '';
+        const dx = mx - e.clientX;
+        if (Math.abs(dx) > 40) go(dx > 0 ? 'next' : 'prev');
+    });
+})();
+</script>
+
+</body>
+</html>
