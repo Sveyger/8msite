@@ -111,6 +111,7 @@ const state = {
   predictionIndex: -1,
   predictionBusy: false,
   predictionAnswersVisible: false,
+  predictionCursor: { believe: 0, skeptic: 0 },
   galleryImages: ['', '', ''],
   galleryOrder: [0, 1, 2],
   galleryBusy: false,
@@ -466,6 +467,7 @@ function renderGirlPage(profile) {
   state.predictionIndex = -1;
   state.predictionBusy = false;
   state.predictionAnswersVisible = false;
+  state.predictionCursor = { believe: 0, skeptic: 0 };
 
   document.getElementById('storyName').textContent = profile.name || 'Героиня';
   document.title = 'История одной обложки: ' + (profile.name || 'Героиня');
@@ -767,6 +769,7 @@ function initPredictionUi(profile) {
   state.predictionIndex = -1;
   state.predictionBusy = false;
   state.predictionAnswersVisible = false;
+  state.predictionCursor = { believe: 0, skeptic: 0 };
   btn.textContent = profile?.predictionButtonLabel || DEFAULT_PREDICTION_BUTTON;
   answersBtn.textContent = state.globalSettings?.answersButtonLabel || DEFAULT_ANSWERS_BUTTON;
   answersBtn.classList.remove('is-active');
@@ -795,13 +798,18 @@ function nextPrediction() {
     ? normalizeLines(state.activeProfile.predictionsSkeptic)
     : normalizeLines(state.activeProfile.predictionsBelieve);
   const safeList = list.length ? list : (state.predictionMode === 'skeptic' ? DEFAULT_PREDICTIONS_SKEPTIC : DEFAULT_PREDICTIONS_BELIEVE);
+  const modeKey = state.predictionMode === 'skeptic' ? 'skeptic' : 'believe';
+  const len = safeList.length;
+  const rawCursor = Number(state.predictionCursor[modeKey] || 0);
+  const cursor = ((rawCursor % len) + len) % len;
 
   textEl.classList.add('fading');
   sourceEl.classList.remove('visible');
 
   setTimeout(() => {
-    state.predictionIndex = (state.predictionIndex + 1) % Math.max(1, safeList.length);
-    setChunkedText(textEl, safeList[state.predictionIndex] || '');
+    state.predictionIndex = cursor;
+    setChunkedText(textEl, safeList[cursor] || '');
+    state.predictionCursor[modeKey] = (cursor + 1) % len;
     textEl.classList.remove('fading');
     sourceEl.classList.add('visible');
     state.predictionBusy = false;
