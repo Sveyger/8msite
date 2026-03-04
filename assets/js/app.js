@@ -1,4 +1,5 @@
 ﻿const STORAGE_KEY = 'march8_master_profiles_v3';
+const GLOBAL_STORAGE_KEY = 'march8_global_settings_v1';
 const AUTH_KEY = 'march8_admin_auth';
 const ADMIN_CODE = 'M8';
 
@@ -7,6 +8,7 @@ const SUPABASE_URL = 'https://xpfaragwxgmstrkaizcv.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_aJQbRNVHoJ_VmhAfx33m1Q_L_h3ujnY';
 const SUPABASE_TABLE = 'march8_profiles';
 const SUPABASE_BUCKET = 'media';
+const SUPABASE_GLOBAL_TABLE = 'march8_global_settings';
 
 const THEMES = {
   warm: { '--accent': '#C4956A', '--accent-light': '#E8CEB5', '--accent-dark': '#8B6914', '--accent-glow': 'rgba(196, 149, 106, 0.4)', '--bg-primary': '#0A0A0A', '--bg-secondary': '#111111', '--bg-card': '#1A1A1A', '--text-primary': '#F5F0EB', '--text-secondary': '#B8AFA6', '--text-muted': '#6B6460', '--gold': '#D4AF37', '--gold-light': '#F0D879' },
@@ -52,7 +54,7 @@ const DEFAULT_CREDITS = [
   'Photography — Team',
   'Video Production — Kling AI',
   'Design & Development — Team',
-  'With Love — Всегда ❤'
+  'With Love — Всегда \u2665'
 ];
 const DEFAULT_CONTEST_TITLE = 'Конкурс цветов';
 const DEFAULT_CONTEST_HINT = 'Введите код победителя, чтобы открыть свой приз.';
@@ -70,21 +72,24 @@ const DEFAULT_PROFILE = {
   compliments: DEFAULT_COMPLIMENTS,
   believesPredictions: true,
   predictionButtonLabel: DEFAULT_PREDICTION_BUTTON,
-  answersButtonLabel: DEFAULT_ANSWERS_BUTTON,
   skepticAnswersMessage: DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
   surveyAnswers: [],
   predictionsBelieve: DEFAULT_PREDICTIONS_BELIEVE,
   predictionsSkeptic: DEFAULT_PREDICTIONS_SKEPTIC,
+  buttonLabel: 'Узнать правду о себе',
+  mediaTip: 'From little girl to cover star',
+  quoteText: '«Даже в детстве было понятно, что растет <mark>звезда обложки</mark>!»'
+};
+
+const DEFAULT_GLOBAL_SETTINGS = {
+  answersButtonLabel: DEFAULT_ANSWERS_BUTTON,
   creditsLines: DEFAULT_CREDITS,
   contestTitle: DEFAULT_CONTEST_TITLE,
   contestHint: DEFAULT_CONTEST_HINT,
   contestButtonLabel: DEFAULT_CONTEST_BUTTON,
   contestWinText: DEFAULT_CONTEST_WIN,
   contestLoseText: DEFAULT_CONTEST_LOSE,
-  contestCodes: DEFAULT_CONTEST_CODES,
-  buttonLabel: 'Узнать правду о себе',
-  mediaTip: 'From little girl to cover star',
-  quoteText: '«Даже в детстве было понятно, что растет <mark>звезда обложки</mark>!»'
+  contestCodes: DEFAULT_CONTEST_CODES
 };
 
 const els = {
@@ -97,6 +102,7 @@ const els = {
 
 const state = {
   db: { profiles: {} },
+  globalSettings: { ...DEFAULT_GLOBAL_SETTINGS },
   selectedKey: null,
   complimentIndex: -1,
   isAnimating: false,
@@ -148,6 +154,7 @@ async function initBackend() {
     state.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     state.backendMode = 'supabase';
     await loadProfiles();
+    await loadGlobalSettings();
     if (!Object.keys(state.db.profiles).length) {
       const seed = makeProfile(generateKey(), DEFAULT_PROFILE);
       await upsertProfile(seed);
@@ -163,11 +170,13 @@ async function initBackend() {
     normalized[k] = makeProfile(k, v || {});
   });
   state.db.profiles = normalized;
+  state.globalSettings = loadLocalGlobalSettings();
   if (!Object.keys(state.db.profiles).length) {
     const seed = makeProfile(generateKey(), DEFAULT_PROFILE);
     state.db.profiles[seed.id] = seed;
   }
   saveLocalDb();
+  saveLocalGlobalSettings();
 }
 
 async function loadProfiles() {
@@ -190,6 +199,31 @@ async function loadProfiles() {
     map[row.access_key] = rowToProfile(row);
   });
   state.db.profiles = map;
+}
+
+async function loadGlobalSettings() {
+  if (state.backendMode !== 'supabase') return;
+
+  const { data, error } = await state.supabase
+    .from(SUPABASE_GLOBAL_TABLE)
+    .select('*')
+    .eq('id', 'global')
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Supabase global settings load failed, fallback to local global settings.', error);
+    state.globalSettings = loadLocalGlobalSettings();
+    return;
+  }
+
+  if (!data) {
+    state.globalSettings = { ...DEFAULT_GLOBAL_SETTINGS };
+    await upsertGlobalSettings(state.globalSettings);
+    return;
+  }
+
+  state.globalSettings = rowToGlobalSettings(data);
 }
 
 async function findProfile(key) {
@@ -219,6 +253,21 @@ async function upsertProfile(profile) {
 
   state.db.profiles[profile.id] = profile;
   saveLocalDb();
+}
+
+async function upsertGlobalSettings(settings) {
+  const normalized = normalizeGlobalSettings(settings);
+  if (state.backendMode === 'supabase') {
+    const { error } = await state.supabase.from(SUPABASE_GLOBAL_TABLE).upsert(globalSettingsToRow(normalized), {
+      onConflict: 'id'
+    });
+    if (error) throw error;
+    state.globalSettings = normalized;
+    return;
+  }
+
+  state.globalSettings = normalized;
+  saveLocalGlobalSettings();
 }
 
 async function removeProfile(key) {
@@ -264,18 +313,10 @@ function makeProfile(key, source) {
     compliments: normalizeLines(source.compliments),
     believesPredictions: typeof source.believesPredictions === 'boolean' ? source.believesPredictions : true,
     predictionButtonLabel: source.predictionButtonLabel || DEFAULT_PREDICTION_BUTTON,
-    answersButtonLabel: source.answersButtonLabel || DEFAULT_ANSWERS_BUTTON,
     skepticAnswersMessage: source.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
     surveyAnswers: normalizeLines(source.surveyAnswers),
     predictionsBelieve: normalizeLines(source.predictionsBelieve).length ? normalizeLines(source.predictionsBelieve) : DEFAULT_PREDICTIONS_BELIEVE,
     predictionsSkeptic: normalizeLines(source.predictionsSkeptic).length ? normalizeLines(source.predictionsSkeptic) : DEFAULT_PREDICTIONS_SKEPTIC,
-    creditsLines: normalizeLines(source.creditsLines).length ? normalizeLines(source.creditsLines) : DEFAULT_CREDITS,
-    contestTitle: source.contestTitle || DEFAULT_CONTEST_TITLE,
-    contestHint: source.contestHint || DEFAULT_CONTEST_HINT,
-    contestButtonLabel: source.contestButtonLabel || DEFAULT_CONTEST_BUTTON,
-    contestWinText: source.contestWinText || DEFAULT_CONTEST_WIN,
-    contestLoseText: source.contestLoseText || DEFAULT_CONTEST_LOSE,
-    contestCodes: normalizeContestCodes(source.contestCodes),
     buttonLabel: source.buttonLabel || 'Узнать правду о себе',
     mediaTip: source.mediaTip || 'From little girl to cover star',
     quoteText: source.quoteText || DEFAULT_PROFILE.quoteText,
@@ -295,18 +336,10 @@ function rowToProfile(row) {
     compliments: normalizeLines(row.compliments),
     believesPredictions: typeof row.believes_predictions === 'boolean' ? row.believes_predictions : true,
     predictionButtonLabel: row.prediction_button_label || DEFAULT_PREDICTION_BUTTON,
-    answersButtonLabel: row.answers_button_label || DEFAULT_ANSWERS_BUTTON,
     skepticAnswersMessage: row.skeptic_answers_message || DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
     surveyAnswers: normalizeLines(row.survey_answers),
     predictionsBelieve: normalizeLines(row.predictions_believe).length ? normalizeLines(row.predictions_believe) : DEFAULT_PREDICTIONS_BELIEVE,
     predictionsSkeptic: normalizeLines(row.predictions_skeptic).length ? normalizeLines(row.predictions_skeptic) : DEFAULT_PREDICTIONS_SKEPTIC,
-    creditsLines: normalizeLines(row.credits_lines).length ? normalizeLines(row.credits_lines) : DEFAULT_CREDITS,
-    contestTitle: row.contest_title || DEFAULT_CONTEST_TITLE,
-    contestHint: row.contest_hint || DEFAULT_CONTEST_HINT,
-    contestButtonLabel: row.contest_button_label || DEFAULT_CONTEST_BUTTON,
-    contestWinText: row.contest_win_text || DEFAULT_CONTEST_WIN,
-    contestLoseText: row.contest_lose_text || DEFAULT_CONTEST_LOSE,
-    contestCodes: normalizeContestCodes(row.contest_codes),
     buttonLabel: row.button_label || 'Узнать правду о себе',
     mediaTip: row.media_tip || 'From little girl to cover star',
     quoteText: row.quote_text || DEFAULT_PROFILE.quoteText,
@@ -326,23 +359,57 @@ function profileToRow(profile) {
     compliments: normalizeLines(profile.compliments),
     believes_predictions: !!profile.believesPredictions,
     prediction_button_label: profile.predictionButtonLabel || DEFAULT_PREDICTION_BUTTON,
-    answers_button_label: profile.answersButtonLabel || DEFAULT_ANSWERS_BUTTON,
     skeptic_answers_message: profile.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
     survey_answers: normalizeLines(profile.surveyAnswers),
     predictions_believe: normalizeLines(profile.predictionsBelieve),
     predictions_skeptic: normalizeLines(profile.predictionsSkeptic),
-    credits_lines: normalizeLines(profile.creditsLines),
-    contest_title: profile.contestTitle || DEFAULT_CONTEST_TITLE,
-    contest_hint: profile.contestHint || DEFAULT_CONTEST_HINT,
-    contest_button_label: profile.contestButtonLabel || DEFAULT_CONTEST_BUTTON,
-    contest_win_text: profile.contestWinText || DEFAULT_CONTEST_WIN,
-    contest_lose_text: profile.contestLoseText || DEFAULT_CONTEST_LOSE,
-    contest_codes: normalizeContestCodes(profile.contestCodes),
     button_label: profile.buttonLabel,
     media_tip: profile.mediaTip,
     quote_text: profile.quoteText,
     created_at: profile.createdAt,
     updated_at: new Date().toISOString()
+  };
+}
+
+function rowToGlobalSettings(row) {
+  return normalizeGlobalSettings({
+    answersButtonLabel: row.answers_button_label,
+    creditsLines: row.credits_lines,
+    contestTitle: row.contest_title,
+    contestHint: row.contest_hint,
+    contestButtonLabel: row.contest_button_label,
+    contestWinText: row.contest_win_text,
+    contestLoseText: row.contest_lose_text,
+    contestCodes: row.contest_codes
+  });
+}
+
+function globalSettingsToRow(settings) {
+  return {
+    id: 'global',
+    answers_button_label: settings.answersButtonLabel || DEFAULT_ANSWERS_BUTTON,
+    credits_lines: normalizeLines(settings.creditsLines),
+    contest_title: settings.contestTitle || DEFAULT_CONTEST_TITLE,
+    contest_hint: settings.contestHint || DEFAULT_CONTEST_HINT,
+    contest_button_label: settings.contestButtonLabel || DEFAULT_CONTEST_BUTTON,
+    contest_win_text: settings.contestWinText || DEFAULT_CONTEST_WIN,
+    contest_lose_text: settings.contestLoseText || DEFAULT_CONTEST_LOSE,
+    contest_codes: normalizeContestCodes(settings.contestCodes),
+    updated_at: new Date().toISOString()
+  };
+}
+
+function normalizeGlobalSettings(source) {
+  const s = source || {};
+  return {
+    answersButtonLabel: s.answersButtonLabel || DEFAULT_ANSWERS_BUTTON,
+    creditsLines: normalizeLines(s.creditsLines).length ? normalizeLines(s.creditsLines) : DEFAULT_CREDITS,
+    contestTitle: s.contestTitle || DEFAULT_CONTEST_TITLE,
+    contestHint: s.contestHint || DEFAULT_CONTEST_HINT,
+    contestButtonLabel: s.contestButtonLabel || DEFAULT_CONTEST_BUTTON,
+    contestWinText: s.contestWinText || DEFAULT_CONTEST_WIN,
+    contestLoseText: s.contestLoseText || DEFAULT_CONTEST_LOSE,
+    contestCodes: normalizeContestCodes(s.contestCodes)
   };
 }
 
@@ -360,6 +427,20 @@ function loadLocalDb() {
 
 function saveLocalDb() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.db));
+}
+
+function loadLocalGlobalSettings() {
+  try {
+    const raw = localStorage.getItem(GLOBAL_STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_GLOBAL_SETTINGS };
+    return normalizeGlobalSettings(JSON.parse(raw));
+  } catch {
+    return { ...DEFAULT_GLOBAL_SETTINGS };
+  }
+}
+
+function saveLocalGlobalSettings() {
+  localStorage.setItem(GLOBAL_STORAGE_KEY, JSON.stringify(normalizeGlobalSettings(state.globalSettings)));
 }
 
 function showOnly(id) {
@@ -395,8 +476,8 @@ function renderGirlPage(profile) {
   setChunkedText(complimentText, compliments[0] || DEFAULT_COMPLIMENTS[0]);
   complimentSource.classList.add('visible');
   initPredictionUi(profile);
-  renderCredits(profile);
-  initContestUi(profile);
+  renderCredits(state.globalSettings);
+  initContestUi(state.globalSettings);
 
   document.getElementById('videoOverlayBottom').textContent = profile.mediaTip || 'From little girl to cover star';
   document.getElementById('quoteBig').innerHTML = profile.quoteText || DEFAULT_PROFILE.quoteText;
@@ -627,10 +708,10 @@ function renderPhotoManager() {
       '<div class="photo-thumb"><img src="' + escapeHtml(url) + '" alt="Фото ' + (i + 1) + '"></div>',
       '<div class="photo-url">' + escapeHtml(url) + '</div>',
       '<div class="photo-actions">',
-      '<button class="photo-btn" data-act="up" data-i="' + i + '" title="Выше">↑</button>',
-      '<button class="photo-btn" data-act="down" data-i="' + i + '" title="Ниже">↓</button>',
-      '<button class="photo-btn" data-act="center" data-i="' + i + '" title="Сделать центральной">⦿</button>',
-      '<button class="photo-btn danger" data-act="remove" data-i="' + i + '" title="Удалить">×</button>',
+      '<button class="photo-btn" data-act="up" data-i="' + i + '" title="Выше">^</button>',
+      '<button class="photo-btn" data-act="down" data-i="' + i + '" title="Ниже">v</button>',
+      '<button class="photo-btn" data-act="center" data-i="' + i + '" title="Сделать центральной">o</button>',
+      '<button class="photo-btn danger" data-act="remove" data-i="' + i + '" title="Удалить">x</button>',
       '</div>'
     ].join('');
     list.appendChild(row);
@@ -668,7 +749,7 @@ function nextCompliment() {
     setChunkedText(textEl, compliments[state.complimentIndex] || DEFAULT_COMPLIMENTS[0]);
     textEl.classList.remove('fading');
     sourceEl.classList.add('visible');
-    btn.textContent = 'Еще комплимент ✨';
+    btn.textContent = 'Еще комплимент \u2728';
     state.isAnimating = false;
   }, 500);
 }
@@ -684,12 +765,12 @@ function initPredictionUi(profile) {
   state.predictionIndex = -1;
   state.predictionBusy = false;
   btn.textContent = profile?.predictionButtonLabel || DEFAULT_PREDICTION_BUTTON;
-  answersBtn.textContent = profile?.answersButtonLabel || DEFAULT_ANSWERS_BUTTON;
+  answersBtn.textContent = state.globalSettings?.answersButtonLabel || DEFAULT_ANSWERS_BUTTON;
   sourceEl.textContent = state.predictionMode === 'believe'
     ? '— Астрологическая колонка VOGUE'
     : '— Редакция рационального взгляда';
-  setChunkedText(textEl, 'Нажми кнопку — и откроем прогноз редакции.');
-  sourceEl.classList.add('visible');
+  setChunkedText(textEl, '');
+  sourceEl.classList.remove('visible');
 }
 
 function nextPrediction() {
@@ -736,12 +817,13 @@ function showSurveyAnswers() {
 
   setTimeout(() => {
     if (state.activeProfile.believesPredictions) {
-      const answers = normalizeLines(state.activeProfile.surveyAnswers);
-      const text = answers.length
-        ? 'Твои ответы:\n' + answers.map((a, i) => (i + 1) + '. ' + a).join('\n')
-        : 'Ответы опроса пока не добавлены.';
-      textEl.textContent = text;
-      sourceEl.textContent = '— Твой опрос';
+      const tableRows = parseSurveyQa(state.activeProfile.surveyAnswers);
+      if (tableRows.length) {
+        textEl.innerHTML = renderSurveyTable(tableRows);
+      } else {
+        textEl.textContent = 'Ответы опроса пока не добавлены.';
+      }
+      sourceEl.textContent = '— Твои ответы';
     } else {
       setChunkedText(textEl, state.activeProfile.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE);
       sourceEl.textContent = '— Редакция';
@@ -805,12 +887,12 @@ function initContestUi(profile) {
 
 function detectFlowerEmoji(name) {
   const n = String(name || '').toLowerCase();
-  if (n.includes('роза') || n.includes('rose')) return '🌹';
-  if (n.includes('пион') || n.includes('peony')) return '🌸';
-  if (n.includes('тюльпан') || n.includes('tulip')) return '🌷';
-  if (n.includes('лилия') || n.includes('lily')) return '🌺';
-  if (n.includes('ромаш') || n.includes('daisy')) return '🌼';
-  return '💐';
+  if (n.includes('роза') || n.includes('rose')) return '\u{1F339}';
+  if (n.includes('пион') || n.includes('peony')) return '\u{1F338}';
+  if (n.includes('тюльпан') || n.includes('tulip')) return '\u{1F337}';
+  if (n.includes('лилия') || n.includes('lily')) return '\u{1F33A}';
+  if (n.includes('ромаш') || n.includes('daisy')) return '\u{1F33C}';
+  return '\u{1F338}';
 }
 
 function createSparkles(element) {
@@ -888,7 +970,16 @@ function setSplashScrollLock(locked) {
 function initFlowers() {
   const container = document.getElementById('splashFlowers');
   if (!container) return;
-  const flowers = ['✿', '❀', '✾', '❁', '✽', '♡', '⚘', '❋'];
+  const flowers = [
+    '\u{2744}',  // snowflake
+    '\u{273F}',  // floral heart
+    '\u{2740}',  // white florette
+    '\u{2726}',  // black four pointed star
+    '\u{2727}',  // white four pointed star
+    '\u{273D}',  // heavy teardrop-spoked asterisk
+    '\u{2728}',  // sparkles
+    '\u{273C}'   // open center teardrop-spoked asterisk
+  ];
   const cs = getComputedStyle(document.documentElement);
   const palette = [
     cs.getPropertyValue('--accent').trim(),
@@ -957,6 +1048,7 @@ function renderAdminEntry() {
 function renderAdmin() {
   showOnly('adminView');
   bindAdminEvents();
+  fillGlobalForm();
   refreshList();
   if (!state.selectedKey) {
     const first = Object.keys(state.db.profiles)[0];
@@ -966,6 +1058,7 @@ function renderAdmin() {
 
 function bindAdminEvents() {
   const form = document.getElementById('profileForm');
+  const globalForm = document.getElementById('globalForm');
   const uploadBtn = document.getElementById('uploadMediaBtn');
   const mediaInput = document.getElementById('mediaFileInput');
   const mediaTarget = document.getElementById('mediaTarget');
@@ -1024,18 +1117,10 @@ function bindAdminEvents() {
       compliments: normalizeLines(document.getElementById('complimentsInput').value),
       believesPredictions: document.getElementById('believesPredictionsInput').value === 'believe',
       predictionButtonLabel: document.getElementById('predictionButtonInput').value.trim() || DEFAULT_PREDICTION_BUTTON,
-      answersButtonLabel: DEFAULT_ANSWERS_BUTTON,
       skepticAnswersMessage: document.getElementById('skepticAnswersMessageInput').value.trim() || DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
       surveyAnswers: normalizeLines(document.getElementById('surveyAnswersInput').value),
       predictionsBelieve: normalizeLines(document.getElementById('predictionsBelieveInput').value),
       predictionsSkeptic: normalizeLines(document.getElementById('predictionsSkepticInput').value),
-      creditsLines: normalizeLines(document.getElementById('creditsInput').value),
-      contestTitle: document.getElementById('contestTitleInput').value.trim() || DEFAULT_CONTEST_TITLE,
-      contestHint: document.getElementById('contestHintInput').value.trim() || DEFAULT_CONTEST_HINT,
-      contestButtonLabel: document.getElementById('contestButtonInput').value.trim() || DEFAULT_CONTEST_BUTTON,
-      contestWinText: document.getElementById('contestWinTextInput').value.trim() || DEFAULT_CONTEST_WIN,
-      contestLoseText: document.getElementById('contestLoseTextInput').value.trim() || DEFAULT_CONTEST_LOSE,
-      contestCodes: normalizeContestCodes(document.getElementById('contestCodesInput').value),
       mediaTip: document.getElementById('tipInput').value.trim() || 'From little girl to cover star',
       quoteText: document.getElementById('quoteInput').value.trim() || DEFAULT_PROFILE.quoteText,
       createdAt: state.db.profiles[state.selectedKey]?.createdAt
@@ -1130,6 +1215,30 @@ function bindAdminEvents() {
       uploadMsg.textContent = 'Ошибка загрузки: ' + reason + '. Проверь bucket "media" (public) и Storage policy для anon.';
     }
   };
+
+  if (globalForm && globalForm.dataset.bound !== '1') {
+    globalForm.dataset.bound = '1';
+    globalForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const next = normalizeGlobalSettings({
+        answersButtonLabel: DEFAULT_ANSWERS_BUTTON,
+        creditsLines: normalizeLines(document.getElementById('creditsInput').value),
+        contestTitle: document.getElementById('contestTitleInput').value.trim() || DEFAULT_CONTEST_TITLE,
+        contestHint: document.getElementById('contestHintInput').value.trim() || DEFAULT_CONTEST_HINT,
+        contestButtonLabel: document.getElementById('contestButtonInput').value.trim() || DEFAULT_CONTEST_BUTTON,
+        contestWinText: document.getElementById('contestWinTextInput').value.trim() || DEFAULT_CONTEST_WIN,
+        contestLoseText: document.getElementById('contestLoseTextInput').value.trim() || DEFAULT_CONTEST_LOSE,
+        contestCodes: normalizeContestCodes(document.getElementById('contestCodesInput').value)
+      });
+      await upsertGlobalSettings(next);
+      fillGlobalForm();
+      const msg = document.getElementById('globalSavedMsg');
+      msg.textContent = 'Общие сохранены';
+      setTimeout(() => {
+        if (msg.textContent === 'Общие сохранены') msg.textContent = '';
+      }, 1800);
+    });
+  }
 }
 
 function refreshList() {
@@ -1163,13 +1272,6 @@ function selectProfile(key) {
   document.getElementById('surveyAnswersInput').value = normalizeLines(p.surveyAnswers).join('\n');
   document.getElementById('predictionsBelieveInput').value = normalizeLines(p.predictionsBelieve).join('\n');
   document.getElementById('predictionsSkepticInput').value = normalizeLines(p.predictionsSkeptic).join('\n');
-  document.getElementById('creditsInput').value = normalizeLines(p.creditsLines).join('\n');
-  document.getElementById('contestTitleInput').value = p.contestTitle || DEFAULT_CONTEST_TITLE;
-  document.getElementById('contestHintInput').value = p.contestHint || DEFAULT_CONTEST_HINT;
-  document.getElementById('contestButtonInput').value = p.contestButtonLabel || DEFAULT_CONTEST_BUTTON;
-  document.getElementById('contestWinTextInput').value = p.contestWinText || DEFAULT_CONTEST_WIN;
-  document.getElementById('contestLoseTextInput').value = p.contestLoseText || DEFAULT_CONTEST_LOSE;
-  document.getElementById('contestCodesInput').value = normalizeContestCodes(p.contestCodes).map((x) => x.code + (x.flower ? ' | ' + x.flower : '')).join('\n');
   document.getElementById('tipInput').value = p.mediaTip || 'From little girl to cover star';
   document.getElementById('quoteInput').value = p.quoteText || DEFAULT_PROFILE.quoteText;
   document.getElementById('profileLink').textContent = currentProfileLink();
@@ -1177,9 +1279,31 @@ function selectProfile(key) {
   renderPhotoManager();
 }
 
+function fillGlobalForm() {
+  const g = normalizeGlobalSettings(state.globalSettings);
+  state.globalSettings = g;
+  const creditsInput = document.getElementById('creditsInput');
+  const contestTitleInput = document.getElementById('contestTitleInput');
+  const contestHintInput = document.getElementById('contestHintInput');
+  const contestButtonInput = document.getElementById('contestButtonInput');
+  const contestWinTextInput = document.getElementById('contestWinTextInput');
+  const contestLoseTextInput = document.getElementById('contestLoseTextInput');
+  const contestCodesInput = document.getElementById('contestCodesInput');
+  if (!creditsInput || !contestTitleInput || !contestHintInput || !contestButtonInput || !contestWinTextInput || !contestLoseTextInput || !contestCodesInput) return;
+
+  creditsInput.value = normalizeLines(g.creditsLines).join('\n');
+  contestTitleInput.value = g.contestTitle || DEFAULT_CONTEST_TITLE;
+  contestHintInput.value = g.contestHint || DEFAULT_CONTEST_HINT;
+  contestButtonInput.value = g.contestButtonLabel || DEFAULT_CONTEST_BUTTON;
+  contestWinTextInput.value = g.contestWinText || DEFAULT_CONTEST_WIN;
+  contestLoseTextInput.value = g.contestLoseText || DEFAULT_CONTEST_LOSE;
+  contestCodesInput.value = normalizeContestCodes(g.contestCodes).map((x) => x.code + (x.flower ? ' | ' + x.flower : '')).join('\n');
+}
+
 function renderAdminPreview(profile) {
   const wrap = document.getElementById('adminPreview');
-  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит' : 'не верит') + ' / ' + normalizeLines(profile.predictionsBelieve).length + ' / ' + normalizeLines(profile.predictionsSkeptic).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Титры: ' + normalizeLines(profile.creditsLines).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Коды конкурса: ' + normalizeContestCodes(profile.contestCodes).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
+  const g = normalizeGlobalSettings(state.globalSettings);
+  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит' : 'не верит') + ' / ' + normalizeLines(profile.predictionsBelieve).length + ' / ' + normalizeLines(profile.predictionsSkeptic).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные титры: ' + normalizeLines(g.creditsLines).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные коды конкурса: ' + normalizeContestCodes(g.contestCodes).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
 }
 
 function currentProfileLink() {
@@ -1239,6 +1363,49 @@ function normalizeContestCodes(value) {
     .filter((x) => x.code);
 }
 
+function parseSurveyQa(value) {
+  const lines = Array.isArray(value)
+    ? value.map((x) => String(x || '')).join('\n').split(/\r?\n/g)
+    : String(value || '').split(/\r?\n/g);
+
+  const rows = [];
+  let q = '';
+  let a = [];
+
+  const flush = () => {
+    if (!q) return;
+    rows.push({ q: q.trim(), a: a.join(' ').replace(/\s+/g, ' ').trim() || '—' });
+    q = '';
+    a = [];
+  };
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (/^\d+\.\s+/.test(line)) {
+      flush();
+      q = line.replace(/^\d+\.\s+/, '').trim();
+    } else if (q) {
+      a.push(line);
+    } else {
+      a.push(line);
+    }
+  }
+  flush();
+
+  if (!rows.length) {
+    const single = normalizeLines(lines);
+    return single.map((x, i) => ({ q: 'Вопрос ' + (i + 1), a: x }));
+  }
+  return rows;
+}
+
+function renderSurveyTable(rows) {
+  const head = '<table><thead><tr><th>Вопрос</th><th>Ответ</th></tr></thead><tbody>';
+  const body = rows.map((r) => '<tr><td>' + escapeHtml(r.q) + '</td><td>' + escapeHtml(r.a) + '</td></tr>').join('');
+  return head + body + '</tbody></table>';
+}
+
 function generateKey() {
   const bytes = new Uint8Array(8);
   crypto.getRandomValues(bytes);
@@ -1250,3 +1417,4 @@ function escapeHtml(input) {
 }
 
 document.addEventListener('dblclick', (e) => e.preventDefault());
+

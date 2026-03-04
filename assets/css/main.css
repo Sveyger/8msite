@@ -620,33 +620,6 @@ body.splash-lock {
   flex-wrap: wrap;
 }
 
-.prediction-toggle {
-  display: flex;
-  gap: .5rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: .95rem;
-}
-
-.prediction-chip {
-  border: 1px solid rgba(255,255,255,.18);
-  border-radius: 999px;
-  background: rgba(255,255,255,.03);
-  color: var(--text-secondary);
-  font-family: 'Montserrat', sans-serif;
-  font-size: .68rem;
-  letter-spacing: .04em;
-  padding: .52rem .86rem;
-  cursor: pointer;
-  transition: all .25s ease;
-}
-
-.prediction-chip.active {
-  border-color: color-mix(in srgb, var(--accent) 60%, rgba(255,255,255,.28));
-  color: var(--text-primary);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-glow) 45%, transparent);
-}
-
 .prediction-button {
   border: 1px solid color-mix(in srgb, var(--accent) 48%, rgba(255,255,255,.2));
   border-radius: 999px;
@@ -709,6 +682,36 @@ body.splash-lock {
 
 .prediction-source.visible {
   opacity: 1;
+}
+
+.prediction-text table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: .15rem;
+  font-family: 'Montserrat', sans-serif;
+  font-size: .83rem;
+  color: var(--text-secondary);
+}
+
+.prediction-text th,
+.prediction-text td {
+  border: 1px solid rgba(255,255,255,.14);
+  padding: .55rem .62rem;
+  vertical-align: top;
+  text-align: left;
+}
+
+.prediction-text th {
+  font-size: .66rem;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--text-primary);
+  background: rgba(255,255,255,.04);
+}
+
+.prediction-text td:first-child {
+  width: 44%;
+  color: var(--text-primary);
 }
 
 /* ============================================
@@ -792,6 +795,26 @@ body.splash-lock {
   0% { transform: scale(.35) rotate(-8deg); opacity: 0; }
   70% { transform: scale(1.15) rotate(4deg); opacity: 1; }
   100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.team-section {
+  text-align: center;
+  padding: 1.2rem 0 1rem;
+}
+
+.team-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.15rem, 4.5vw, 1.45rem);
+  color: var(--text-primary);
+  margin-bottom: .75rem;
+}
+
+.credits--public {
+  margin-top: 0;
+  border-top: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  padding: .9rem .4rem;
+  color: rgba(255,255,255,0.33);
 }
 
 /* ============================================

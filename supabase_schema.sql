@@ -8,20 +8,10 @@
   compliments jsonb not null default '[]'::jsonb,
   believes_predictions boolean not null default true,
   prediction_button_label text not null default 'Узнать предсказание',
-  answers_button_label text not null default 'Посмотреть мои ответы',
   skeptic_answers_message text not null default 'Вы не верите в предсказания :)',
   survey_answers jsonb not null default '[]'::jsonb,
-  prediction_intro_believe text not null default 'Выбрано: «верю». Нажми кнопку, и получишь мягкое предсказание.',
-  prediction_intro_skeptic text not null default 'Выбрано: «не верю». Нажми кнопку, и получишь честный мотивационный прогноз.',
   predictions_believe jsonb not null default '[]'::jsonb,
   predictions_skeptic jsonb not null default '[]'::jsonb,
-  credits_lines jsonb not null default '[]'::jsonb,
-  contest_title text not null default 'Конкурс цветов',
-  contest_hint text not null default 'Введите код победителя, чтобы открыть свой приз.',
-  contest_button_label text not null default 'Проверить код',
-  contest_win_text text not null default 'Поздравляем! Код подтвержден.',
-  contest_lose_text text not null default 'Код не найден. Проверьте ввод.',
-  contest_codes jsonb not null default '[]'::jsonb,
   button_label text not null default 'Узнать правду о себе',
   media_tip text not null default 'From little girl to cover star',
   quote_text text not null default '«Даже в детстве было понятно, что растет <mark>звезда обложки</mark>!»',
@@ -31,22 +21,30 @@
 
 alter table public.march8_profiles add column if not exists believes_predictions boolean not null default true;
 alter table public.march8_profiles add column if not exists prediction_button_label text not null default 'Узнать предсказание';
-alter table public.march8_profiles add column if not exists answers_button_label text not null default 'Посмотреть мои ответы';
 alter table public.march8_profiles add column if not exists skeptic_answers_message text not null default 'Вы не верите в предсказания :)';
 alter table public.march8_profiles add column if not exists survey_answers jsonb not null default '[]'::jsonb;
-alter table public.march8_profiles add column if not exists prediction_intro_believe text not null default 'Выбрано: «верю». Нажми кнопку, и получишь мягкое предсказание.';
-alter table public.march8_profiles add column if not exists prediction_intro_skeptic text not null default 'Выбрано: «не верю». Нажми кнопку, и получишь честный мотивационный прогноз.';
 alter table public.march8_profiles add column if not exists predictions_believe jsonb not null default '[]'::jsonb;
 alter table public.march8_profiles add column if not exists predictions_skeptic jsonb not null default '[]'::jsonb;
-alter table public.march8_profiles add column if not exists credits_lines jsonb not null default '[]'::jsonb;
-alter table public.march8_profiles add column if not exists contest_title text not null default 'Конкурс цветов';
-alter table public.march8_profiles add column if not exists contest_hint text not null default 'Введите код победителя, чтобы открыть свой приз.';
-alter table public.march8_profiles add column if not exists contest_button_label text not null default 'Проверить код';
-alter table public.march8_profiles add column if not exists contest_win_text text not null default 'Поздравляем! Код подтвержден.';
-alter table public.march8_profiles add column if not exists contest_lose_text text not null default 'Код не найден. Проверьте ввод.';
-alter table public.march8_profiles add column if not exists contest_codes jsonb not null default '[]'::jsonb;
+
+create table if not exists public.march8_global_settings (
+  id text primary key default 'global',
+  answers_button_label text not null default 'Посмотреть мои ответы',
+  credits_lines jsonb not null default '[]'::jsonb,
+  contest_title text not null default 'Конкурс цветов',
+  contest_hint text not null default 'Введите код победителя, чтобы открыть свой приз.',
+  contest_button_label text not null default 'Проверить код',
+  contest_win_text text not null default 'Поздравляем! Код подтвержден.',
+  contest_lose_text text not null default 'Код не найден. Проверьте ввод.',
+  contest_codes jsonb not null default '[]'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.march8_global_settings (id)
+values ('global')
+on conflict (id) do nothing;
 
 alter table public.march8_profiles enable row level security;
+alter table public.march8_global_settings enable row level security;
 
 -- Demo mode policies for frontend-only app (anon key in browser).
 -- This is convenient, but not fully secure against enumeration.
@@ -74,6 +72,25 @@ create policy "march8_profiles_delete" on public.march8_profiles
 for delete
 to anon
 using (true);
+
+drop policy if exists "march8_global_settings_select" on public.march8_global_settings;
+create policy "march8_global_settings_select" on public.march8_global_settings
+for select
+to anon
+using (true);
+
+drop policy if exists "march8_global_settings_insert" on public.march8_global_settings;
+create policy "march8_global_settings_insert" on public.march8_global_settings
+for insert
+to anon
+with check (true);
+
+drop policy if exists "march8_global_settings_update" on public.march8_global_settings;
+create policy "march8_global_settings_update" on public.march8_global_settings
+for update
+to anon
+using (true)
+with check (true);
 
 -- Storage bucket and policies for media upload from frontend.
 insert into storage.buckets (id, name, public)
