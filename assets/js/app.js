@@ -17,6 +17,7 @@ const THEMES = {
   girl_pink: { '--accent': '#FF5DAF', '--accent-light': '#FFC2E0', '--accent-dark': '#A01D5E', '--accent-glow': 'rgba(255, 93, 175, 0.45)', '--bg-primary': '#130A12', '--bg-secondary': '#1A1020', '--bg-gradient-start': '#2A0E22', '--bg-gradient-end': '#13091A', '--bg-card': '#241425', '--text-primary': '#FFF0F7', '--text-secondary': '#E2B5CB', '--text-muted': '#A47D94', '--gold': '#FF75BA', '--gold-light': '#FFBFE0' },
   girl_violet: { '--accent': '#8E58FF', '--accent-light': '#C8ADFF', '--accent-dark': '#4B2A96', '--accent-glow': 'rgba(142, 88, 255, 0.45)', '--bg-primary': '#0E0A1A', '--bg-secondary': '#151126', '--bg-gradient-start': '#22133E', '--bg-gradient-end': '#120F24', '--bg-card': '#1E1735', '--text-primary': '#F3EEFF', '--text-secondary': '#C7B9EB', '--text-muted': '#8B7EAE', '--gold': '#9A6CFF', '--gold-light': '#D4C1FF' },
   girl_lilac_soft: { '--accent': '#E7C6FF', '--accent-light': '#F4E5FF', '--accent-dark': '#A17BBE', '--accent-glow': 'rgba(231, 198, 255, 0.45)', '--bg-primary': '#140F1D', '--bg-secondary': '#1D1529', '--bg-gradient-start': '#2C1F3A', '--bg-gradient-end': '#171223', '--bg-card': '#231A31', '--text-primary': '#FBF5FF', '--text-secondary': '#DCC8EC', '--text-muted': '#A58BB8', '--gold': '#E7C6FF', '--gold-light': '#F6EAFF' },
+  girl_ethereal_serene: { '--accent': '#EADCDC', '--accent-light': '#ECE4D9', '--accent-dark': '#BDA9A6', '--accent-glow': 'rgba(234, 220, 220, 0.44)', '--bg-primary': '#161415', '--bg-secondary': '#1E1A1C', '--bg-gradient-start': '#2B2528', '--bg-gradient-end': '#181517', '--bg-card': '#241F22', '--text-primary': '#F3ECE8', '--text-secondary': '#D8CFCB', '--text-muted': '#A79995', '--gold': '#EBCFCC', '--gold-light': '#F0DFDE' },
   girl_light_blue: { '--accent': '#6EC9FF', '--accent-light': '#D9F2FF', '--accent-dark': '#2A6C96', '--accent-glow': 'rgba(110, 201, 255, 0.45)', '--bg-primary': '#07131D', '--bg-secondary': '#0D1D2A', '--bg-gradient-start': '#0D2A3A', '--bg-gradient-end': '#0A1826', '--bg-card': '#142A3A', '--text-primary': '#ECF8FF', '--text-secondary': '#B9D6E8', '--text-muted': '#7F9EB2', '--gold': '#7ED0FF', '--gold-light': '#CDEEFF' },
   girl_black: { '--accent': '#FFFFFF', '--accent-light': '#FFFFFF', '--accent-dark': '#8A8A8A', '--accent-glow': 'rgba(255, 255, 255, 0.34)', '--bg-primary': '#000000', '--bg-secondary': '#080808', '--bg-gradient-start': '#262626', '--bg-gradient-end': '#020202', '--bg-card': '#121212', '--text-primary': '#FFFFFF', '--text-secondary': '#D4D4D4', '--text-muted': '#8E8E8E', '--gold': '#FFFFFF', '--gold-light': '#DCDCDC' }
 };
@@ -44,8 +45,21 @@ const DEFAULT_PREDICTIONS_SKEPTIC = [
 ];
 
 const DEFAULT_PREDICTION_BUTTON = 'Узнать предсказание';
-const DEFAULT_PREDICTION_INTRO_BELIEVE = 'Выбрано: «верю». Нажми кнопку, и получишь мягкое предсказание.';
-const DEFAULT_PREDICTION_INTRO_SKEPTIC = 'Выбрано: «не верю». Нажми кнопку, и получишь честный мотивационный прогноз.';
+const DEFAULT_ANSWERS_BUTTON = 'Посмотреть мои ответы';
+const DEFAULT_SKEPTIC_ANSWERS_MESSAGE = 'Вы не верите в предсказания :)';
+const DEFAULT_CREDITS = [
+  'Creative Direction — Team',
+  'Photography — Team',
+  'Video Production — Kling AI',
+  'Design & Development — Team',
+  'With Love — Всегда ❤'
+];
+const DEFAULT_CONTEST_TITLE = 'Конкурс цветов';
+const DEFAULT_CONTEST_HINT = 'Введите код победителя, чтобы открыть свой приз.';
+const DEFAULT_CONTEST_BUTTON = 'Проверить код';
+const DEFAULT_CONTEST_WIN = 'Поздравляем! Код подтвержден.';
+const DEFAULT_CONTEST_LOSE = 'Код не найден. Проверьте ввод.';
+const DEFAULT_CONTEST_CODES = [];
 
 const DEFAULT_PROFILE = {
   name: 'Екатерина',
@@ -56,10 +70,18 @@ const DEFAULT_PROFILE = {
   compliments: DEFAULT_COMPLIMENTS,
   believesPredictions: true,
   predictionButtonLabel: DEFAULT_PREDICTION_BUTTON,
-  predictionIntroBelieve: DEFAULT_PREDICTION_INTRO_BELIEVE,
-  predictionIntroSkeptic: DEFAULT_PREDICTION_INTRO_SKEPTIC,
+  answersButtonLabel: DEFAULT_ANSWERS_BUTTON,
+  skepticAnswersMessage: DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
+  surveyAnswers: [],
   predictionsBelieve: DEFAULT_PREDICTIONS_BELIEVE,
   predictionsSkeptic: DEFAULT_PREDICTIONS_SKEPTIC,
+  creditsLines: DEFAULT_CREDITS,
+  contestTitle: DEFAULT_CONTEST_TITLE,
+  contestHint: DEFAULT_CONTEST_HINT,
+  contestButtonLabel: DEFAULT_CONTEST_BUTTON,
+  contestWinText: DEFAULT_CONTEST_WIN,
+  contestLoseText: DEFAULT_CONTEST_LOSE,
+  contestCodes: DEFAULT_CONTEST_CODES,
   buttonLabel: 'Узнать правду о себе',
   mediaTip: 'From little girl to cover star',
   quoteText: '«Даже в детстве было понятно, что растет <mark>звезда обложки</mark>!»'
@@ -242,10 +264,18 @@ function makeProfile(key, source) {
     compliments: normalizeLines(source.compliments),
     believesPredictions: typeof source.believesPredictions === 'boolean' ? source.believesPredictions : true,
     predictionButtonLabel: source.predictionButtonLabel || DEFAULT_PREDICTION_BUTTON,
-    predictionIntroBelieve: source.predictionIntroBelieve || DEFAULT_PREDICTION_INTRO_BELIEVE,
-    predictionIntroSkeptic: source.predictionIntroSkeptic || DEFAULT_PREDICTION_INTRO_SKEPTIC,
+    answersButtonLabel: source.answersButtonLabel || DEFAULT_ANSWERS_BUTTON,
+    skepticAnswersMessage: source.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
+    surveyAnswers: normalizeLines(source.surveyAnswers),
     predictionsBelieve: normalizeLines(source.predictionsBelieve).length ? normalizeLines(source.predictionsBelieve) : DEFAULT_PREDICTIONS_BELIEVE,
     predictionsSkeptic: normalizeLines(source.predictionsSkeptic).length ? normalizeLines(source.predictionsSkeptic) : DEFAULT_PREDICTIONS_SKEPTIC,
+    creditsLines: normalizeLines(source.creditsLines).length ? normalizeLines(source.creditsLines) : DEFAULT_CREDITS,
+    contestTitle: source.contestTitle || DEFAULT_CONTEST_TITLE,
+    contestHint: source.contestHint || DEFAULT_CONTEST_HINT,
+    contestButtonLabel: source.contestButtonLabel || DEFAULT_CONTEST_BUTTON,
+    contestWinText: source.contestWinText || DEFAULT_CONTEST_WIN,
+    contestLoseText: source.contestLoseText || DEFAULT_CONTEST_LOSE,
+    contestCodes: normalizeContestCodes(source.contestCodes),
     buttonLabel: source.buttonLabel || 'Узнать правду о себе',
     mediaTip: source.mediaTip || 'From little girl to cover star',
     quoteText: source.quoteText || DEFAULT_PROFILE.quoteText,
@@ -265,10 +295,18 @@ function rowToProfile(row) {
     compliments: normalizeLines(row.compliments),
     believesPredictions: typeof row.believes_predictions === 'boolean' ? row.believes_predictions : true,
     predictionButtonLabel: row.prediction_button_label || DEFAULT_PREDICTION_BUTTON,
-    predictionIntroBelieve: row.prediction_intro_believe || DEFAULT_PREDICTION_INTRO_BELIEVE,
-    predictionIntroSkeptic: row.prediction_intro_skeptic || DEFAULT_PREDICTION_INTRO_SKEPTIC,
+    answersButtonLabel: row.answers_button_label || DEFAULT_ANSWERS_BUTTON,
+    skepticAnswersMessage: row.skeptic_answers_message || DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
+    surveyAnswers: normalizeLines(row.survey_answers),
     predictionsBelieve: normalizeLines(row.predictions_believe).length ? normalizeLines(row.predictions_believe) : DEFAULT_PREDICTIONS_BELIEVE,
     predictionsSkeptic: normalizeLines(row.predictions_skeptic).length ? normalizeLines(row.predictions_skeptic) : DEFAULT_PREDICTIONS_SKEPTIC,
+    creditsLines: normalizeLines(row.credits_lines).length ? normalizeLines(row.credits_lines) : DEFAULT_CREDITS,
+    contestTitle: row.contest_title || DEFAULT_CONTEST_TITLE,
+    contestHint: row.contest_hint || DEFAULT_CONTEST_HINT,
+    contestButtonLabel: row.contest_button_label || DEFAULT_CONTEST_BUTTON,
+    contestWinText: row.contest_win_text || DEFAULT_CONTEST_WIN,
+    contestLoseText: row.contest_lose_text || DEFAULT_CONTEST_LOSE,
+    contestCodes: normalizeContestCodes(row.contest_codes),
     buttonLabel: row.button_label || 'Узнать правду о себе',
     mediaTip: row.media_tip || 'From little girl to cover star',
     quoteText: row.quote_text || DEFAULT_PROFILE.quoteText,
@@ -288,10 +326,18 @@ function profileToRow(profile) {
     compliments: normalizeLines(profile.compliments),
     believes_predictions: !!profile.believesPredictions,
     prediction_button_label: profile.predictionButtonLabel || DEFAULT_PREDICTION_BUTTON,
-    prediction_intro_believe: profile.predictionIntroBelieve || DEFAULT_PREDICTION_INTRO_BELIEVE,
-    prediction_intro_skeptic: profile.predictionIntroSkeptic || DEFAULT_PREDICTION_INTRO_SKEPTIC,
+    answers_button_label: profile.answersButtonLabel || DEFAULT_ANSWERS_BUTTON,
+    skeptic_answers_message: profile.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
+    survey_answers: normalizeLines(profile.surveyAnswers),
     predictions_believe: normalizeLines(profile.predictionsBelieve),
     predictions_skeptic: normalizeLines(profile.predictionsSkeptic),
+    credits_lines: normalizeLines(profile.creditsLines),
+    contest_title: profile.contestTitle || DEFAULT_CONTEST_TITLE,
+    contest_hint: profile.contestHint || DEFAULT_CONTEST_HINT,
+    contest_button_label: profile.contestButtonLabel || DEFAULT_CONTEST_BUTTON,
+    contest_win_text: profile.contestWinText || DEFAULT_CONTEST_WIN,
+    contest_lose_text: profile.contestLoseText || DEFAULT_CONTEST_LOSE,
+    contest_codes: normalizeContestCodes(profile.contestCodes),
     button_label: profile.buttonLabel,
     media_tip: profile.mediaTip,
     quote_text: profile.quoteText,
@@ -349,6 +395,8 @@ function renderGirlPage(profile) {
   setChunkedText(complimentText, compliments[0] || DEFAULT_COMPLIMENTS[0]);
   complimentSource.classList.add('visible');
   initPredictionUi(profile);
+  renderCredits(profile);
+  initContestUi(profile);
 
   document.getElementById('videoOverlayBottom').textContent = profile.mediaTip || 'From little girl to cover star';
   document.getElementById('quoteBig').innerHTML = profile.quoteText || DEFAULT_PROFILE.quoteText;
@@ -360,6 +408,8 @@ function renderGirlPage(profile) {
   complimentBtn.onclick = () => nextCompliment();
   const predictionBtn = document.getElementById('predictionBtn');
   if (predictionBtn) predictionBtn.onclick = () => nextPrediction();
+  const answersBtn = document.getElementById('answersBtn');
+  if (answersBtn) answersBtn.onclick = () => showSurveyAnswers();
 }
 
 function renderMedia(profile) {
@@ -624,24 +674,21 @@ function nextCompliment() {
 }
 
 function initPredictionUi(profile) {
-  const modeNote = document.getElementById('predictionModeNote');
+  const answersBtn = document.getElementById('answersBtn');
   const btn = document.getElementById('predictionBtn');
   const textEl = document.getElementById('predictionText');
   const sourceEl = document.getElementById('predictionSource');
-  if (!modeNote || !btn || !textEl || !sourceEl) return;
+  if (!answersBtn || !btn || !textEl || !sourceEl) return;
 
   state.predictionMode = profile?.believesPredictions ? 'believe' : 'skeptic';
   state.predictionIndex = -1;
+  state.predictionBusy = false;
   btn.textContent = profile?.predictionButtonLabel || DEFAULT_PREDICTION_BUTTON;
-  modeNote.textContent = state.predictionMode === 'believe'
-    ? 'Режим: верит в предсказания'
-    : 'Режим: не верит в предсказания';
+  answersBtn.textContent = profile?.answersButtonLabel || DEFAULT_ANSWERS_BUTTON;
   sourceEl.textContent = state.predictionMode === 'believe'
     ? '— Астрологическая колонка VOGUE'
     : '— Редакция рационального взгляда';
-  setChunkedText(textEl, state.predictionMode === 'believe'
-    ? (profile?.predictionIntroBelieve || DEFAULT_PREDICTION_INTRO_BELIEVE)
-    : (profile?.predictionIntroSkeptic || DEFAULT_PREDICTION_INTRO_SKEPTIC));
+  setChunkedText(textEl, 'Нажми кнопку — и откроем прогноз редакции.');
   sourceEl.classList.add('visible');
 }
 
@@ -671,6 +718,99 @@ function nextPrediction() {
     sourceEl.classList.add('visible');
     state.predictionBusy = false;
   }, 420);
+}
+
+function showSurveyAnswers() {
+  if (!state.activeProfile || state.predictionBusy) return;
+  state.predictionBusy = true;
+
+  const textEl = document.getElementById('predictionText');
+  const sourceEl = document.getElementById('predictionSource');
+  if (!textEl || !sourceEl) {
+    state.predictionBusy = false;
+    return;
+  }
+
+  textEl.classList.add('fading');
+  sourceEl.classList.remove('visible');
+
+  setTimeout(() => {
+    if (state.activeProfile.believesPredictions) {
+      const answers = normalizeLines(state.activeProfile.surveyAnswers);
+      const text = answers.length
+        ? 'Твои ответы:\n' + answers.map((a, i) => (i + 1) + '. ' + a).join('\n')
+        : 'Ответы опроса пока не добавлены.';
+      textEl.textContent = text;
+      sourceEl.textContent = '— Твой опрос';
+    } else {
+      setChunkedText(textEl, state.activeProfile.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE);
+      sourceEl.textContent = '— Редакция';
+    }
+    textEl.classList.remove('fading');
+    sourceEl.classList.add('visible');
+    state.predictionBusy = false;
+  }, 420);
+}
+
+function renderCredits(profile) {
+  const wrap = document.getElementById('creditsList');
+  if (!wrap) return;
+  const lines = normalizeLines(profile?.creditsLines);
+  const finalLines = lines.length ? lines : DEFAULT_CREDITS;
+  wrap.innerHTML = finalLines.map((line) => '<span>' + escapeHtml(line) + '</span>').join('');
+}
+
+function initContestUi(profile) {
+  const titleEl = document.getElementById('contestTitle');
+  const hintEl = document.getElementById('contestHint');
+  const inputEl = document.getElementById('contestCodeInput');
+  const buttonEl = document.getElementById('contestCheckBtn');
+  const resultEl = document.getElementById('contestResult');
+  const flowerWrap = document.getElementById('contestFlower');
+  const flowerEmoji = document.getElementById('contestFlowerEmoji');
+  if (!titleEl || !hintEl || !inputEl || !buttonEl || !resultEl || !flowerWrap || !flowerEmoji) return;
+
+  titleEl.textContent = profile?.contestTitle || DEFAULT_CONTEST_TITLE;
+  hintEl.textContent = profile?.contestHint || DEFAULT_CONTEST_HINT;
+  buttonEl.textContent = profile?.contestButtonLabel || DEFAULT_CONTEST_BUTTON;
+  resultEl.textContent = '';
+  resultEl.className = 'contest-result';
+  flowerWrap.classList.add('hidden');
+  inputEl.value = '';
+
+  const check = () => {
+    const code = inputEl.value.trim().toUpperCase();
+    const items = normalizeContestCodes(profile?.contestCodes);
+    const hit = items.find((x) => x.code.toUpperCase() === code);
+    if (hit) {
+      resultEl.textContent = (profile?.contestWinText || DEFAULT_CONTEST_WIN) + ' ' + (hit.flower ? 'Твой цветок: ' + hit.flower + '.' : '');
+      resultEl.className = 'contest-result win';
+      flowerEmoji.textContent = detectFlowerEmoji(hit.flower);
+      flowerWrap.classList.remove('hidden');
+      return;
+    }
+    resultEl.textContent = profile?.contestLoseText || DEFAULT_CONTEST_LOSE;
+    resultEl.className = 'contest-result lose';
+    flowerWrap.classList.add('hidden');
+  };
+
+  buttonEl.onclick = check;
+  inputEl.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      check();
+    }
+  };
+}
+
+function detectFlowerEmoji(name) {
+  const n = String(name || '').toLowerCase();
+  if (n.includes('роза') || n.includes('rose')) return '🌹';
+  if (n.includes('пион') || n.includes('peony')) return '🌸';
+  if (n.includes('тюльпан') || n.includes('tulip')) return '🌷';
+  if (n.includes('лилия') || n.includes('lily')) return '🌺';
+  if (n.includes('ромаш') || n.includes('daisy')) return '🌼';
+  return '💐';
 }
 
 function createSparkles(element) {
@@ -884,10 +1024,18 @@ function bindAdminEvents() {
       compliments: normalizeLines(document.getElementById('complimentsInput').value),
       believesPredictions: document.getElementById('believesPredictionsInput').value === 'believe',
       predictionButtonLabel: document.getElementById('predictionButtonInput').value.trim() || DEFAULT_PREDICTION_BUTTON,
-      predictionIntroBelieve: document.getElementById('predictionIntroBelieveInput').value.trim() || DEFAULT_PREDICTION_INTRO_BELIEVE,
-      predictionIntroSkeptic: document.getElementById('predictionIntroSkepticInput').value.trim() || DEFAULT_PREDICTION_INTRO_SKEPTIC,
+      answersButtonLabel: DEFAULT_ANSWERS_BUTTON,
+      skepticAnswersMessage: document.getElementById('skepticAnswersMessageInput').value.trim() || DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
+      surveyAnswers: normalizeLines(document.getElementById('surveyAnswersInput').value),
       predictionsBelieve: normalizeLines(document.getElementById('predictionsBelieveInput').value),
       predictionsSkeptic: normalizeLines(document.getElementById('predictionsSkepticInput').value),
+      creditsLines: normalizeLines(document.getElementById('creditsInput').value),
+      contestTitle: document.getElementById('contestTitleInput').value.trim() || DEFAULT_CONTEST_TITLE,
+      contestHint: document.getElementById('contestHintInput').value.trim() || DEFAULT_CONTEST_HINT,
+      contestButtonLabel: document.getElementById('contestButtonInput').value.trim() || DEFAULT_CONTEST_BUTTON,
+      contestWinText: document.getElementById('contestWinTextInput').value.trim() || DEFAULT_CONTEST_WIN,
+      contestLoseText: document.getElementById('contestLoseTextInput').value.trim() || DEFAULT_CONTEST_LOSE,
+      contestCodes: normalizeContestCodes(document.getElementById('contestCodesInput').value),
       mediaTip: document.getElementById('tipInput').value.trim() || 'From little girl to cover star',
       quoteText: document.getElementById('quoteInput').value.trim() || DEFAULT_PROFILE.quoteText,
       createdAt: state.db.profiles[state.selectedKey]?.createdAt
@@ -1011,10 +1159,17 @@ function selectProfile(key) {
   document.getElementById('complimentsInput').value = normalizeLines(p.compliments).join('\n');
   document.getElementById('believesPredictionsInput').value = p.believesPredictions ? 'believe' : 'skeptic';
   document.getElementById('predictionButtonInput').value = p.predictionButtonLabel || DEFAULT_PREDICTION_BUTTON;
-  document.getElementById('predictionIntroBelieveInput').value = p.predictionIntroBelieve || DEFAULT_PREDICTION_INTRO_BELIEVE;
-  document.getElementById('predictionIntroSkepticInput').value = p.predictionIntroSkeptic || DEFAULT_PREDICTION_INTRO_SKEPTIC;
+  document.getElementById('skepticAnswersMessageInput').value = p.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE;
+  document.getElementById('surveyAnswersInput').value = normalizeLines(p.surveyAnswers).join('\n');
   document.getElementById('predictionsBelieveInput').value = normalizeLines(p.predictionsBelieve).join('\n');
   document.getElementById('predictionsSkepticInput').value = normalizeLines(p.predictionsSkeptic).join('\n');
+  document.getElementById('creditsInput').value = normalizeLines(p.creditsLines).join('\n');
+  document.getElementById('contestTitleInput').value = p.contestTitle || DEFAULT_CONTEST_TITLE;
+  document.getElementById('contestHintInput').value = p.contestHint || DEFAULT_CONTEST_HINT;
+  document.getElementById('contestButtonInput').value = p.contestButtonLabel || DEFAULT_CONTEST_BUTTON;
+  document.getElementById('contestWinTextInput').value = p.contestWinText || DEFAULT_CONTEST_WIN;
+  document.getElementById('contestLoseTextInput').value = p.contestLoseText || DEFAULT_CONTEST_LOSE;
+  document.getElementById('contestCodesInput').value = normalizeContestCodes(p.contestCodes).map((x) => x.code + (x.flower ? ' | ' + x.flower : '')).join('\n');
   document.getElementById('tipInput').value = p.mediaTip || 'From little girl to cover star';
   document.getElementById('quoteInput').value = p.quoteText || DEFAULT_PROFILE.quoteText;
   document.getElementById('profileLink').textContent = currentProfileLink();
@@ -1024,7 +1179,7 @@ function selectProfile(key) {
 
 function renderAdminPreview(profile) {
   const wrap = document.getElementById('adminPreview');
-  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит' : 'не верит') + ' / ' + normalizeLines(profile.predictionsBelieve).length + ' / ' + normalizeLines(profile.predictionsSkeptic).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
+  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит' : 'не верит') + ' / ' + normalizeLines(profile.predictionsBelieve).length + ' / ' + normalizeLines(profile.predictionsSkeptic).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Титры: ' + normalizeLines(profile.creditsLines).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Коды конкурса: ' + normalizeContestCodes(profile.contestCodes).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
 }
 
 function currentProfileLink() {
@@ -1050,6 +1205,38 @@ function flashSaved(text) {
 function normalizeLines(value) {
   if (Array.isArray(value)) return value.map((s) => String(s).trim()).filter(Boolean);
   return String(value || '').split(/\r?\n/g).map((s) => s.trim()).filter(Boolean);
+}
+
+function normalizeContestCodes(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (item && typeof item === 'object') {
+          return {
+            code: String(item.code || '').trim().toUpperCase(),
+            flower: String(item.flower || '').trim()
+          };
+        }
+        const raw = String(item || '').trim();
+        if (!raw) return null;
+        const [codePart, flowerPart] = raw.split('|');
+        return { code: String(codePart || '').trim().toUpperCase(), flower: String(flowerPart || '').trim() };
+      })
+      .filter((x) => x && x.code);
+  }
+
+  return String(value || '')
+    .split(/\r?\n/g)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [codePart, flowerPart] = line.split('|');
+      return {
+        code: String(codePart || '').trim().toUpperCase(),
+        flower: String(flowerPart || '').trim()
+      };
+    })
+    .filter((x) => x.code);
 }
 
 function generateKey() {

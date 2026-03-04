@@ -72,8 +72,10 @@
 
     <section class="prediction-section reveal">
       <div class="prediction-title">Интерактив • Предсказания</div>
-      <p class="prediction-mode" id="predictionModeNote">Режим предсказаний загружается…</p>
-      <button class="prediction-button" id="predictionBtn" type="button">Узнать предсказание</button>
+      <div class="prediction-actions">
+        <button class="prediction-button" id="predictionBtn" type="button">Узнать предсказание</button>
+        <button class="prediction-button prediction-button--ghost" id="answersBtn" type="button">Посмотреть мои ответы</button>
+      </div>
       <div class="prediction-display">
         <p class="prediction-text" id="predictionText">Нажми кнопку — и откроем прогноз редакции.</p>
         <div class="prediction-source visible" id="predictionSource">— Астрологическая колонка VOGUE</div>
@@ -125,13 +127,22 @@
           <br><br>
           Ты вдохновляешь. Ты покоряешь. Ты невероятная.
         </div>
-        <div class="credits">
-          <span>Creative Direction — Team</span>
-          <span>Photography — Team</span>
-          <span>Video Production — Kling AI</span>
-          <span>Design & Development — Team</span>
-          <span>With Love — Всегда ❤</span>
-        </div>
+        <div class="credits" id="creditsList"></div>
+      </div>
+    </section>
+
+    <div class="divider reveal"><span class="divider-icon">✦</span></div>
+
+    <section class="contest-section reveal">
+      <div class="contest-title" id="contestTitle">Конкурс цветов</div>
+      <p class="contest-hint" id="contestHint">Введите код победителя, чтобы открыть свой приз.</p>
+      <div class="contest-form">
+        <input id="contestCodeInput" class="contest-input" type="text" placeholder="Введите код">
+        <button id="contestCheckBtn" class="contest-btn" type="button">Проверить код</button>
+      </div>
+      <div id="contestResult" class="contest-result"></div>
+      <div id="contestFlower" class="contest-flower hidden">
+        <div class="contest-flower-emoji" id="contestFlowerEmoji">🌸</div>
       </div>
     </section>
 
@@ -150,7 +161,7 @@
         <section class="admin-card">
           <h3 class="admin-panel-title">Настройки профиля</h3>
           <form id="profileForm" class="admin-form">
-            <div class="admin-row"><div><label class="admin-label" for="nameInput">Имя</label><input class="admin-input" id="nameInput" required></div><div><label class="admin-label" for="themeInput">Тема</label><select class="admin-select" id="themeInput"><optgroup label="Кастомные (под девушек)"><option value="girl_pink_white_black">Розовый + белый + черный</option><option value="girl_pink">Розовый</option><option value="girl_violet">Фиолетовый</option><option value="girl_lilac_soft">Лиловый (E7C6FF)</option><option value="girl_light_blue">Светло-голубой</option><option value="girl_black">Черная</option></optgroup><optgroup label="Ванильные"><option value="warm">warm</option><option value="brunette">brunette</option><option value="blonde">blonde</option><option value="black">black</option></optgroup></select><p class="admin-hint">Кастомные темы выше, ванильные темы внизу.</p></div></div>
+            <div class="admin-row"><div><label class="admin-label" for="nameInput">Имя</label><input class="admin-input" id="nameInput" required></div><div><label class="admin-label" for="themeInput">Тема</label><select class="admin-select" id="themeInput"><optgroup label="Кастомные (под девушек)"><option value="girl_pink_white_black">Розовый + белый + черный</option><option value="girl_pink">Розовый</option><option value="girl_violet">Фиолетовый</option><option value="girl_lilac_soft">Лиловый (E7C6FF)</option><option value="girl_ethereal_serene">Ethereal &amp; Serene</option><option value="girl_light_blue">Светло-голубой</option><option value="girl_black">Черная</option></optgroup><optgroup label="Ванильные"><option value="warm">warm</option><option value="brunette">brunette</option><option value="blonde">blonde</option><option value="black">black</option></optgroup></select><p class="admin-hint">Кастомные темы выше, ванильные темы внизу.</p></div></div>
             <div><label class="admin-label" for="videoInput">Видео URL</label><input class="admin-input" id="videoInput" placeholder="assets/kling-story.mp4"></div>
             <div><label class="admin-label" for="posterInput">Постер URL</label><input class="admin-input" id="posterInput" placeholder="assets/poster.jpg"></div>
             <div><label class="admin-label" for="photosInput">Фото (3 ссылки, по строкам)</label><textarea class="admin-textarea" id="photosInput" placeholder="assets/photo1.jpg&#10;assets/photo2.jpg&#10;assets/photo3.jpg"></textarea></div>
@@ -162,10 +173,15 @@
             <div><label class="admin-label" for="buttonInput">Текст кнопки</label><input class="admin-input" id="buttonInput"></div>
             <div><label class="admin-label" for="complimentsInput">Комплименты (по строкам)</label><textarea class="admin-textarea" id="complimentsInput"></textarea></div>
             <div class="admin-row"><div><label class="admin-label" for="believesPredictionsInput">Вера в предсказания</label><select class="admin-select" id="believesPredictionsInput"><option value="believe">Верит</option><option value="skeptic">Не верит</option></select></div><div><label class="admin-label" for="predictionButtonInput">Кнопка предсказаний</label><input class="admin-input" id="predictionButtonInput" placeholder="Узнать предсказание"></div></div>
-            <div><label class="admin-label" for="predictionIntroBelieveInput">Текст перед выдачей (если верит)</label><textarea class="admin-textarea" id="predictionIntroBelieveInput" placeholder="Выбрано: «верю». Нажми кнопку, и получишь мягкое предсказание."></textarea></div>
-            <div><label class="admin-label" for="predictionIntroSkepticInput">Текст перед выдачей (если не верит)</label><textarea class="admin-textarea" id="predictionIntroSkepticInput" placeholder="Выбрано: «не верю». Нажми кнопку, и получишь честный мотивационный прогноз."></textarea></div>
             <div><label class="admin-label" for="predictionsBelieveInput">Предсказания (если верит, по строкам)</label><textarea class="admin-textarea" id="predictionsBelieveInput"></textarea></div>
             <div><label class="admin-label" for="predictionsSkepticInput">Тексты (если не верит, по строкам)</label><textarea class="admin-textarea" id="predictionsSkepticInput"></textarea></div>
+            <div><label class="admin-label" for="surveyAnswersInput">Ответы девушки (по строкам)</label><textarea class="admin-textarea" id="surveyAnswersInput"></textarea></div>
+            <div><label class="admin-label" for="skepticAnswersMessageInput">Сообщение вместо ответов (если не верит)</label><input class="admin-input" id="skepticAnswersMessageInput" placeholder="Вы не верите в предсказания :)"></div>
+            <div><label class="admin-label" for="creditsInput">Титры/команда (по строкам)</label><textarea class="admin-textarea" id="creditsInput" placeholder="Creative Direction — Team"></textarea></div>
+            <div class="admin-row"><div><label class="admin-label" for="contestTitleInput">Заголовок конкурса</label><input class="admin-input" id="contestTitleInput" placeholder="Конкурс цветов"></div><div><label class="admin-label" for="contestButtonInput">Текст кнопки конкурса</label><input class="admin-input" id="contestButtonInput" placeholder="Проверить код"></div></div>
+            <div><label class="admin-label" for="contestHintInput">Подсказка конкурса</label><input class="admin-input" id="contestHintInput" placeholder="Введите код победителя, чтобы открыть свой приз."></div>
+            <div class="admin-row"><div><label class="admin-label" for="contestWinTextInput">Текст при победе</label><input class="admin-input" id="contestWinTextInput" placeholder="Поздравляем! Код подтвержден."></div><div><label class="admin-label" for="contestLoseTextInput">Текст при ошибке</label><input class="admin-input" id="contestLoseTextInput" placeholder="Код не найден. Проверьте ввод."></div></div>
+            <div><label class="admin-label" for="contestCodesInput">Коды победителей (по строкам: КОД | Цветок)</label><textarea class="admin-textarea" id="contestCodesInput" placeholder="ROSE-2026 | Роза&#10;PEONY-77 | Пион"></textarea></div>
             <div><label class="admin-label" for="tipInput">Подпись видео/медиа</label><input class="admin-input" id="tipInput"></div>
             <div><label class="admin-label" for="quoteInput">Большая цитата</label><textarea class="admin-textarea" id="quoteInput"></textarea></div>
             <div class="admin-actions"><button class="admin-btn admin-btn--accent" type="submit">Сохранить</button><button class="admin-btn" id="copyLinkBtn" type="button">Скопировать ссылку</button><button class="admin-btn" id="openLinkBtn" type="button">Открыть ссылку</button><button class="admin-btn admin-btn--danger" id="deleteBtn" type="button">Удалить</button></div>
