@@ -613,6 +613,15 @@ body.splash-lock {
   margin-bottom: 1.2rem;
 }
 
+.prediction-mode {
+  margin: 0 0 .95rem;
+  font-family: 'Montserrat', sans-serif;
+  font-size: .62rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
 .prediction-toggle {
   display: flex;
   gap: .5rem;

@@ -43,6 +43,10 @@ const DEFAULT_PREDICTIONS_SKEPTIC = [
   'Секретный прогноз редакции: ты сама автор лучшего сценария для своей жизни.'
 ];
 
+const DEFAULT_PREDICTION_BUTTON = 'Узнать предсказание';
+const DEFAULT_PREDICTION_INTRO_BELIEVE = 'Выбрано: «верю». Нажми кнопку, и получишь мягкое предсказание.';
+const DEFAULT_PREDICTION_INTRO_SKEPTIC = 'Выбрано: «не верю». Нажми кнопку, и получишь честный мотивационный прогноз.';
+
 const DEFAULT_PROFILE = {
   name: 'Екатерина',
   theme: 'warm',
@@ -50,6 +54,10 @@ const DEFAULT_PROFILE = {
   posterSrc: 'assets/poster.jpg',
   photos: ['assets/photo1.jpg', 'assets/photo2.jpg', 'assets/photo3.jpg'],
   compliments: DEFAULT_COMPLIMENTS,
+  believesPredictions: true,
+  predictionButtonLabel: DEFAULT_PREDICTION_BUTTON,
+  predictionIntroBelieve: DEFAULT_PREDICTION_INTRO_BELIEVE,
+  predictionIntroSkeptic: DEFAULT_PREDICTION_INTRO_SKEPTIC,
   predictionsBelieve: DEFAULT_PREDICTIONS_BELIEVE,
   predictionsSkeptic: DEFAULT_PREDICTIONS_SKEPTIC,
   buttonLabel: 'Узнать правду о себе',
@@ -128,11 +136,16 @@ async function initBackend() {
 
   state.backendMode = 'local';
   state.db = loadLocalDb();
+  const normalized = {};
+  Object.entries(state.db.profiles || {}).forEach(([k, v]) => {
+    normalized[k] = makeProfile(k, v || {});
+  });
+  state.db.profiles = normalized;
   if (!Object.keys(state.db.profiles).length) {
     const seed = makeProfile(generateKey(), DEFAULT_PROFILE);
     state.db.profiles[seed.id] = seed;
-    saveLocalDb();
   }
+  saveLocalDb();
 }
 
 async function loadProfiles() {
@@ -227,8 +240,12 @@ function makeProfile(key, source) {
     posterSrc: source.posterSrc || '',
     photos: normalizeLines(source.photos),
     compliments: normalizeLines(source.compliments),
-    predictionsBelieve: normalizeLines(source.predictionsBelieve),
-    predictionsSkeptic: normalizeLines(source.predictionsSkeptic),
+    believesPredictions: typeof source.believesPredictions === 'boolean' ? source.believesPredictions : true,
+    predictionButtonLabel: source.predictionButtonLabel || DEFAULT_PREDICTION_BUTTON,
+    predictionIntroBelieve: source.predictionIntroBelieve || DEFAULT_PREDICTION_INTRO_BELIEVE,
+    predictionIntroSkeptic: source.predictionIntroSkeptic || DEFAULT_PREDICTION_INTRO_SKEPTIC,
+    predictionsBelieve: normalizeLines(source.predictionsBelieve).length ? normalizeLines(source.predictionsBelieve) : DEFAULT_PREDICTIONS_BELIEVE,
+    predictionsSkeptic: normalizeLines(source.predictionsSkeptic).length ? normalizeLines(source.predictionsSkeptic) : DEFAULT_PREDICTIONS_SKEPTIC,
     buttonLabel: source.buttonLabel || 'Узнать правду о себе',
     mediaTip: source.mediaTip || 'From little girl to cover star',
     quoteText: source.quoteText || DEFAULT_PROFILE.quoteText,
@@ -246,8 +263,12 @@ function rowToProfile(row) {
     posterSrc: row.poster_src || '',
     photos: normalizeLines(row.photos),
     compliments: normalizeLines(row.compliments),
-    predictionsBelieve: DEFAULT_PREDICTIONS_BELIEVE,
-    predictionsSkeptic: DEFAULT_PREDICTIONS_SKEPTIC,
+    believesPredictions: typeof row.believes_predictions === 'boolean' ? row.believes_predictions : true,
+    predictionButtonLabel: row.prediction_button_label || DEFAULT_PREDICTION_BUTTON,
+    predictionIntroBelieve: row.prediction_intro_believe || DEFAULT_PREDICTION_INTRO_BELIEVE,
+    predictionIntroSkeptic: row.prediction_intro_skeptic || DEFAULT_PREDICTION_INTRO_SKEPTIC,
+    predictionsBelieve: normalizeLines(row.predictions_believe).length ? normalizeLines(row.predictions_believe) : DEFAULT_PREDICTIONS_BELIEVE,
+    predictionsSkeptic: normalizeLines(row.predictions_skeptic).length ? normalizeLines(row.predictions_skeptic) : DEFAULT_PREDICTIONS_SKEPTIC,
     buttonLabel: row.button_label || 'Узнать правду о себе',
     mediaTip: row.media_tip || 'From little girl to cover star',
     quoteText: row.quote_text || DEFAULT_PROFILE.quoteText,
@@ -265,6 +286,12 @@ function profileToRow(profile) {
     poster_src: profile.posterSrc,
     photos: normalizeLines(profile.photos),
     compliments: normalizeLines(profile.compliments),
+    believes_predictions: !!profile.believesPredictions,
+    prediction_button_label: profile.predictionButtonLabel || DEFAULT_PREDICTION_BUTTON,
+    prediction_intro_believe: profile.predictionIntroBelieve || DEFAULT_PREDICTION_INTRO_BELIEVE,
+    prediction_intro_skeptic: profile.predictionIntroSkeptic || DEFAULT_PREDICTION_INTRO_SKEPTIC,
+    predictions_believe: normalizeLines(profile.predictionsBelieve),
+    predictions_skeptic: normalizeLines(profile.predictionsSkeptic),
     button_label: profile.buttonLabel,
     media_tip: profile.mediaTip,
     quote_text: profile.quoteText,
@@ -307,7 +334,7 @@ function renderGirlPage(profile) {
   setSplashScrollLock(true);
   state.activeProfile = profile;
   state.complimentIndex = -1;
-  state.predictionMode = 'believe';
+  state.predictionMode = profile.believesPredictions ? 'believe' : 'skeptic';
   state.predictionIndex = -1;
   state.predictionBusy = false;
 
@@ -321,7 +348,7 @@ function renderGirlPage(profile) {
   complimentBtn.textContent = profile.buttonLabel || 'Узнать правду о себе';
   setChunkedText(complimentText, compliments[0] || DEFAULT_COMPLIMENTS[0]);
   complimentSource.classList.add('visible');
-  initPredictionUi();
+  initPredictionUi(profile);
 
   document.getElementById('videoOverlayBottom').textContent = profile.mediaTip || 'From little girl to cover star';
   document.getElementById('quoteBig').innerHTML = profile.quoteText || DEFAULT_PROFILE.quoteText;
@@ -596,33 +623,25 @@ function nextCompliment() {
   }, 500);
 }
 
-function initPredictionUi() {
-  const yesBtn = document.getElementById('beliefYesBtn');
-  const noBtn = document.getElementById('beliefNoBtn');
+function initPredictionUi(profile) {
+  const modeNote = document.getElementById('predictionModeNote');
+  const btn = document.getElementById('predictionBtn');
   const textEl = document.getElementById('predictionText');
   const sourceEl = document.getElementById('predictionSource');
-  if (!yesBtn || !noBtn || !textEl || !sourceEl) return;
+  if (!modeNote || !btn || !textEl || !sourceEl) return;
 
-  yesBtn.onclick = () => setPredictionMode('believe');
-  noBtn.onclick = () => setPredictionMode('skeptic');
-  setPredictionMode('believe');
-}
-
-function setPredictionMode(mode) {
-  state.predictionMode = mode === 'skeptic' ? 'skeptic' : 'believe';
+  state.predictionMode = profile?.believesPredictions ? 'believe' : 'skeptic';
   state.predictionIndex = -1;
-  const yesBtn = document.getElementById('beliefYesBtn');
-  const noBtn = document.getElementById('beliefNoBtn');
-  const sourceEl = document.getElementById('predictionSource');
-  const textEl = document.getElementById('predictionText');
-  if (!yesBtn || !noBtn || !sourceEl || !textEl) return;
-
-  yesBtn.classList.toggle('active', state.predictionMode === 'believe');
-  noBtn.classList.toggle('active', state.predictionMode === 'skeptic');
-  sourceEl.textContent = state.predictionMode === 'believe' ? '— Астрологическая колонка VOGUE' : '— Редакция рационального взгляда';
+  btn.textContent = profile?.predictionButtonLabel || DEFAULT_PREDICTION_BUTTON;
+  modeNote.textContent = state.predictionMode === 'believe'
+    ? 'Режим: верит в предсказания'
+    : 'Режим: не верит в предсказания';
+  sourceEl.textContent = state.predictionMode === 'believe'
+    ? '— Астрологическая колонка VOGUE'
+    : '— Редакция рационального взгляда';
   setChunkedText(textEl, state.predictionMode === 'believe'
-    ? 'Выбрано: «верю». Нажми кнопку, и получишь мягкое предсказание.'
-    : 'Выбрано: «не верю». Нажми кнопку, и получишь честный мотивационный прогноз.');
+    ? (profile?.predictionIntroBelieve || DEFAULT_PREDICTION_INTRO_BELIEVE)
+    : (profile?.predictionIntroSkeptic || DEFAULT_PREDICTION_INTRO_SKEPTIC));
   sourceEl.classList.add('visible');
 }
 
@@ -638,15 +657,16 @@ function nextPrediction() {
   }
 
   const list = state.predictionMode === 'skeptic'
-    ? normalizeLines(state.activeProfile.predictionsSkeptic).length ? normalizeLines(state.activeProfile.predictionsSkeptic) : DEFAULT_PREDICTIONS_SKEPTIC
-    : normalizeLines(state.activeProfile.predictionsBelieve).length ? normalizeLines(state.activeProfile.predictionsBelieve) : DEFAULT_PREDICTIONS_BELIEVE;
+    ? normalizeLines(state.activeProfile.predictionsSkeptic)
+    : normalizeLines(state.activeProfile.predictionsBelieve);
+  const safeList = list.length ? list : (state.predictionMode === 'skeptic' ? DEFAULT_PREDICTIONS_SKEPTIC : DEFAULT_PREDICTIONS_BELIEVE);
 
   textEl.classList.add('fading');
   sourceEl.classList.remove('visible');
 
   setTimeout(() => {
-    state.predictionIndex = (state.predictionIndex + 1) % Math.max(1, list.length);
-    setChunkedText(textEl, list[state.predictionIndex] || '');
+    state.predictionIndex = (state.predictionIndex + 1) % Math.max(1, safeList.length);
+    setChunkedText(textEl, safeList[state.predictionIndex] || '');
     textEl.classList.remove('fading');
     sourceEl.classList.add('visible');
     state.predictionBusy = false;
@@ -862,6 +882,12 @@ function bindAdminEvents() {
       photos: normalizeLines(document.getElementById('photosInput').value),
       buttonLabel: document.getElementById('buttonInput').value.trim() || 'Узнать правду о себе',
       compliments: normalizeLines(document.getElementById('complimentsInput').value),
+      believesPredictions: document.getElementById('believesPredictionsInput').value === 'believe',
+      predictionButtonLabel: document.getElementById('predictionButtonInput').value.trim() || DEFAULT_PREDICTION_BUTTON,
+      predictionIntroBelieve: document.getElementById('predictionIntroBelieveInput').value.trim() || DEFAULT_PREDICTION_INTRO_BELIEVE,
+      predictionIntroSkeptic: document.getElementById('predictionIntroSkepticInput').value.trim() || DEFAULT_PREDICTION_INTRO_SKEPTIC,
+      predictionsBelieve: normalizeLines(document.getElementById('predictionsBelieveInput').value),
+      predictionsSkeptic: normalizeLines(document.getElementById('predictionsSkepticInput').value),
       mediaTip: document.getElementById('tipInput').value.trim() || 'From little girl to cover star',
       quoteText: document.getElementById('quoteInput').value.trim() || DEFAULT_PROFILE.quoteText,
       createdAt: state.db.profiles[state.selectedKey]?.createdAt
@@ -983,6 +1009,12 @@ function selectProfile(key) {
   document.getElementById('photosInput').value = normalizeLines(p.photos).join('\n');
   document.getElementById('buttonInput').value = p.buttonLabel || 'Узнать правду о себе';
   document.getElementById('complimentsInput').value = normalizeLines(p.compliments).join('\n');
+  document.getElementById('believesPredictionsInput').value = p.believesPredictions ? 'believe' : 'skeptic';
+  document.getElementById('predictionButtonInput').value = p.predictionButtonLabel || DEFAULT_PREDICTION_BUTTON;
+  document.getElementById('predictionIntroBelieveInput').value = p.predictionIntroBelieve || DEFAULT_PREDICTION_INTRO_BELIEVE;
+  document.getElementById('predictionIntroSkepticInput').value = p.predictionIntroSkeptic || DEFAULT_PREDICTION_INTRO_SKEPTIC;
+  document.getElementById('predictionsBelieveInput').value = normalizeLines(p.predictionsBelieve).join('\n');
+  document.getElementById('predictionsSkepticInput').value = normalizeLines(p.predictionsSkeptic).join('\n');
   document.getElementById('tipInput').value = p.mediaTip || 'From little girl to cover star';
   document.getElementById('quoteInput').value = p.quoteText || DEFAULT_PROFILE.quoteText;
   document.getElementById('profileLink').textContent = currentProfileLink();
@@ -992,7 +1024,7 @@ function selectProfile(key) {
 
 function renderAdminPreview(profile) {
   const wrap = document.getElementById('adminPreview');
-  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
+  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит' : 'не верит') + ' / ' + normalizeLines(profile.predictionsBelieve).length + ' / ' + normalizeLines(profile.predictionsSkeptic).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
 }
 
 function currentProfileLink() {

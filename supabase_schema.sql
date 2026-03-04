@@ -6,12 +6,25 @@
   poster_src text not null default '',
   photos jsonb not null default '[]'::jsonb,
   compliments jsonb not null default '[]'::jsonb,
+  believes_predictions boolean not null default true,
+  prediction_button_label text not null default 'Узнать предсказание',
+  prediction_intro_believe text not null default 'Выбрано: «верю». Нажми кнопку, и получишь мягкое предсказание.',
+  prediction_intro_skeptic text not null default 'Выбрано: «не верю». Нажми кнопку, и получишь честный мотивационный прогноз.',
+  predictions_believe jsonb not null default '[]'::jsonb,
+  predictions_skeptic jsonb not null default '[]'::jsonb,
   button_label text not null default 'Узнать правду о себе',
   media_tip text not null default 'From little girl to cover star',
   quote_text text not null default '«Даже в детстве было понятно, что растет <mark>звезда обложки</mark>!»',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.march8_profiles add column if not exists believes_predictions boolean not null default true;
+alter table public.march8_profiles add column if not exists prediction_button_label text not null default 'Узнать предсказание';
+alter table public.march8_profiles add column if not exists prediction_intro_believe text not null default 'Выбрано: «верю». Нажми кнопку, и получишь мягкое предсказание.';
+alter table public.march8_profiles add column if not exists prediction_intro_skeptic text not null default 'Выбрано: «не верю». Нажми кнопку, и получишь честный мотивационный прогноз.';
+alter table public.march8_profiles add column if not exists predictions_believe jsonb not null default '[]'::jsonb;
+alter table public.march8_profiles add column if not exists predictions_skeptic jsonb not null default '[]'::jsonb;
 
 alter table public.march8_profiles enable row level security;
 

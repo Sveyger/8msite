@@ -72,13 +72,10 @@
 
     <section class="prediction-section reveal">
       <div class="prediction-title">Интерактив • Предсказания</div>
-      <div class="prediction-toggle" role="tablist" aria-label="Отношение к предсказаниям">
-        <button class="prediction-chip active" id="beliefYesBtn" type="button">Верю в предсказания</button>
-        <button class="prediction-chip" id="beliefNoBtn" type="button">Не верю в предсказания</button>
-      </div>
+      <p class="prediction-mode" id="predictionModeNote">Режим предсказаний загружается…</p>
       <button class="prediction-button" id="predictionBtn" type="button">Узнать предсказание</button>
       <div class="prediction-display">
-        <p class="prediction-text" id="predictionText">Выбери режим и нажми кнопку — откроем прогноз редакции.</p>
+        <p class="prediction-text" id="predictionText">Нажми кнопку — и откроем прогноз редакции.</p>
         <div class="prediction-source visible" id="predictionSource">— Астрологическая колонка VOGUE</div>
       </div>
     </section>
@@ -164,6 +161,11 @@
             </div>
             <div><label class="admin-label" for="buttonInput">Текст кнопки</label><input class="admin-input" id="buttonInput"></div>
             <div><label class="admin-label" for="complimentsInput">Комплименты (по строкам)</label><textarea class="admin-textarea" id="complimentsInput"></textarea></div>
+            <div class="admin-row"><div><label class="admin-label" for="believesPredictionsInput">Вера в предсказания</label><select class="admin-select" id="believesPredictionsInput"><option value="believe">Верит</option><option value="skeptic">Не верит</option></select></div><div><label class="admin-label" for="predictionButtonInput">Кнопка предсказаний</label><input class="admin-input" id="predictionButtonInput" placeholder="Узнать предсказание"></div></div>
+            <div><label class="admin-label" for="predictionIntroBelieveInput">Текст перед выдачей (если верит)</label><textarea class="admin-textarea" id="predictionIntroBelieveInput" placeholder="Выбрано: «верю». Нажми кнопку, и получишь мягкое предсказание."></textarea></div>
+            <div><label class="admin-label" for="predictionIntroSkepticInput">Текст перед выдачей (если не верит)</label><textarea class="admin-textarea" id="predictionIntroSkepticInput" placeholder="Выбрано: «не верю». Нажми кнопку, и получишь честный мотивационный прогноз."></textarea></div>
+            <div><label class="admin-label" for="predictionsBelieveInput">Предсказания (если верит, по строкам)</label><textarea class="admin-textarea" id="predictionsBelieveInput"></textarea></div>
+            <div><label class="admin-label" for="predictionsSkepticInput">Тексты (если не верит, по строкам)</label><textarea class="admin-textarea" id="predictionsSkepticInput"></textarea></div>
             <div><label class="admin-label" for="tipInput">Подпись видео/медиа</label><input class="admin-input" id="tipInput"></div>
             <div><label class="admin-label" for="quoteInput">Большая цитата</label><textarea class="admin-textarea" id="quoteInput"></textarea></div>
             <div class="admin-actions"><button class="admin-btn admin-btn--accent" type="submit">Сохранить</button><button class="admin-btn" id="copyLinkBtn" type="button">Скопировать ссылку</button><button class="admin-btn" id="openLinkBtn" type="button">Открыть ссылку</button><button class="admin-btn admin-btn--danger" id="deleteBtn" type="button">Удалить</button></div>
