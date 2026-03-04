@@ -1,7 +1,7 @@
 ﻿const STORAGE_KEY = 'march8_master_profiles_v3';
 const GLOBAL_STORAGE_KEY = 'march8_global_settings_v1';
 const AUTH_KEY = 'march8_admin_auth';
-const ADMIN_CODE = 'M8';
+const ADMIN_CODE = 'ANVLM8';
 
 // Fill these values for production on GitHub Pages.
 const SUPABASE_URL = 'https://xpfaragwxgmstrkaizcv.supabase.co';
@@ -110,6 +110,7 @@ const state = {
   predictionMode: 'believe',
   predictionIndex: -1,
   predictionBusy: false,
+  predictionAnswersVisible: false,
   galleryImages: ['', '', ''],
   galleryOrder: [0, 1, 2],
   galleryBusy: false,
@@ -464,6 +465,7 @@ function renderGirlPage(profile) {
   state.predictionMode = profile.believesPredictions ? 'believe' : 'skeptic';
   state.predictionIndex = -1;
   state.predictionBusy = false;
+  state.predictionAnswersVisible = false;
 
   document.getElementById('storyName').textContent = profile.name || 'Героиня';
   document.title = 'История одной обложки: ' + (profile.name || 'Героиня');
@@ -764,8 +766,10 @@ function initPredictionUi(profile) {
   state.predictionMode = profile?.believesPredictions ? 'believe' : 'skeptic';
   state.predictionIndex = -1;
   state.predictionBusy = false;
+  state.predictionAnswersVisible = false;
   btn.textContent = profile?.predictionButtonLabel || DEFAULT_PREDICTION_BUTTON;
   answersBtn.textContent = state.globalSettings?.answersButtonLabel || DEFAULT_ANSWERS_BUTTON;
+  answersBtn.classList.remove('is-active');
   sourceEl.textContent = state.predictionMode === 'believe'
     ? '— Астрологическая колонка VOGUE'
     : '— Редакция рационального взгляда';
@@ -776,13 +780,16 @@ function initPredictionUi(profile) {
 function nextPrediction() {
   if (!state.activeProfile || state.predictionBusy) return;
   state.predictionBusy = true;
+  state.predictionAnswersVisible = false;
 
   const textEl = document.getElementById('predictionText');
   const sourceEl = document.getElementById('predictionSource');
+  const answersBtn = document.getElementById('answersBtn');
   if (!textEl || !sourceEl) {
     state.predictionBusy = false;
     return;
   }
+  if (answersBtn) answersBtn.classList.remove('is-active');
 
   const list = state.predictionMode === 'skeptic'
     ? normalizeLines(state.activeProfile.predictionsSkeptic)
@@ -807,15 +814,31 @@ function showSurveyAnswers() {
 
   const textEl = document.getElementById('predictionText');
   const sourceEl = document.getElementById('predictionSource');
+  const answersBtn = document.getElementById('answersBtn');
   if (!textEl || !sourceEl) {
     state.predictionBusy = false;
     return;
+  }
+
+  if (answersBtn) {
+    answersBtn.classList.add('tap-anim');
+    setTimeout(() => answersBtn.classList.remove('tap-anim'), 420);
   }
 
   textEl.classList.add('fading');
   sourceEl.classList.remove('visible');
 
   setTimeout(() => {
+    if (state.predictionAnswersVisible) {
+      textEl.textContent = '';
+      sourceEl.classList.remove('visible');
+      if (answersBtn) answersBtn.classList.remove('is-active');
+      state.predictionAnswersVisible = false;
+      textEl.classList.remove('fading');
+      state.predictionBusy = false;
+      return;
+    }
+
     if (state.activeProfile.believesPredictions) {
       const tableRows = parseSurveyQa(state.activeProfile.surveyAnswers);
       if (tableRows.length) {
@@ -828,6 +851,8 @@ function showSurveyAnswers() {
       setChunkedText(textEl, state.activeProfile.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE);
       sourceEl.textContent = '— Редакция';
     }
+    if (answersBtn) answersBtn.classList.add('is-active');
+    state.predictionAnswersVisible = true;
     textEl.classList.remove('fading');
     sourceEl.classList.add('visible');
     state.predictionBusy = false;

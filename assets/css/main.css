@@ -638,6 +638,33 @@ body.splash-lock {
   border-color: rgba(255,255,255,.2);
   background: rgba(255,255,255,.03);
   letter-spacing: .12em;
+  position: relative;
+  overflow: hidden;
+}
+
+.prediction-button--ghost::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent-light) 35%, transparent), transparent);
+  opacity: 0;
+}
+
+.prediction-button--ghost.tap-anim {
+  animation: answersBtnPulse .42s ease;
+}
+
+.prediction-button--ghost.tap-anim::after {
+  animation: answersBtnShine .42s ease;
+}
+
+.prediction-button--ghost.is-active {
+  border-color: color-mix(in srgb, var(--accent) 56%, rgba(255,255,255,.2));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-glow) 38%, transparent), 0 10px 24px color-mix(in srgb, var(--accent-glow) 25%, transparent);
+  background: color-mix(in srgb, var(--accent) 16%, rgba(255,255,255,.03));
 }
 
 .prediction-button:hover {
@@ -648,6 +675,18 @@ body.splash-lock {
 
 .prediction-button:active {
   transform: translateY(0);
+}
+
+@keyframes answersBtnPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+@keyframes answersBtnShine {
+  0% { left: -120%; opacity: 0; }
+  25% { opacity: .9; }
+  100% { left: 140%; opacity: 0; }
 }
 
 .prediction-display {
