@@ -1047,9 +1047,11 @@ function renderAdminEntry() {
 
 function renderAdmin() {
   showOnly('adminView');
+  initAdminTabs();
   bindAdminEvents();
   fillGlobalForm();
   refreshList();
+  activateAdminTab('profile');
   if (!state.selectedKey) {
     const first = Object.keys(state.db.profiles)[0];
     if (first) selectProfile(first);
@@ -1065,6 +1067,12 @@ function bindAdminEvents() {
   const uploadMsg = document.getElementById('uploadMsg');
   if (form.dataset.bound === '1') return;
   form.dataset.bound = '1';
+
+  const searchInput = document.getElementById('profileSearchInput');
+  if (searchInput && searchInput.dataset.bound !== '1') {
+    searchInput.dataset.bound = '1';
+    searchInput.addEventListener('input', () => refreshList());
+  }
 
   const photosInput = document.getElementById('photosInput');
   photosInput.addEventListener('input', () => renderPhotoManager());
@@ -1098,6 +1106,7 @@ function bindAdminEvents() {
     const profile = makeProfile(key, DEFAULT_PROFILE);
     await upsertProfile(profile);
     state.db.profiles[key] = profile;
+    if (searchInput) searchInput.value = '';
     refreshList();
     selectProfile(key);
     renderPhotoManager();
@@ -1243,15 +1252,41 @@ function bindAdminEvents() {
 
 function refreshList() {
   const list = document.getElementById('profileList');
+  const searchInput = document.getElementById('profileSearchInput');
+  const countBadge = document.getElementById('profileCountBadge');
+  const query = String(searchInput?.value || '').trim().toLowerCase();
   list.innerHTML = '';
   const entries = Object.values(state.db.profiles).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ru'));
-  entries.forEach((profile) => {
+  const filtered = query
+    ? entries.filter((profile) => {
+      const name = String(profile.name || '').toLowerCase();
+      const key = String(profile.id || '').toLowerCase();
+      return name.includes(query) || key.includes(query);
+    })
+    : entries;
+
+  if (countBadge) countBadge.textContent = String(filtered.length);
+
+  filtered.forEach((profile) => {
     const item = document.createElement('article');
     item.className = 'admin-item' + (state.selectedKey === profile.id ? ' active' : '');
+    item.dataset.name = String(profile.name || '');
+    item.dataset.key = String(profile.id || '');
     item.onclick = () => selectProfile(profile.id);
-    item.innerHTML = '<p class="admin-item-name">' + escapeHtml(profile.name || 'Без имени') + '</p><p class="admin-item-key">key: ' + escapeHtml(profile.id) + '</p>';
+    item.innerHTML = [
+      '<div class="mp-profile-avatar">' + escapeHtml(makeInitials(profile.name || 'Героиня')) + '</div>',
+      '<div class="mp-profile-meta">',
+      '<p class="admin-item-name">' + escapeHtml(profile.name || 'Без имени') + '</p>',
+      '<p class="admin-item-key">' + escapeHtml(profile.id || '') + '</p>',
+      '</div>',
+      '<span class="mp-profile-status" aria-hidden="true"></span>'
+    ].join('');
     list.appendChild(item);
   });
+
+  if (!filtered.length) {
+    list.innerHTML = '<p class="admin-hint">Ничего не найдено.</p>';
+  }
 }
 
 function selectProfile(key) {
@@ -1259,6 +1294,8 @@ function selectProfile(key) {
   if (!p) return;
   state.selectedKey = key;
   refreshList();
+  const adminCurrentName = document.getElementById('adminCurrentName');
+  if (adminCurrentName) adminCurrentName.textContent = p.name || 'Героиня';
   document.getElementById('nameInput').value = p.name || '';
   document.getElementById('themeInput').value = p.theme || 'warm';
   document.getElementById('videoInput').value = p.videoSrc || '';
@@ -1277,6 +1314,26 @@ function selectProfile(key) {
   document.getElementById('profileLink').textContent = currentProfileLink();
   renderAdminPreview(p);
   renderPhotoManager();
+}
+
+function initAdminTabs() {
+  const buttons = Array.from(document.querySelectorAll('[data-admin-tab]'));
+  if (!buttons.length) return;
+  buttons.forEach((btn) => {
+    if (btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => activateAdminTab(btn.dataset.adminTab || 'profile'));
+  });
+}
+
+function activateAdminTab(tab) {
+  const name = String(tab || 'profile');
+  document.querySelectorAll('[data-admin-tab]').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.adminTab === name);
+  });
+  document.querySelectorAll('[data-admin-tab-panel]').forEach((panel) => {
+    panel.classList.toggle('active', panel.dataset.adminTabPanel === name);
+  });
 }
 
 function fillGlobalForm() {
@@ -1304,6 +1361,13 @@ function renderAdminPreview(profile) {
   const wrap = document.getElementById('adminPreview');
   const g = normalizeGlobalSettings(state.globalSettings);
   wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит' : 'не верит') + ' / ' + normalizeLines(profile.predictionsBelieve).length + ' / ' + normalizeLines(profile.predictionsSkeptic).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные титры: ' + normalizeLines(g.creditsLines).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные коды конкурса: ' + normalizeContestCodes(g.contestCodes).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
+}
+
+function makeInitials(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '??';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
 function currentProfileLink() {
