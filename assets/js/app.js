@@ -29,6 +29,20 @@ const DEFAULT_COMPLIMENTS = [
   'Ты тот самый человек, рядом с которым хочется становиться лучше и смелее.'
 ];
 
+const DEFAULT_PREDICTIONS_BELIEVE = [
+  'В ближайшие дни ты получишь знак, который подтвердит: ты идешь в правильном направлении.',
+  'Твоя энергия притянет важное знакомство, и оно сыграет тебе на руку.',
+  'До конца месяца случится приятный поворот, о котором ты давно мечтала.',
+  'Твое «да» в нужный момент откроет дверь в красивую новую историю.'
+];
+
+const DEFAULT_PREDICTIONS_SKEPTIC = [
+  'Ты не веришь в предсказания, и правильно: твой главный прогноз строится твоими решениями.',
+  'Пока другие ждут знаки, ты создаешь результат сама. Это твой сильный стиль.',
+  'Твоя интуиция работает лучше любых гороскопов, когда ты к себе прислушиваешься.',
+  'Секретный прогноз редакции: ты сама автор лучшего сценария для своей жизни.'
+];
+
 const DEFAULT_PROFILE = {
   name: 'Екатерина',
   theme: 'warm',
@@ -36,6 +50,8 @@ const DEFAULT_PROFILE = {
   posterSrc: 'assets/poster.jpg',
   photos: ['assets/photo1.jpg', 'assets/photo2.jpg', 'assets/photo3.jpg'],
   compliments: DEFAULT_COMPLIMENTS,
+  predictionsBelieve: DEFAULT_PREDICTIONS_BELIEVE,
+  predictionsSkeptic: DEFAULT_PREDICTIONS_SKEPTIC,
   buttonLabel: 'Узнать правду о себе',
   mediaTip: 'From little girl to cover star',
   quoteText: '«Даже в детстве было понятно, что растет <mark>звезда обложки</mark>!»'
@@ -55,6 +71,9 @@ const state = {
   complimentIndex: -1,
   isAnimating: false,
   activeProfile: null,
+  predictionMode: 'believe',
+  predictionIndex: -1,
+  predictionBusy: false,
   galleryImages: ['', '', ''],
   galleryOrder: [0, 1, 2],
   galleryBusy: false,
@@ -208,6 +227,8 @@ function makeProfile(key, source) {
     posterSrc: source.posterSrc || '',
     photos: normalizeLines(source.photos),
     compliments: normalizeLines(source.compliments),
+    predictionsBelieve: normalizeLines(source.predictionsBelieve),
+    predictionsSkeptic: normalizeLines(source.predictionsSkeptic),
     buttonLabel: source.buttonLabel || 'Узнать правду о себе',
     mediaTip: source.mediaTip || 'From little girl to cover star',
     quoteText: source.quoteText || DEFAULT_PROFILE.quoteText,
@@ -225,6 +246,8 @@ function rowToProfile(row) {
     posterSrc: row.poster_src || '',
     photos: normalizeLines(row.photos),
     compliments: normalizeLines(row.compliments),
+    predictionsBelieve: DEFAULT_PREDICTIONS_BELIEVE,
+    predictionsSkeptic: DEFAULT_PREDICTIONS_SKEPTIC,
     buttonLabel: row.button_label || 'Узнать правду о себе',
     mediaTip: row.media_tip || 'From little girl to cover star',
     quoteText: row.quote_text || DEFAULT_PROFILE.quoteText,
@@ -284,6 +307,9 @@ function renderGirlPage(profile) {
   setSplashScrollLock(true);
   state.activeProfile = profile;
   state.complimentIndex = -1;
+  state.predictionMode = 'believe';
+  state.predictionIndex = -1;
+  state.predictionBusy = false;
 
   document.getElementById('storyName').textContent = profile.name || 'Героиня';
   document.title = 'История одной обложки: ' + (profile.name || 'Героиня');
@@ -295,6 +321,7 @@ function renderGirlPage(profile) {
   complimentBtn.textContent = profile.buttonLabel || 'Узнать правду о себе';
   setChunkedText(complimentText, compliments[0] || DEFAULT_COMPLIMENTS[0]);
   complimentSource.classList.add('visible');
+  initPredictionUi();
 
   document.getElementById('videoOverlayBottom').textContent = profile.mediaTip || 'From little girl to cover star';
   document.getElementById('quoteBig').innerHTML = profile.quoteText || DEFAULT_PROFILE.quoteText;
@@ -304,6 +331,8 @@ function renderGirlPage(profile) {
   renderGallery(profile);
 
   complimentBtn.onclick = () => nextCompliment();
+  const predictionBtn = document.getElementById('predictionBtn');
+  if (predictionBtn) predictionBtn.onclick = () => nextPrediction();
 }
 
 function renderMedia(profile) {
@@ -565,6 +594,63 @@ function nextCompliment() {
     btn.textContent = 'Еще комплимент ✨';
     state.isAnimating = false;
   }, 500);
+}
+
+function initPredictionUi() {
+  const yesBtn = document.getElementById('beliefYesBtn');
+  const noBtn = document.getElementById('beliefNoBtn');
+  const textEl = document.getElementById('predictionText');
+  const sourceEl = document.getElementById('predictionSource');
+  if (!yesBtn || !noBtn || !textEl || !sourceEl) return;
+
+  yesBtn.onclick = () => setPredictionMode('believe');
+  noBtn.onclick = () => setPredictionMode('skeptic');
+  setPredictionMode('believe');
+}
+
+function setPredictionMode(mode) {
+  state.predictionMode = mode === 'skeptic' ? 'skeptic' : 'believe';
+  state.predictionIndex = -1;
+  const yesBtn = document.getElementById('beliefYesBtn');
+  const noBtn = document.getElementById('beliefNoBtn');
+  const sourceEl = document.getElementById('predictionSource');
+  const textEl = document.getElementById('predictionText');
+  if (!yesBtn || !noBtn || !sourceEl || !textEl) return;
+
+  yesBtn.classList.toggle('active', state.predictionMode === 'believe');
+  noBtn.classList.toggle('active', state.predictionMode === 'skeptic');
+  sourceEl.textContent = state.predictionMode === 'believe' ? '— Астрологическая колонка VOGUE' : '— Редакция рационального взгляда';
+  setChunkedText(textEl, state.predictionMode === 'believe'
+    ? 'Выбрано: «верю». Нажми кнопку, и получишь мягкое предсказание.'
+    : 'Выбрано: «не верю». Нажми кнопку, и получишь честный мотивационный прогноз.');
+  sourceEl.classList.add('visible');
+}
+
+function nextPrediction() {
+  if (!state.activeProfile || state.predictionBusy) return;
+  state.predictionBusy = true;
+
+  const textEl = document.getElementById('predictionText');
+  const sourceEl = document.getElementById('predictionSource');
+  if (!textEl || !sourceEl) {
+    state.predictionBusy = false;
+    return;
+  }
+
+  const list = state.predictionMode === 'skeptic'
+    ? normalizeLines(state.activeProfile.predictionsSkeptic).length ? normalizeLines(state.activeProfile.predictionsSkeptic) : DEFAULT_PREDICTIONS_SKEPTIC
+    : normalizeLines(state.activeProfile.predictionsBelieve).length ? normalizeLines(state.activeProfile.predictionsBelieve) : DEFAULT_PREDICTIONS_BELIEVE;
+
+  textEl.classList.add('fading');
+  sourceEl.classList.remove('visible');
+
+  setTimeout(() => {
+    state.predictionIndex = (state.predictionIndex + 1) % Math.max(1, list.length);
+    setChunkedText(textEl, list[state.predictionIndex] || '');
+    textEl.classList.remove('fading');
+    sourceEl.classList.add('visible');
+    state.predictionBusy = false;
+  }, 420);
 }
 
 function createSparkles(element) {

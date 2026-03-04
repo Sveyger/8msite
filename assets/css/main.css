@@ -596,6 +596,108 @@ body.splash-lock {
 }
 
 /* ============================================
+   PREDICTION SECTION (TEMPLATE)
+   ============================================ */
+.prediction-section {
+  text-align: center;
+  padding: 1rem 0 2.2rem;
+}
+
+.prediction-title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 300;
+  font-size: 0.58rem;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 1.2rem;
+}
+
+.prediction-toggle {
+  display: flex;
+  gap: .5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: .95rem;
+}
+
+.prediction-chip {
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px;
+  background: rgba(255,255,255,.03);
+  color: var(--text-secondary);
+  font-family: 'Montserrat', sans-serif;
+  font-size: .68rem;
+  letter-spacing: .04em;
+  padding: .52rem .86rem;
+  cursor: pointer;
+  transition: all .25s ease;
+}
+
+.prediction-chip.active {
+  border-color: color-mix(in srgb, var(--accent) 60%, rgba(255,255,255,.28));
+  color: var(--text-primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-glow) 45%, transparent);
+}
+
+.prediction-button {
+  border: 1px solid color-mix(in srgb, var(--accent) 48%, rgba(255,255,255,.2));
+  border-radius: 999px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 24%, rgba(255,255,255,.02)), color-mix(in srgb, var(--accent-light) 20%, rgba(255,255,255,.01)));
+  color: var(--text-primary);
+  font-family: 'Montserrat', sans-serif;
+  font-size: .68rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  padding: .9rem 1.45rem;
+  cursor: pointer;
+  transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+}
+
+.prediction-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--accent-glow) 35%, transparent);
+  filter: brightness(1.04);
+}
+
+.prediction-button:active {
+  transform: translateY(0);
+}
+
+.prediction-display {
+  margin-top: 1.35rem;
+  min-height: 82px;
+}
+
+.prediction-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.06rem, 4.1vw, 1.28rem);
+  line-height: 1.62;
+  color: var(--text-primary);
+  transition: opacity .42s ease, transform .42s ease;
+}
+
+.prediction-text.fading {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.prediction-source {
+  margin-top: .8rem;
+  font-family: 'Montserrat', sans-serif;
+  font-size: .54rem;
+  letter-spacing: .33em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity .4s ease;
+}
+
+.prediction-source.visible {
+  opacity: 1;
+}
+
+/* ============================================
    PHOTO GALLERY
    ============================================ */
 .gallery-section {
