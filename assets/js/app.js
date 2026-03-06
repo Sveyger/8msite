@@ -62,6 +62,14 @@ const DEFAULT_CONTEST_BUTTON = 'Проверить код';
 const DEFAULT_CONTEST_WIN = 'Поздравляем! Код подтвержден.';
 const DEFAULT_CONTEST_LOSE = 'Код не найден. Проверьте ввод.';
 const DEFAULT_CONTEST_CODES = [];
+const DEFAULT_TEAM_MEMBERS = [
+  { role: 'Фейс контроль', label: 'Участник 01', photo: '' },
+  { role: 'Фейс контроль', label: 'Участник 02', photo: '' },
+  { role: 'Фейс контроль', label: 'Участник 03', photo: '' },
+  { role: 'Ведущий', label: 'Участник 04', photo: '' },
+  { role: 'Админ', label: 'Участник 05', photo: '' },
+  { role: 'Админ', label: 'Участник 06', photo: '' }
+];
 
 const DEFAULT_PROFILE = {
   name: 'Екатерина',
@@ -480,7 +488,7 @@ function renderGirlPage(profile) {
   setChunkedText(complimentText, compliments[0] || DEFAULT_COMPLIMENTS[0]);
   complimentSource.classList.add('visible');
   initPredictionUi(profile);
-  renderCredits(state.globalSettings);
+  renderTeamGrid();
   initContestUi(state.globalSettings);
 
   document.getElementById('videoOverlayBottom').textContent = profile.mediaTip || 'From little girl to cover star';
@@ -867,12 +875,22 @@ function showSurveyAnswers() {
   }, 420);
 }
 
-function renderCredits(profile) {
-  const wrap = document.getElementById('creditsList');
+function renderTeamGrid() {
+  const wrap = document.getElementById('teamGrid');
   if (!wrap) return;
-  const lines = normalizeLines(profile?.creditsLines);
-  const finalLines = lines.length ? lines : DEFAULT_CREDITS;
-  wrap.innerHTML = finalLines.map((line) => '<span>' + escapeHtml(line) + '</span>').join('');
+  wrap.innerHTML = DEFAULT_TEAM_MEMBERS.map((member, idx) => {
+    const initials = makeInitials(member.label || member.role || String(idx + 1));
+    const media = member.photo
+      ? '<img class="team-photo-img" src="' + escapeHtml(member.photo) + '" alt="' + escapeHtml(member.label || member.role) + '">'
+      : '<div class="team-photo-fallback">' + escapeHtml(initials) + '</div>';
+    return [
+      '<article class="team-card">',
+      '<div class="team-photo-frame">' + media + '</div>',
+      '<p class="team-card-role">' + escapeHtml(member.role) + '</p>',
+      '<p class="team-card-name">' + escapeHtml(member.label) + '</p>',
+      '</article>'
+    ].join('');
+  }).join('');
 }
 
 function initContestUi(profile) {
@@ -1263,8 +1281,8 @@ function bindAdminEvents() {
     globalForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const next = normalizeGlobalSettings({
-        answersButtonLabel: DEFAULT_ANSWERS_BUTTON,
-        creditsLines: normalizeLines(document.getElementById('creditsInput').value),
+        answersButtonLabel: state.globalSettings.answersButtonLabel || DEFAULT_ANSWERS_BUTTON,
+        creditsLines: state.globalSettings.creditsLines,
         contestTitle: document.getElementById('contestTitleInput').value.trim() || DEFAULT_CONTEST_TITLE,
         contestHint: document.getElementById('contestHintInput').value.trim() || DEFAULT_CONTEST_HINT,
         contestButtonLabel: document.getElementById('contestButtonInput').value.trim() || DEFAULT_CONTEST_BUTTON,
@@ -1372,16 +1390,14 @@ function activateAdminTab(tab) {
 function fillGlobalForm() {
   const g = normalizeGlobalSettings(state.globalSettings);
   state.globalSettings = g;
-  const creditsInput = document.getElementById('creditsInput');
   const contestTitleInput = document.getElementById('contestTitleInput');
   const contestHintInput = document.getElementById('contestHintInput');
   const contestButtonInput = document.getElementById('contestButtonInput');
   const contestWinTextInput = document.getElementById('contestWinTextInput');
   const contestLoseTextInput = document.getElementById('contestLoseTextInput');
   const contestCodesInput = document.getElementById('contestCodesInput');
-  if (!creditsInput || !contestTitleInput || !contestHintInput || !contestButtonInput || !contestWinTextInput || !contestLoseTextInput || !contestCodesInput) return;
+  if (!contestTitleInput || !contestHintInput || !contestButtonInput || !contestWinTextInput || !contestLoseTextInput || !contestCodesInput) return;
 
-  creditsInput.value = normalizeLines(g.creditsLines).join('\n');
   contestTitleInput.value = g.contestTitle || DEFAULT_CONTEST_TITLE;
   contestHintInput.value = g.contestHint || DEFAULT_CONTEST_HINT;
   contestButtonInput.value = g.contestButtonLabel || DEFAULT_CONTEST_BUTTON;
@@ -1393,7 +1409,7 @@ function fillGlobalForm() {
 function renderAdminPreview(profile) {
   const wrap = document.getElementById('adminPreview');
   const g = normalizeGlobalSettings(state.globalSettings);
-  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит' : 'не верит') + ' / ' + normalizeLines(profile.predictionsBelieve).length + ' / ' + normalizeLines(profile.predictionsSkeptic).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные титры: ' + normalizeLines(g.creditsLines).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные коды конкурса: ' + normalizeContestCodes(g.contestCodes).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
+  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит' : 'не верит') + ' / ' + normalizeLines(profile.predictionsBelieve).length + ' / ' + normalizeLines(profile.predictionsSkeptic).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные коды конкурса: ' + normalizeContestCodes(g.contestCodes).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
 }
 
 function makeInitials(name) {

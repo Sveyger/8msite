@@ -117,21 +117,6 @@
       <p class="quote-author">— Главный редактор</p>
     </section>
 
-    <div class="divider reveal"><span class="divider-icon">✦</span></div>
-
-    <section class="secret-footer reveal">
-      <div class="secret-trigger" id="secretTrigger" onclick="toggleSecret()">••• секрет •••</div>
-      <div class="secret-content" id="secretContent">
-        <div class="secret-text" id="secretText">
-          Эту страницу с любовью сделали те, кто знает: ты заслуживаешь быть на обложке каждый день.
-          <br><br>
-          Ты вдохновляешь. Ты покоряешь. Ты невероятная.
-        </div>
-      </div>
-    </section>
-
-    <div class="divider reveal"><span class="divider-icon">✦</span></div>
-
     <section class="contest-section reveal">
       <div class="contest-title" id="contestTitle">Конкурс цветов</div>
       <p class="contest-hint" id="contestHint">Введите код победителя, чтобы открыть свой приз.</p>
@@ -146,8 +131,22 @@
     </section>
 
     <section class="team-section reveal">
-      <div class="team-title">Команда проекта</div>
-      <div class="credits credits--public" id="creditsList"></div>
+      <div class="team-title">Команда вечера</div>
+      <p class="team-subtitle">Те, кто готовили событие и собирали этот проект.</p>
+      <div class="team-grid" id="teamGrid"></div>
+    </section>
+
+    <div class="divider reveal"><span class="divider-icon">✦</span></div>
+
+    <section class="secret-footer reveal">
+      <div class="secret-trigger" id="secretTrigger" onclick="toggleSecret()">••• секрет •••</div>
+      <div class="secret-content" id="secretContent">
+        <div class="secret-text" id="secretText">
+          Эту страницу с любовью сделали те, кто знает: ты заслуживаешь быть на обложке каждый день.
+          <br><br>
+          Ты вдохновляешь. Ты покоряешь. Ты невероятная.
+        </div>
+      </div>
     </section>
 
     <div class="bottom-brand"><div class="bottom-brand-text">VOGUE</div></div>
@@ -360,10 +359,6 @@
       <section class="admin-card mp-tab-panel" data-admin-tab-panel="global">
         <h3 class="admin-panel-title">Глобальные настройки (общие)</h3>
         <form id="globalForm" class="admin-form">
-          <div>
-            <label class="admin-label" for="creditsInput">Титры/команда (по строкам)</label>
-            <textarea class="admin-textarea" id="creditsInput" placeholder="Creative Direction — Team"></textarea>
-          </div>
           <div class="admin-row">
             <div>
               <label class="admin-label" for="contestTitleInput">Заголовок конкурса</label>
