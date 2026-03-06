@@ -115,6 +115,8 @@ const state = {
   selectedKey: null,
   complimentIndex: -1,
   isAnimating: false,
+  complimentTypingTimer: null,
+  complimentTypingRun: 0,
   activeProfile: null,
   predictionMode: 'believe',
   predictionIndex: -1,
@@ -489,8 +491,12 @@ function renderGirlPage(profile) {
   const complimentText = document.getElementById('complimentText');
   const complimentSource = document.getElementById('complimentSource');
   complimentBtn.textContent = profile.buttonLabel || 'Узнать правду о себе';
-  setChunkedText(complimentText, compliments[0] || DEFAULT_COMPLIMENTS[0]);
-  complimentSource.classList.add('visible');
+  state.isAnimating = true;
+  complimentSource.classList.remove('visible');
+  typeComplimentText(complimentText, compliments[0] || DEFAULT_COMPLIMENTS[0], () => {
+    complimentSource.classList.add('visible');
+    state.isAnimating = false;
+  });
   initPredictionUi(profile);
   renderTeamGrid();
   initContestUi(state.globalSettings);
@@ -762,11 +768,12 @@ function nextCompliment() {
 
   setTimeout(() => {
     state.complimentIndex = (state.complimentIndex + 1) % Math.max(compliments.length, 1);
-    setChunkedText(textEl, compliments[state.complimentIndex] || DEFAULT_COMPLIMENTS[0]);
     textEl.classList.remove('fading');
-    sourceEl.classList.add('visible');
-    btn.textContent = 'Еще комплимент \u2728';
-    state.isAnimating = false;
+    typeComplimentText(textEl, compliments[state.complimentIndex] || DEFAULT_COMPLIMENTS[0], () => {
+      sourceEl.classList.add('visible');
+      btn.textContent = 'Еще комплимент \u2728';
+      state.isAnimating = false;
+    });
   }, 500);
 }
 
@@ -993,6 +1000,49 @@ function setChunkedText(el, text) {
     .map((part) => (/^\s+$/.test(part) ? part : '<span class="hover-chunk">' + escapeHtml(part) + '</span>'))
     .join('');
   el.innerHTML = html;
+}
+
+function clearComplimentTyping() {
+  if (state.complimentTypingTimer) {
+    clearTimeout(state.complimentTypingTimer);
+    state.complimentTypingTimer = null;
+  }
+}
+
+function typeComplimentText(el, text, onDone) {
+  clearComplimentTyping();
+  const raw = String(text || '').trim();
+  const chars = [...raw];
+  const runId = Date.now();
+  state.complimentTypingRun = runId;
+
+  if (!raw) {
+    el.textContent = '';
+    el.classList.remove('is-typing');
+    if (typeof onDone === 'function') onDone();
+    return;
+  }
+
+  let index = 0;
+  el.classList.add('is-typing');
+  el.textContent = '';
+
+  const tick = () => {
+    if (state.complimentTypingRun !== runId) return;
+    index += 1;
+    el.textContent = chars.slice(0, index).join('');
+    if (index >= chars.length) {
+      el.classList.remove('is-typing');
+      setChunkedText(el, raw);
+      state.complimentTypingTimer = null;
+      if (typeof onDone === 'function') onDone();
+      return;
+    }
+    const delay = chars[index - 1] === ' ' ? 8 : (index < 18 ? 16 : 22);
+    state.complimentTypingTimer = setTimeout(tick, delay);
+  };
+
+  tick();
 }
 
 function applyStaticChunkHover() {
