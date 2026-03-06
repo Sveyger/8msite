@@ -238,6 +238,8 @@ body.splash-lock {
    MAIN CONTENT
    ============================================ */
 .main {
+  position: relative;
+  isolation: isolate;
   max-width: 480px;
   margin: 0 auto;
   padding: 0 1.25rem;
@@ -245,8 +247,70 @@ body.splash-lock {
   transition: opacity 0.8s ease;
 }
 
+.main::before,
+.main::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 999px;
+  filter: blur(72px);
+  opacity: .72;
+}
+
+.main::before {
+  top: 5rem;
+  left: -6.5rem;
+  width: 12rem;
+  height: 18rem;
+  background:
+    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent-light) 20%, transparent), transparent 56%),
+    radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--accent-glow) 55%, transparent), transparent 72%);
+}
+
+.main::after {
+  top: 44rem;
+  right: -7rem;
+  width: 14rem;
+  height: 20rem;
+  background:
+    radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 56%),
+    radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--accent-glow) 48%, transparent), transparent 74%);
+}
+
 .main.visible {
   opacity: 1;
+}
+
+.story-section,
+.compliment-section,
+.prediction-section,
+.gallery-section,
+.team-section,
+.secret-footer {
+  position: relative;
+}
+
+.story-section::before,
+.compliment-section::before,
+.prediction-section::before,
+.gallery-section::before,
+.team-section::before,
+.secret-footer::before {
+  content: '';
+  position: absolute;
+  top: -1.2rem;
+  left: 50%;
+  width: min(100%, 26rem);
+  height: calc(100% + 2.4rem);
+  transform: translateX(-50%);
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent-glow) 12%, transparent), transparent 28%),
+    linear-gradient(180deg, rgba(255,255,255,.016), transparent 18%, transparent 82%, rgba(255,255,255,.012));
+  opacity: .72;
+  mask: linear-gradient(180deg, transparent 0%, rgba(0,0,0,.92) 10%, rgba(0,0,0,.92) 90%, transparent 100%);
+  z-index: -1;
 }
 
 /* ============================================
