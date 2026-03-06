@@ -115,8 +115,6 @@ const state = {
   selectedKey: null,
   complimentIndex: -1,
   isAnimating: false,
-  complimentTypingTimer: null,
-  complimentTypingRun: 0,
   activeProfile: null,
   predictionMode: 'believe',
   predictionIndex: -1,
@@ -493,10 +491,10 @@ function renderGirlPage(profile) {
   const initialCompliment = compliments[0] || DEFAULT_COMPLIMENTS[0];
   state.complimentIndex = compliments.length ? 0 : -1;
   complimentBtn.textContent = profile.buttonLabel || 'Узнать правду о себе';
+  complimentSource.textContent = '— Редакция VOGUE';
+  complimentSource.classList.add('visible');
   state.isAnimating = true;
-  complimentSource.classList.remove('visible');
-  typeComplimentText(complimentText, initialCompliment, () => {
-    complimentSource.classList.add('visible');
+  typeRevealText(complimentText, initialCompliment, () => {
     state.isAnimating = false;
   });
   initPredictionUi(profile);
@@ -761,22 +759,14 @@ function nextCompliment() {
   state.isAnimating = true;
   const compliments = normalizeLines(state.activeProfile.compliments);
   const textEl = document.getElementById('complimentText');
-  const sourceEl = document.getElementById('complimentSource');
   const btn = document.getElementById('complimentBtn');
 
   createSparkles(btn);
-  textEl.classList.add('fading');
-  sourceEl.classList.remove('visible');
-
-  setTimeout(() => {
-    state.complimentIndex = (state.complimentIndex + 1) % Math.max(compliments.length, 1);
-    textEl.classList.remove('fading');
-    typeComplimentText(textEl, compliments[state.complimentIndex] || DEFAULT_COMPLIMENTS[0], () => {
-      sourceEl.classList.add('visible');
-      btn.textContent = 'Еще комплимент \u2728';
-      state.isAnimating = false;
-    });
-  }, 500);
+  state.complimentIndex = (state.complimentIndex + 1) % Math.max(compliments.length, 1);
+  typeRevealText(textEl, compliments[state.complimentIndex] || DEFAULT_COMPLIMENTS[0], () => {
+    btn.textContent = 'Еще комплимент \u2728';
+    state.isAnimating = false;
+  });
 }
 
 function initPredictionUi(profile) {
@@ -798,7 +788,7 @@ function initPredictionUi(profile) {
     ? '— Астрологическая колонка VOGUE'
     : '— Редакция рационального взгляда';
   setChunkedText(textEl, '');
-  sourceEl.classList.remove('visible');
+  sourceEl.classList.add('visible');
 }
 
 function nextPrediction() {
@@ -824,17 +814,16 @@ function nextPrediction() {
   const rawCursor = Number(state.predictionCursor[modeKey] || 0);
   const cursor = ((rawCursor % len) + len) % len;
 
-  textEl.classList.add('fading');
-  sourceEl.classList.remove('visible');
+  sourceEl.textContent = state.predictionMode === 'skeptic'
+    ? '— Редакция рационального взгляда'
+    : '— Астрологическая колонка VOGUE';
+  sourceEl.classList.add('visible');
 
-  setTimeout(() => {
-    state.predictionIndex = cursor;
-    setChunkedText(textEl, safeList[cursor] || '');
-    state.predictionCursor[modeKey] = (cursor + 1) % len;
-    textEl.classList.remove('fading');
-    sourceEl.classList.add('visible');
+  state.predictionIndex = cursor;
+  state.predictionCursor[modeKey] = (cursor + 1) % len;
+  typeRevealText(textEl, safeList[cursor] || '', () => {
     state.predictionBusy = false;
-  }, 420);
+  });
 }
 
 function showSurveyAnswers() {
@@ -854,38 +843,43 @@ function showSurveyAnswers() {
     setTimeout(() => answersBtn.classList.remove('tap-anim'), 420);
   }
 
-  textEl.classList.add('fading');
-  sourceEl.classList.remove('visible');
-
-  setTimeout(() => {
-    if (state.predictionAnswersVisible) {
-      textEl.textContent = '';
-      sourceEl.classList.remove('visible');
+  if (state.predictionAnswersVisible) {
+    sourceEl.textContent = state.predictionMode === 'believe'
+      ? '— Астрологическая колонка VOGUE'
+      : '— Редакция рационального взгляда';
+    animateHtmlSwap(textEl, '', () => {
       if (answersBtn) answersBtn.classList.remove('is-active');
       state.predictionAnswersVisible = false;
-      textEl.classList.remove('fading');
       state.predictionBusy = false;
+    });
+    return;
+  }
+
+  if (state.activeProfile.believesPredictions) {
+    const tableRows = parseSurveyQa(state.activeProfile.surveyAnswers);
+    sourceEl.textContent = '— Твои ответы';
+    if (tableRows.length) {
+      animateHtmlSwap(textEl, renderSurveyTable(tableRows), () => {
+        if (answersBtn) answersBtn.classList.add('is-active');
+        state.predictionAnswersVisible = true;
+        state.predictionBusy = false;
+      });
       return;
     }
+    typeRevealText(textEl, 'Ответы опроса пока не добавлены.', () => {
+      if (answersBtn) answersBtn.classList.add('is-active');
+      state.predictionAnswersVisible = true;
+      state.predictionBusy = false;
+    });
+    return;
+  }
 
-    if (state.activeProfile.believesPredictions) {
-      const tableRows = parseSurveyQa(state.activeProfile.surveyAnswers);
-      if (tableRows.length) {
-        textEl.innerHTML = renderSurveyTable(tableRows);
-      } else {
-        textEl.textContent = 'Ответы опроса пока не добавлены.';
-      }
-      sourceEl.textContent = '— Твои ответы';
-    } else {
-      setChunkedText(textEl, state.activeProfile.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE);
-      sourceEl.textContent = '— Редакция';
-    }
+  sourceEl.textContent = '— Редакция';
+  typeRevealText(textEl, state.activeProfile.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE, () => {
     if (answersBtn) answersBtn.classList.add('is-active');
     state.predictionAnswersVisible = true;
-    textEl.classList.remove('fading');
-    sourceEl.classList.add('visible');
     state.predictionBusy = false;
-  }, 420);
+  });
 }
 
 function renderTeamGrid() {
@@ -1004,47 +998,82 @@ function setChunkedText(el, text) {
   el.innerHTML = html;
 }
 
-function clearComplimentTyping() {
-  if (state.complimentTypingTimer) {
-    clearTimeout(state.complimentTypingTimer);
-    state.complimentTypingTimer = null;
+function clearRevealAnimation(el) {
+  if (!el) return;
+  if (el.__revealTimer) {
+    clearTimeout(el.__revealTimer);
+    el.__revealTimer = null;
   }
+  el.__revealRun = 0;
+  el.classList.remove('is-typing', 'fading', 'switching');
 }
 
-function typeComplimentText(el, text, onDone) {
-  clearComplimentTyping();
+function typeRevealText(el, text, onDone) {
+  clearRevealAnimation(el);
   const raw = String(text || '').trim();
   const chars = [...raw];
-  const runId = Date.now();
-  state.complimentTypingRun = runId;
+  const runId = Date.now() + Math.random();
+  el.__revealRun = runId;
 
-  if (!raw) {
-    el.textContent = '';
-    el.classList.remove('is-typing');
-    if (typeof onDone === 'function') onDone();
-    return;
-  }
+  el.classList.add('fading');
 
-  let index = 0;
-  el.classList.add('is-typing');
-  el.textContent = '';
+  el.__revealTimer = setTimeout(() => {
+    if (el.__revealRun !== runId) return;
+    el.classList.remove('fading');
 
-  const tick = () => {
-    if (state.complimentTypingRun !== runId) return;
-    index += 1;
-    el.textContent = chars.slice(0, index).join('');
-    if (index >= chars.length) {
-      el.classList.remove('is-typing');
-      setChunkedText(el, raw);
-      state.complimentTypingTimer = null;
+    if (!raw) {
+      el.textContent = '';
       if (typeof onDone === 'function') onDone();
       return;
     }
-    const delay = chars[index - 1] === ' ' ? 8 : (index < 18 ? 16 : 22);
-    state.complimentTypingTimer = setTimeout(tick, delay);
-  };
 
-  tick();
+    let index = 0;
+    el.classList.add('is-typing');
+    el.textContent = '';
+
+    const tick = () => {
+      if (el.__revealRun !== runId) return;
+      index += 1;
+      el.textContent = chars.slice(0, index).join('');
+      if (index >= chars.length) {
+        el.classList.remove('is-typing');
+        setChunkedText(el, raw);
+        el.__revealTimer = null;
+        if (typeof onDone === 'function') onDone();
+        return;
+      }
+
+      const currentChar = chars[index - 1];
+      let delay = 24;
+      if (/\s/.test(currentChar)) delay = 12;
+      else if (/[.,!?;:]/.test(currentChar)) delay = 42;
+      else if (index < 16) delay = 18;
+      el.__revealTimer = setTimeout(tick, delay);
+    };
+
+    tick();
+  }, 180);
+}
+
+function animateHtmlSwap(el, html, onDone) {
+  clearRevealAnimation(el);
+  const nextHtml = String(html || '');
+  const runId = Date.now() + Math.random();
+  el.__revealRun = runId;
+  el.classList.add('fading');
+
+  el.__revealTimer = setTimeout(() => {
+    if (el.__revealRun !== runId) return;
+    el.innerHTML = nextHtml;
+    el.classList.remove('fading');
+    el.classList.add('switching');
+    el.__revealTimer = setTimeout(() => {
+      if (el.__revealRun !== runId) return;
+      el.classList.remove('switching');
+      el.__revealTimer = null;
+      if (typeof onDone === 'function') onDone();
+    }, 320);
+  }, 180);
 }
 
 function applyStaticChunkHover() {

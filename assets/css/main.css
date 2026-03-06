@@ -62,7 +62,10 @@ html {
 body {
   font-family: 'Cormorant Garamond', serif;
   background:
-    radial-gradient(1100px 700px at 50% -10%, color-mix(in srgb, var(--accent-glow) 45%, transparent), transparent 62%),
+    radial-gradient(900px 560px at 12% 8%, color-mix(in srgb, var(--accent-glow) 18%, transparent), transparent 62%),
+    radial-gradient(760px 520px at 88% 18%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 66%),
+    radial-gradient(920px 680px at 50% -10%, color-mix(in srgb, var(--accent-glow) 38%, transparent), transparent 62%),
+    linear-gradient(135deg, rgba(255,255,255,.018) 0%, transparent 34%, rgba(255,255,255,.012) 58%, transparent 100%),
     linear-gradient(165deg, var(--bg-gradient-start, var(--bg-primary)) 0%, var(--bg-gradient-end, var(--bg-secondary)) 70%, var(--bg-primary) 100%);
   color: var(--text-primary);
   min-height: 100vh;
@@ -570,13 +573,27 @@ body.splash-lock {
   font-style: italic;
   color: var(--text-primary);
   line-height: 1.6;
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition: opacity .68s cubic-bezier(.22, 1, .36, 1), transform .68s cubic-bezier(.22, 1, .36, 1), filter .68s ease;
   opacity: 1;
+  will-change: opacity, transform, filter;
 }
 
 .compliment-text.fading {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(12px) scale(.985);
+  filter: blur(3px);
+}
+
+.compliment-text.is-typing,
+.prediction-text.is-typing {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(.2px);
+}
+
+.compliment-text.switching,
+.prediction-text.switching {
+  animation: dynamicTextSettle .42s cubic-bezier(.22, 1, .36, 1);
 }
 
 .compliment-source {
@@ -587,8 +604,7 @@ body.splash-lock {
   text-transform: uppercase;
   color: var(--text-muted);
   margin-top: 1rem;
-  opacity: 0;
-  transition: opacity 0.5s ease 0.3s;
+  opacity: .94;
 }
 
 .compliment-source.visible {
@@ -700,12 +716,14 @@ body.splash-lock {
   line-height: 1.62;
   white-space: pre-line;
   color: var(--text-primary);
-  transition: opacity .42s ease, transform .42s ease;
+  transition: opacity .68s cubic-bezier(.22, 1, .36, 1), transform .68s cubic-bezier(.22, 1, .36, 1), filter .68s ease;
+  will-change: opacity, transform, filter;
 }
 
 .prediction-text.fading {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(10px) scale(.988);
+  filter: blur(3px);
 }
 
 .prediction-source {
@@ -715,12 +733,24 @@ body.splash-lock {
   letter-spacing: .33em;
   text-transform: uppercase;
   color: var(--text-muted);
-  opacity: 0;
-  transition: opacity .4s ease;
+  opacity: .94;
 }
 
 .prediction-source.visible {
   opacity: 1;
+}
+
+@keyframes dynamicTextSettle {
+  from {
+    opacity: .24;
+    transform: translateY(8px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
 }
 
 .prediction-text table {
