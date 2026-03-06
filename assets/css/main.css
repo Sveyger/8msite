@@ -914,7 +914,7 @@ body.splash-lock {
 
 .team-card-kicker {
   position: absolute;
-  top: .44rem;
+  top: .58rem;
   left: 50%;
   z-index: 2;
   transform: translateX(-50%);
@@ -932,85 +932,47 @@ body.splash-lock {
   z-index: 2;
   width: .7rem;
   height: .7rem;
+  box-sizing: border-box;
   opacity: .92;
   pointer-events: none;
-}
-
-.team-card-corner::before,
-.team-card-corner::after {
-  content: '';
-  position: absolute;
-  background: color-mix(in srgb, var(--accent-light) 88%, white 12%);
   box-shadow: 0 0 10px color-mix(in srgb, var(--accent-glow) 28%, transparent);
+  border-color: color-mix(in srgb, var(--accent-light) 88%, white 12%);
 }
 
 .team-card-corner--tl {
   top: .38rem;
   left: .38rem;
+  border-top: 1px solid;
+  border-left: 1px solid;
 }
 
 .team-card-corner--tr {
   top: .38rem;
   right: .38rem;
+  border-top: 1px solid;
+  border-right: 1px solid;
 }
 
 .team-card-corner--bl {
   bottom: .38rem;
   left: .38rem;
+  border-bottom: 1px solid;
+  border-left: 1px solid;
 }
 
 .team-card-corner--br {
   bottom: .38rem;
   right: .38rem;
-}
-
-.team-card-corner--tl::before,
-.team-card-corner--bl::before,
-.team-card-corner--tr::before,
-.team-card-corner--br::before {
-  top: 0;
-  width: .58rem;
-  height: 1px;
-}
-
-.team-card-corner--tl::after,
-.team-card-corner--tr::after,
-.team-card-corner--bl::after,
-.team-card-corner--br::after {
-  left: 0;
-  width: 1px;
-  height: .58rem;
-}
-
-.team-card-corner--tr::before,
-.team-card-corner--br::before {
-  right: 0;
-  left: auto;
-}
-
-.team-card-corner--tr::after,
-.team-card-corner--br::after {
-  right: 0;
-  left: auto;
-}
-
-.team-card-corner--bl::before,
-.team-card-corner--br::before {
-  bottom: 0;
-  top: auto;
-}
-
-.team-card-corner--bl::after,
-.team-card-corner--br::after {
-  bottom: 0;
-  top: auto;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
 }
 
 .team-card-vignette {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(6,4,14,.05) 0%, rgba(6,4,14,.02) 30%, rgba(8,6,18,.18) 54%, rgba(7,5,16,.68) 84%, rgba(4,3,10,.94) 100%),
+    linear-gradient(90deg, rgba(5,4,12,.3) 0%, rgba(5,4,12,.08) 10%, transparent 22%, transparent 78%, rgba(5,4,12,.08) 90%, rgba(5,4,12,.3) 100%),
+    linear-gradient(180deg, rgba(8,6,18,.2) 0%, rgba(6,4,14,.04) 18%, rgba(8,6,18,.18) 54%, rgba(7,5,16,.68) 84%, rgba(4,3,10,.94) 100%),
     radial-gradient(circle at 50% 100%, color-mix(in srgb, var(--accent-glow) 12%, transparent), transparent 42%);
   pointer-events: none;
 }
@@ -1050,7 +1012,7 @@ body.splash-lock {
   }
 
   .team-card-kicker {
-    top: .38rem;
+    top: .5rem;
     font-size: .34rem;
     letter-spacing: .38em;
   }
