@@ -891,11 +891,18 @@ function renderTeamGrid() {
     return [
       '<article class="team-card">',
       '<div class="team-photo-frame">',
-      '<span class="team-card-badge">' + String(idx + 1).padStart(2, '0') + '</span>',
+      '<span class="team-card-kicker">MARCH 8 PROJECT</span>',
+      '<span class="team-card-corner team-card-corner--tl"></span>',
+      '<span class="team-card-corner team-card-corner--tr"></span>',
+      '<span class="team-card-corner team-card-corner--bl"></span>',
+      '<span class="team-card-corner team-card-corner--br"></span>',
       media,
-      '</div>',
+      '<div class="team-card-vignette"></div>',
+      '<div class="team-card-caption">',
       '<p class="team-card-role">' + escapeHtml(member.role) + '</p>',
       '<p class="team-card-name">' + escapeHtml(member.label) + '</p>',
+      '</div>',
+      '</div>',
       '</article>'
     ].join('');
   }).join('');
