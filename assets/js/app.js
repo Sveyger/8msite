@@ -63,12 +63,12 @@ const DEFAULT_CONTEST_WIN = 'Поздравляем! Код подтвержде
 const DEFAULT_CONTEST_LOSE = 'Код не найден. Проверьте ввод.';
 const DEFAULT_CONTEST_CODES = [];
 const DEFAULT_TEAM_MEMBERS = [
-  { role: 'Фейс контроль', label: 'Участник 01', photo: '' },
-  { role: 'Фейс контроль', label: 'Участник 02', photo: '' },
-  { role: 'Фейс контроль', label: 'Участник 03', photo: '' },
-  { role: 'Ведущий', label: 'Участник 04', photo: '' },
-  { role: 'Админ', label: 'Участник 05', photo: '' },
-  { role: 'Админ', label: 'Участник 06', photo: '' }
+  { role: 'Админ', label: 'Админ 1', photo: '' },
+  { role: 'Ведущий', label: 'Ведущий', photo: '' },
+  { role: 'Админ', label: 'Админ 2', photo: '' },
+  { role: 'Фейс контроль', label: 'Фейс 1', photo: '' },
+  { role: 'Фейс контроль', label: 'Фейс 2', photo: '' },
+  { role: 'Фейс контроль', label: 'Фейс 3', photo: '' }
 ];
 
 const DEFAULT_PROFILE = {
@@ -885,7 +885,10 @@ function renderTeamGrid() {
       : '<div class="team-photo-fallback">' + escapeHtml(initials) + '</div>';
     return [
       '<article class="team-card">',
-      '<div class="team-photo-frame">' + media + '</div>',
+      '<div class="team-photo-frame">',
+      '<span class="team-card-badge">' + String(idx + 1).padStart(2, '0') + '</span>',
+      media,
+      '</div>',
       '<p class="team-card-role">' + escapeHtml(member.role) + '</p>',
       '<p class="team-card-name">' + escapeHtml(member.label) + '</p>',
       '</article>'
