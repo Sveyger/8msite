@@ -30,6 +30,7 @@ create table if not exists public.march8_global_settings (
   id text primary key default 'global',
   answers_button_label text not null default 'Посмотреть мои ответы',
   credits_lines jsonb not null default '[]'::jsonb,
+  team_members jsonb not null default '[]'::jsonb,
   contest_title text not null default 'Конкурс цветов',
   contest_hint text not null default 'Введите код победителя, чтобы открыть свой приз.',
   contest_button_label text not null default 'Проверить код',
@@ -38,6 +39,8 @@ create table if not exists public.march8_global_settings (
   contest_codes jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now()
 );
+
+alter table public.march8_global_settings add column if not exists team_members jsonb not null default '[]'::jsonb;
 
 insert into public.march8_global_settings (id)
 values ('global')

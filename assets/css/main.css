@@ -1527,6 +1527,17 @@ body.splash-lock {
   object-fit: cover;
   display: block;
 }
+.photo-thumb-empty {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-family: 'Montserrat', sans-serif;
+  font-size: .7rem;
+  letter-spacing: .16em;
+  color: var(--text-secondary);
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+}
 .photo-url {
   font-size: 11px;
   color: var(--text-secondary);
@@ -1551,6 +1562,22 @@ body.splash-lock {
 .photo-btn.danger {
   border-color: rgba(196,77,77,.55);
   color: #ffb7b7;
+}
+.photo-row--team {
+  grid-template-columns: 56px 1fr;
+  align-items: start;
+}
+.photo-thumb--team {
+  width: 56px;
+  height: 82px;
+}
+.team-editor-fields {
+  display: grid;
+  gap: 6px;
+}
+.team-member-input {
+  padding-top: .5rem;
+  padding-bottom: .5rem;
 }
 @media (min-width: 960px) {
   .admin-layout { grid-template-columns: 320px 1fr; }

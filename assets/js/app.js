@@ -92,6 +92,7 @@ const DEFAULT_PROFILE = {
 const DEFAULT_GLOBAL_SETTINGS = {
   answersButtonLabel: DEFAULT_ANSWERS_BUTTON,
   creditsLines: DEFAULT_CREDITS,
+  teamMembers: DEFAULT_TEAM_MEMBERS,
   contestTitle: DEFAULT_CONTEST_TITLE,
   contestHint: DEFAULT_CONTEST_HINT,
   contestButtonLabel: DEFAULT_CONTEST_BUTTON,
@@ -385,6 +386,7 @@ function rowToGlobalSettings(row) {
   return normalizeGlobalSettings({
     answersButtonLabel: row.answers_button_label,
     creditsLines: row.credits_lines,
+    teamMembers: row.team_members,
     contestTitle: row.contest_title,
     contestHint: row.contest_hint,
     contestButtonLabel: row.contest_button_label,
@@ -399,6 +401,7 @@ function globalSettingsToRow(settings) {
     id: 'global',
     answers_button_label: settings.answersButtonLabel || DEFAULT_ANSWERS_BUTTON,
     credits_lines: normalizeLines(settings.creditsLines),
+    team_members: normalizeTeamMembers(settings.teamMembers),
     contest_title: settings.contestTitle || DEFAULT_CONTEST_TITLE,
     contest_hint: settings.contestHint || DEFAULT_CONTEST_HINT,
     contest_button_label: settings.contestButtonLabel || DEFAULT_CONTEST_BUTTON,
@@ -414,6 +417,7 @@ function normalizeGlobalSettings(source) {
   return {
     answersButtonLabel: s.answersButtonLabel || DEFAULT_ANSWERS_BUTTON,
     creditsLines: normalizeLines(s.creditsLines).length ? normalizeLines(s.creditsLines) : DEFAULT_CREDITS,
+    teamMembers: normalizeTeamMembers(s.teamMembers),
     contestTitle: s.contestTitle || DEFAULT_CONTEST_TITLE,
     contestHint: s.contestHint || DEFAULT_CONTEST_HINT,
     contestButtonLabel: s.contestButtonLabel || DEFAULT_CONTEST_BUTTON,
@@ -878,7 +882,8 @@ function showSurveyAnswers() {
 function renderTeamGrid() {
   const wrap = document.getElementById('teamGrid');
   if (!wrap) return;
-  wrap.innerHTML = DEFAULT_TEAM_MEMBERS.map((member, idx) => {
+  const members = normalizeTeamMembers(state.globalSettings.teamMembers);
+  wrap.innerHTML = members.map((member, idx) => {
     const initials = makeInitials(member.label || member.role || String(idx + 1));
     const media = member.photo
       ? '<img class="team-photo-img" src="' + escapeHtml(member.photo) + '" alt="' + escapeHtml(member.label || member.role) + '">'
@@ -1119,6 +1124,10 @@ function bindAdminEvents() {
   const mediaInput = document.getElementById('mediaFileInput');
   const mediaTarget = document.getElementById('mediaTarget');
   const uploadMsg = document.getElementById('uploadMsg');
+  const uploadTeamBtn = document.getElementById('uploadTeamMediaBtn');
+  const teamMediaInput = document.getElementById('teamMediaFileInput');
+  const teamMediaTarget = document.getElementById('teamMediaTarget');
+  const uploadTeamMsg = document.getElementById('uploadTeamMsg');
   if (form.dataset.bound === '1') return;
   form.dataset.bound = '1';
 
@@ -1279,6 +1288,44 @@ function bindAdminEvents() {
     }
   };
 
+  if (uploadTeamBtn) {
+    uploadTeamBtn.onclick = async () => {
+      const file = teamMediaInput?.files?.[0];
+      if (!file) {
+        uploadTeamMsg.textContent = 'Выберите фото команды для загрузки.';
+        return;
+      }
+      if (state.backendMode !== 'supabase') {
+        const reason = state.backendFallbackReason ? (' Причина fallback: ' + state.backendFallbackReason + '.') : '';
+        uploadTeamMsg.textContent = 'Сейчас включен localStorage.' + reason + ' Для загрузки фото команды нужен Supabase-режим.';
+        return;
+      }
+
+      uploadTeamMsg.textContent = 'Загрузка...';
+      try {
+        const url = await uploadFileToStorage(file);
+        const members = collectTeamMembersFromManager();
+        const targetIndex = Number(teamMediaTarget?.value || 0);
+        if (Number.isFinite(targetIndex) && members[targetIndex]) {
+          members[targetIndex].photo = url;
+        }
+        const nextSettings = normalizeGlobalSettings({
+          ...state.globalSettings,
+          teamMembers: members
+        });
+        await upsertGlobalSettings(nextSettings);
+        renderTeamMembersManager();
+        renderTeamGrid();
+        teamMediaInput.value = '';
+        uploadTeamMsg.textContent = 'Фото команды загружено, подставлено в слот и сохранено.';
+      } catch (err) {
+        console.error(err);
+        const reason = err?.message ? String(err.message) : 'Неизвестная ошибка';
+        uploadTeamMsg.textContent = 'Ошибка загрузки: ' + reason + '. Проверь bucket "media" и Storage policy для anon.';
+      }
+    };
+  }
+
   if (globalForm && globalForm.dataset.bound !== '1') {
     globalForm.dataset.bound = '1';
     globalForm.addEventListener('submit', async (e) => {
@@ -1286,6 +1333,7 @@ function bindAdminEvents() {
       const next = normalizeGlobalSettings({
         answersButtonLabel: state.globalSettings.answersButtonLabel || DEFAULT_ANSWERS_BUTTON,
         creditsLines: state.globalSettings.creditsLines,
+        teamMembers: collectTeamMembersFromManager(),
         contestTitle: document.getElementById('contestTitleInput').value.trim() || DEFAULT_CONTEST_TITLE,
         contestHint: document.getElementById('contestHintInput').value.trim() || DEFAULT_CONTEST_HINT,
         contestButtonLabel: document.getElementById('contestButtonInput').value.trim() || DEFAULT_CONTEST_BUTTON,
@@ -1295,6 +1343,7 @@ function bindAdminEvents() {
       });
       await upsertGlobalSettings(next);
       fillGlobalForm();
+      renderTeamGrid();
       const msg = document.getElementById('globalSavedMsg');
       msg.textContent = 'Общие сохранены';
       setTimeout(() => {
@@ -1393,6 +1442,7 @@ function activateAdminTab(tab) {
 function fillGlobalForm() {
   const g = normalizeGlobalSettings(state.globalSettings);
   state.globalSettings = g;
+  renderTeamMembersManager();
   const contestTitleInput = document.getElementById('contestTitleInput');
   const contestHintInput = document.getElementById('contestHintInput');
   const contestButtonInput = document.getElementById('contestButtonInput');
@@ -1409,10 +1459,47 @@ function fillGlobalForm() {
   contestCodesInput.value = normalizeContestCodes(g.contestCodes).map((x) => x.code + (x.flower ? ' | ' + x.flower : '')).join('\n');
 }
 
+function renderTeamMembersManager() {
+  const wrap = document.getElementById('teamMembersManager');
+  if (!wrap) return;
+  const members = normalizeTeamMembers(state.globalSettings.teamMembers);
+  wrap.innerHTML = members.map((member, idx) => {
+    return [
+      '<div class="photo-row photo-row--team">',
+      '<div class="photo-thumb photo-thumb--team">',
+      member.photo
+        ? '<img src="' + escapeHtml(member.photo) + '" alt="' + escapeHtml(member.label || member.role) + '">'
+        : '<div class="photo-thumb-empty">' + escapeHtml(String(idx + 1).padStart(2, '0')) + '</div>',
+      '</div>',
+      '<div class="team-editor-fields">',
+      '<input class="admin-input team-member-input" data-team-field="role" data-team-index="' + idx + '" value="' + escapeHtml(member.role) + '" placeholder="Роль">',
+      '<input class="admin-input team-member-input" data-team-field="label" data-team-index="' + idx + '" value="' + escapeHtml(member.label) + '" placeholder="Имя/подпись">',
+      '<input class="admin-input team-member-input" data-team-field="photo" data-team-index="' + idx + '" value="' + escapeHtml(member.photo) + '" placeholder="URL фото">',
+      '</div>',
+      '</div>'
+    ].join('');
+  }).join('');
+}
+
+function collectTeamMembersFromManager() {
+  const wrap = document.getElementById('teamMembersManager');
+  if (!wrap) return normalizeTeamMembers(state.globalSettings.teamMembers);
+  const members = normalizeTeamMembers(state.globalSettings.teamMembers);
+  members.forEach((member, idx) => {
+    const roleEl = wrap.querySelector('[data-team-field="role"][data-team-index="' + idx + '"]');
+    const labelEl = wrap.querySelector('[data-team-field="label"][data-team-index="' + idx + '"]');
+    const photoEl = wrap.querySelector('[data-team-field="photo"][data-team-index="' + idx + '"]');
+    member.role = String(roleEl?.value || member.role).trim() || member.role;
+    member.label = String(labelEl?.value || member.label).trim() || member.label;
+    member.photo = String(photoEl?.value || '').trim();
+  });
+  return normalizeTeamMembers(members);
+}
+
 function renderAdminPreview(profile) {
   const wrap = document.getElementById('adminPreview');
   const g = normalizeGlobalSettings(state.globalSettings);
-  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит' : 'не верит') + ' / ' + normalizeLines(profile.predictionsBelieve).length + ' / ' + normalizeLines(profile.predictionsSkeptic).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные коды конкурса: ' + normalizeContestCodes(g.contestCodes).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
+  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит' : 'не верит') + ' / ' + normalizeLines(profile.predictionsBelieve).length + ' / ' + normalizeLines(profile.predictionsSkeptic).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Команда: ' + normalizeTeamMembers(g.teamMembers).filter((x) => x.photo || x.label || x.role).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные коды конкурса: ' + normalizeContestCodes(g.contestCodes).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
 }
 
 function makeInitials(name) {
@@ -1477,6 +1564,18 @@ function normalizeContestCodes(value) {
       };
     })
     .filter((x) => x.code);
+}
+
+function normalizeTeamMembers(value) {
+  const source = Array.isArray(value) ? value : [];
+  return DEFAULT_TEAM_MEMBERS.map((item, idx) => {
+    const current = source[idx] && typeof source[idx] === 'object' ? source[idx] : {};
+    return {
+      role: String(current.role || item.role || '').trim() || item.role,
+      label: String(current.label || item.label || '').trim() || item.label,
+      photo: String(current.photo || '').trim()
+    };
+  });
 }
 
 function parseSurveyQa(value) {

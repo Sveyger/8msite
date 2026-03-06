@@ -359,6 +359,37 @@
       <section class="admin-card mp-tab-panel" data-admin-tab-panel="global">
         <h3 class="admin-panel-title">Глобальные настройки (общие)</h3>
         <form id="globalForm" class="admin-form">
+          <div class="photo-manager">
+            <div class="admin-label">Команда проекта</div>
+            <div id="teamMembersManager" class="photo-manager-list"></div>
+            <p class="admin-hint">Здесь настраиваются 6 карточек команды: 2 админа, 1 ведущий и 3 фейс-контроля.</p>
+          </div>
+
+          <div class="photo-manager">
+            <div class="admin-label">Загрузка фото команды</div>
+            <div class="admin-row">
+              <div>
+                <label class="admin-label" for="teamMediaTarget">Слот команды</label>
+                <select class="admin-select" id="teamMediaTarget">
+                  <option value="0">Админ 1</option>
+                  <option value="1">Ведущий</option>
+                  <option value="2">Админ 2</option>
+                  <option value="3">Фейс 1</option>
+                  <option value="4">Фейс 2</option>
+                  <option value="5">Фейс 3</option>
+                </select>
+              </div>
+              <div>
+                <label class="admin-label" for="teamMediaFileInput">Файл</label>
+                <input class="admin-input" id="teamMediaFileInput" type="file" accept="image/*">
+              </div>
+            </div>
+            <div class="admin-actions">
+              <button class="admin-btn" id="uploadTeamMediaBtn" type="button">Загрузить фото команды</button>
+            </div>
+            <p id="uploadTeamMsg" class="admin-hint"></p>
+          </div>
+
           <div class="admin-row">
             <div>
               <label class="admin-label" for="contestTitleInput">Заголовок конкурса</label>
