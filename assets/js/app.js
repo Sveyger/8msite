@@ -476,7 +476,7 @@ function renderGirlPage(profile) {
   showOnly('girlRoute');
   setSplashScrollLock(true);
   state.activeProfile = profile;
-  state.complimentIndex = -1;
+  state.complimentIndex = 0;
   state.predictionMode = profile.believesPredictions ? 'believe' : 'skeptic';
   state.predictionIndex = -1;
   state.predictionBusy = false;
@@ -490,10 +490,12 @@ function renderGirlPage(profile) {
   const complimentBtn = document.getElementById('complimentBtn');
   const complimentText = document.getElementById('complimentText');
   const complimentSource = document.getElementById('complimentSource');
+  const initialCompliment = compliments[0] || DEFAULT_COMPLIMENTS[0];
+  state.complimentIndex = compliments.length ? 0 : -1;
   complimentBtn.textContent = profile.buttonLabel || 'Узнать правду о себе';
   state.isAnimating = true;
   complimentSource.classList.remove('visible');
-  typeComplimentText(complimentText, compliments[0] || DEFAULT_COMPLIMENTS[0], () => {
+  typeComplimentText(complimentText, initialCompliment, () => {
     complimentSource.classList.add('visible');
     state.isAnimating = false;
   });
