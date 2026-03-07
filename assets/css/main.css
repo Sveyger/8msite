@@ -1091,6 +1091,11 @@ body.splash-lock {
   text-shadow: 0 1px 4px rgba(0,0,0,.28);
 }
 
+.team-card-kicker--dark {
+  color: rgba(0,0,0,.82);
+  text-shadow: none;
+}
+
 .team-card-corner {
   position: absolute;
   z-index: 2;

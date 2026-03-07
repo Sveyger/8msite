@@ -1248,13 +1248,15 @@ function renderTeamGrid() {
   const cropClass = state.globalSettings?.teamPhotoCrop ? ' team-photo-img--crop' : '';
   wrap.innerHTML = members.map((member, idx) => {
     const initials = makeInitials(member.label || member.role || String(idx + 1));
+    const roleValue = String(member.role || '').trim().toLowerCase();
+    const kickerClass = /админ|ведущ/.test(roleValue) ? ' team-card-kicker--dark' : '';
     const media = member.photo
       ? '<img class="team-photo-img' + cropClass + '" src="' + escapeHtml(member.photo) + '" alt="' + escapeHtml(member.label || member.role) + '">'
       : '<div class="team-photo-fallback">' + escapeHtml(initials) + '</div>';
     return [
       '<article class="team-card">',
       '<div class="team-photo-frame">',
-      '<span class="team-card-kicker">MARCH 8 PROJECT</span>',
+      '<span class="team-card-kicker' + kickerClass + '">MARCH 8 PROJECT</span>',
       media,
       '<div class="team-card-vignette"></div>',
       '<div class="team-card-caption">',
