@@ -408,6 +408,39 @@ async function replaceSurveyCode(oldCode, newCode) {
   return state.selectedSurveyCode;
 }
 
+async function hardResetSurvey(code) {
+  if (state.backendMode !== 'supabase' || !state.supabase || !code) return;
+  const currentCode = String(code).trim().toUpperCase();
+  const item = state.surveyItems.find((entry) => entry.accessCode === currentCode) || null;
+  const label = item?.displayName || currentCode;
+  const confirmed = window.confirm('Хард сбросить анкету для "' + label + '"? Будут удалены ответ, черновик и фото, затем анкета пересоздастся с тем же кодом.');
+  if (!confirmed) return;
+
+  const photoUrls = normalizeLines(item?.response?.photo_urls);
+  if (photoUrls.length) {
+    const storagePaths = photoUrls
+      .map((url) => getStoragePathFromPublicUrl(url))
+      .filter(Boolean);
+    if (storagePaths.length) {
+      const { error: storageError } = await state.supabase.storage.from(SUPABASE_BUCKET).remove(storagePaths);
+      if (storageError) {
+        console.warn('Survey photo cleanup failed during hard reset:', storageError);
+      }
+    }
+  }
+
+  const { data, error } = await state.supabase.rpc('march8_hard_reset_survey', {
+    p_code: currentCode
+  });
+  if (error) throw error;
+  if (!data?.ok) {
+    throw new Error(String(data?.reason || 'hard_reset_failed'));
+  }
+
+  state.selectedSurveyCode = currentCode;
+  await loadSurveyAdminData();
+}
+
 function getStoragePathFromPublicUrl(url) {
   const value = String(url || '').trim();
   if (!value) return '';
@@ -469,7 +502,7 @@ function renderSurveyAdminDetail() {
   if (!response) {
     detail.innerHTML = [
       '<div class="survey-admin-grid">',
-      '<div class="survey-admin-card"><div class="admin-actions" style="justify-content:space-between;align-items:center;margin-bottom:.8rem;"><h4>' + escapeHtml(item.displayName) + '</h4></div><div class="survey-admin-meta">',
+      '<div class="survey-admin-card"><div class="admin-actions" style="justify-content:space-between;align-items:center;margin-bottom:.8rem;"><h4>' + escapeHtml(item.displayName) + '</h4><button class="admin-btn admin-btn--danger" id="surveyHardResetBtn" type="button">Хард сброс</button></div><div class="survey-admin-meta">',
       '<p><strong>Код:</strong> ' + escapeHtml(item.accessCode) + '</p>',
       '<p><strong>Статус:</strong> Не начат</p>',
       '</div><div class="admin-actions" style="margin-top:1rem;align-items:center;">',
@@ -478,6 +511,7 @@ function renderSurveyAdminDetail() {
       '</div></div></div>'
     ].join('');
     bindSurveyCodeReplace(item.accessCode);
+    bindSurveyHardReset(item.accessCode);
     return;
   }
 
@@ -503,7 +537,7 @@ function renderSurveyAdminDetail() {
 
   detail.innerHTML = [
     '<div class="survey-admin-grid">',
-    '<div class="survey-admin-card"><div class="admin-actions" style="justify-content:space-between;align-items:center;margin-bottom:.8rem;"><h4>' + escapeHtml(item.displayName) + '</h4><button class="admin-btn admin-btn--danger" id="surveyResetBtn" type="button">Откатить опрос</button></div><div class="survey-admin-meta">',
+    '<div class="survey-admin-card"><div class="admin-actions" style="justify-content:space-between;align-items:center;margin-bottom:.8rem;"><h4>' + escapeHtml(item.displayName) + '</h4><div class="admin-actions"><button class="admin-btn admin-btn--danger" id="surveyResetBtn" type="button">Откатить опрос</button><button class="admin-btn admin-btn--danger" id="surveyHardResetBtn" type="button">Хард сброс</button></div></div><div class="survey-admin-meta">',
     rows.map(([label, value]) => '<p><strong>' + escapeHtml(label) + ':</strong> ' + escapeHtml(String(value || '—')) + '</p>').join(''),
     '<p><strong>Шаги:</strong> ' + escapeHtml(Object.keys(stepState).filter((key) => stepState[key]).join(', ') || '—') + '</p>',
     '</div><div class="admin-actions" style="margin-top:1rem;align-items:center;">',
@@ -531,6 +565,7 @@ function renderSurveyAdminDetail() {
     });
   }
   bindSurveyCodeReplace(item.accessCode);
+  bindSurveyHardReset(item.accessCode);
 }
 
 function bindSurveyCodeReplace(currentCode) {
@@ -562,6 +597,22 @@ function bindSurveyCodeReplace(currentCode) {
       }
       replaceBtn.disabled = false;
       replaceInput.disabled = false;
+    }
+  });
+}
+
+function bindSurveyHardReset(currentCode) {
+  const hardResetBtn = document.getElementById('surveyHardResetBtn');
+  if (!hardResetBtn) return;
+
+  hardResetBtn.addEventListener('click', async () => {
+    hardResetBtn.disabled = true;
+    try {
+      await hardResetSurvey(currentCode);
+    } catch (error) {
+      console.error(error);
+      alert('Не удалось выполнить хард сброс. Проверьте права доступа и SQL в Supabase.');
+      hardResetBtn.disabled = false;
     }
   });
 }

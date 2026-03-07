@@ -366,6 +366,60 @@ begin
 end;
 $$;
 
+create or replace function public.march8_hard_reset_survey(
+  p_code text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_code text := upper(trim(coalesce(p_code, '')));
+  v_invite public.march8_survey_invites%rowtype;
+begin
+  if not exists (
+    select 1 from public.admin_users au
+    where au.user_id = auth.uid()
+  ) then
+    return jsonb_build_object('ok', false, 'reason', 'forbidden');
+  end if;
+
+  if v_code = '' then
+    return jsonb_build_object('ok', false, 'reason', 'empty_code');
+  end if;
+
+  select * into v_invite
+  from public.march8_survey_invites
+  where access_code = v_code;
+
+  if not found then
+    return jsonb_build_object('ok', false, 'reason', 'code_not_found');
+  end if;
+
+  delete from public.march8_survey_invites
+  where access_code = v_code;
+
+  insert into public.march8_survey_invites (
+    access_code,
+    display_name,
+    created_at,
+    updated_at
+  )
+  values (
+    v_code,
+    v_invite.display_name,
+    now(),
+    now()
+  );
+
+  return jsonb_build_object(
+    'ok', true,
+    'code', v_code
+  );
+end;
+$$;
+
 drop policy if exists "admin_users_self_select" on public.admin_users;
 create policy "admin_users_self_select" on public.admin_users
 for select
