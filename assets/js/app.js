@@ -70,6 +70,16 @@ const DEFAULT_TEAM_MEMBERS = [
   { role: 'Фейс контроль', label: 'Фейс 2', photo: '' },
   { role: 'Фейс контроль', label: 'Фейс 3', photo: '' }
 ];
+const DEFAULT_SECTION_VISIBILITY = {
+  video: true,
+  compliment: true,
+  prediction: true,
+  gallery: true,
+  quote: true,
+  contest: true,
+  team: true,
+  secret: true
+};
 
 const DEFAULT_PROFILE = {
   name: 'Екатерина',
@@ -84,6 +94,7 @@ const DEFAULT_PROFILE = {
   surveyAnswers: [],
   predictionsBelieve: DEFAULT_PREDICTIONS_BELIEVE,
   predictionsSkeptic: DEFAULT_PREDICTIONS_SKEPTIC,
+  sectionVisibility: DEFAULT_SECTION_VISIBILITY,
   buttonLabel: 'Узнать правду о себе',
   mediaTip: 'From little girl to cover star',
   quoteText: '«Даже в детстве было понятно, что растет <mark>звезда обложки</mark>!»'
@@ -328,6 +339,7 @@ function makeProfile(key, source) {
     surveyAnswers: normalizeLines(source.surveyAnswers),
     predictionsBelieve: normalizeLines(source.predictionsBelieve).length ? normalizeLines(source.predictionsBelieve) : DEFAULT_PREDICTIONS_BELIEVE,
     predictionsSkeptic: normalizeLines(source.predictionsSkeptic).length ? normalizeLines(source.predictionsSkeptic) : DEFAULT_PREDICTIONS_SKEPTIC,
+    sectionVisibility: normalizeSectionVisibility(source.sectionVisibility),
     buttonLabel: source.buttonLabel || 'Узнать правду о себе',
     mediaTip: source.mediaTip || 'From little girl to cover star',
     quoteText: source.quoteText || DEFAULT_PROFILE.quoteText,
@@ -351,6 +363,7 @@ function rowToProfile(row) {
     surveyAnswers: normalizeLines(row.survey_answers),
     predictionsBelieve: normalizeLines(row.predictions_believe).length ? normalizeLines(row.predictions_believe) : DEFAULT_PREDICTIONS_BELIEVE,
     predictionsSkeptic: normalizeLines(row.predictions_skeptic).length ? normalizeLines(row.predictions_skeptic) : DEFAULT_PREDICTIONS_SKEPTIC,
+    sectionVisibility: normalizeSectionVisibility(row.section_visibility),
     buttonLabel: row.button_label || 'Узнать правду о себе',
     mediaTip: row.media_tip || 'From little girl to cover star',
     quoteText: row.quote_text || DEFAULT_PROFILE.quoteText,
@@ -374,6 +387,7 @@ function profileToRow(profile) {
     survey_answers: normalizeLines(profile.surveyAnswers),
     predictions_believe: normalizeLines(profile.predictionsBelieve),
     predictions_skeptic: normalizeLines(profile.predictionsSkeptic),
+    section_visibility: normalizeSectionVisibility(profile.sectionVisibility),
     button_label: profile.buttonLabel,
     media_tip: profile.mediaTip,
     quote_text: profile.quoteText,
@@ -427,6 +441,20 @@ function normalizeGlobalSettings(source) {
   };
 }
 
+function normalizeSectionVisibility(source) {
+  const s = source && typeof source === 'object' ? source : {};
+  return {
+    video: s.video !== false,
+    compliment: s.compliment !== false,
+    prediction: s.prediction !== false,
+    gallery: s.gallery !== false,
+    quote: s.quote !== false,
+    contest: s.contest !== false,
+    team: s.team !== false,
+    secret: s.secret !== false
+  };
+}
+
 function loadLocalDb() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -473,6 +501,7 @@ function renderGirlPage(profile) {
   initFlowers();
   showOnly('girlRoute');
   setSplashScrollLock(true);
+  applyProfileSectionVisibility(profile.sectionVisibility);
   state.activeProfile = profile;
   state.complimentIndex = 0;
   state.predictionMode = profile.believesPredictions ? 'believe' : 'skeptic';
@@ -964,6 +993,59 @@ function detectFlowerEmoji(name) {
   return '\u{1F338}';
 }
 
+function applyProfileSectionVisibility(source) {
+  const visibility = normalizeSectionVisibility(source);
+  const map = {
+    video: 'videoSection',
+    compliment: 'complimentSection',
+    prediction: 'predictionSection',
+    gallery: 'gallerySection',
+    quote: 'quoteSection',
+    contest: 'contestSection',
+    team: 'teamSection',
+    secret: 'secretSection'
+  };
+
+  Object.entries(map).forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('hidden', visibility[key] === false);
+  });
+  updateMainDividers();
+}
+
+function updateMainDividers() {
+  const main = document.getElementById('mainContent');
+  if (!main) return;
+  const children = Array.from(main.children);
+  const isContentBlock = (el) => {
+    if (!el || el.classList.contains('hidden')) return false;
+    if (el.classList.contains('divider')) return false;
+    if (el.classList.contains('bottom-brand')) return false;
+    return true;
+  };
+
+  children.forEach((child, idx) => {
+    if (!child.classList.contains('divider')) return;
+
+    let prev = null;
+    for (let i = idx - 1; i >= 0; i -= 1) {
+      if (children[i].classList.contains('hidden')) continue;
+      prev = children[i];
+      break;
+    }
+
+    let next = null;
+    for (let i = idx + 1; i < children.length; i += 1) {
+      if (children[i].classList.contains('hidden')) continue;
+      next = children[i];
+      break;
+    }
+
+    child.classList.toggle('hidden', !(isContentBlock(prev) && isContentBlock(next)));
+  });
+}
+
 function createSparkles(element) {
   const rect = element.getBoundingClientRect();
   const container = document.getElementById('sparkleContainer');
@@ -1281,6 +1363,16 @@ function bindAdminEvents() {
       surveyAnswers: normalizeLines(document.getElementById('surveyAnswersInput').value),
       predictionsBelieve: normalizeLines(document.getElementById('predictionsBelieveInput').value),
       predictionsSkeptic: normalizeLines(document.getElementById('predictionsSkepticInput').value),
+      sectionVisibility: {
+        video: document.getElementById('showVideoInput').checked,
+        compliment: document.getElementById('showComplimentInput').checked,
+        prediction: document.getElementById('showPredictionInput').checked,
+        gallery: document.getElementById('showGalleryInput').checked,
+        quote: document.getElementById('showQuoteInput').checked,
+        contest: document.getElementById('showContestInput').checked,
+        team: document.getElementById('showTeamInput').checked,
+        secret: document.getElementById('showSecretInput').checked
+      },
       mediaTip: document.getElementById('tipInput').value.trim() || 'From little girl to cover star',
       quoteText: document.getElementById('quoteInput').value.trim() || DEFAULT_PROFILE.quoteText,
       createdAt: state.db.profiles[state.selectedKey]?.createdAt
@@ -1502,6 +1594,15 @@ function selectProfile(key) {
   document.getElementById('predictionsSkepticInput').value = normalizeLines(p.predictionsSkeptic).join('\n');
   document.getElementById('tipInput').value = p.mediaTip || 'From little girl to cover star';
   document.getElementById('quoteInput').value = p.quoteText || DEFAULT_PROFILE.quoteText;
+  const vis = normalizeSectionVisibility(p.sectionVisibility);
+  document.getElementById('showVideoInput').checked = vis.video;
+  document.getElementById('showComplimentInput').checked = vis.compliment;
+  document.getElementById('showPredictionInput').checked = vis.prediction;
+  document.getElementById('showGalleryInput').checked = vis.gallery;
+  document.getElementById('showQuoteInput').checked = vis.quote;
+  document.getElementById('showContestInput').checked = vis.contest;
+  document.getElementById('showTeamInput').checked = vis.team;
+  document.getElementById('showSecretInput').checked = vis.secret;
   document.getElementById('profileLink').textContent = currentProfileLink();
   renderAdminPreview(p);
   renderPhotoManager();
@@ -1587,7 +1688,11 @@ function collectTeamMembersFromManager() {
 function renderAdminPreview(profile) {
   const wrap = document.getElementById('adminPreview');
   const g = normalizeGlobalSettings(state.globalSettings);
-  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит' : 'не верит') + ' / ' + normalizeLines(profile.predictionsBelieve).length + ' / ' + normalizeLines(profile.predictionsSkeptic).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Команда: ' + normalizeTeamMembers(g.teamMembers).filter((x) => x.photo || x.label || x.role).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные коды конкурса: ' + normalizeContestCodes(g.contestCodes).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
+  const hiddenSections = Object.entries(normalizeSectionVisibility(profile.sectionVisibility))
+    .filter(([, visible]) => !visible)
+    .map(([key]) => key)
+    .join(', ') || 'нет';
+  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит' : 'не верит') + ' / ' + normalizeLines(profile.predictionsBelieve).length + ' / ' + normalizeLines(profile.predictionsSkeptic).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Скрытые блоки: ' + escapeHtml(hiddenSections) + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Команда: ' + normalizeTeamMembers(g.teamMembers).filter((x) => x.photo || x.label || x.role).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные коды конкурса: ' + normalizeContestCodes(g.contestCodes).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
 }
 
 function makeInitials(name) {

@@ -35,7 +35,7 @@
       </h1>
     </section>
 
-    <section class="video-section reveal">
+    <section class="video-section reveal" id="videoSection">
       <div class="video-frame">
         <video id="girlVideo" autoplay loop muted playsinline class="hidden"></video>
         <img id="girlImage" class="hidden" alt="Фото героини">
@@ -58,7 +58,7 @@
 
     <div class="divider reveal"><span class="divider-icon">❖</span></div>
 
-    <section class="compliment-section reveal">
+    <section class="compliment-section reveal" id="complimentSection">
       <button class="compliment-button" id="complimentBtn" type="button">Узнать правду о себе</button>
       <div class="compliment-display">
         <div class="compliment-quote">
@@ -70,7 +70,7 @@
 
     <div class="divider reveal"><span class="divider-icon">✦</span></div>
 
-    <section class="prediction-section reveal">
+    <section class="prediction-section reveal" id="predictionSection">
       <div class="prediction-title">Интерактив • Предсказания</div>
       <div class="prediction-actions">
         <button class="prediction-button" id="predictionBtn" type="button">Узнать предсказание</button>
@@ -84,7 +84,7 @@
 
     <div class="divider reveal"><span class="divider-icon">✦</span></div>
 
-    <section class="gallery-section reveal">
+    <section class="gallery-section reveal" id="gallerySection">
       <div class="gallery-title">Фотосессия • Backstage</div>
       <div class="carousel" id="carousel">
         <button class="arrow arrow--l" id="prev" type="button" aria-label="Назад">
@@ -112,12 +112,12 @@
       <p class="gallery-hint">← → или свайп</p>
     </section>
 
-    <section class="quote-section reveal">
+    <section class="quote-section reveal" id="quoteSection">
       <p class="quote-big" id="quoteBig">«Даже в детстве было понятно, что растет <mark>звезда обложки</mark>!»</p>
       <p class="quote-author">— Главный редактор</p>
     </section>
 
-    <section class="contest-section reveal">
+    <section class="contest-section reveal" id="contestSection">
       <div class="contest-title" id="contestTitle">Конкурс цветов</div>
       <p class="contest-hint" id="contestHint">Введите код победителя, чтобы открыть свой приз.</p>
       <div class="contest-form">
@@ -130,7 +130,7 @@
       </div>
     </section>
 
-    <section class="team-section reveal">
+    <section class="team-section reveal" id="teamSection">
       <div class="team-title">Команда вечера</div>
       <p class="team-subtitle">Те, кто готовили событие и собирали этот проект.</p>
       <div class="team-grid" id="teamGrid"></div>
@@ -138,7 +138,7 @@
 
     <div class="divider reveal"><span class="divider-icon">✦</span></div>
 
-    <section class="secret-footer reveal">
+    <section class="secret-footer reveal" id="secretSection">
       <div class="secret-trigger" id="secretTrigger" onclick="toggleSecret()">••• секрет •••</div>
       <div class="secret-content" id="secretContent">
         <div class="secret-text" id="secretText">
@@ -295,6 +295,20 @@
             <div>
               <label class="admin-label" for="quoteInput">Большая цитата</label>
               <textarea class="admin-textarea" id="quoteInput"></textarea>
+            </div>
+            <div class="admin-visibility-box">
+              <div class="admin-label">Видимость блоков на странице</div>
+              <div class="admin-visibility-grid">
+                <label class="admin-check"><input type="checkbox" id="showVideoInput" checked> <span>Kling / видео</span></label>
+                <label class="admin-check"><input type="checkbox" id="showComplimentInput" checked> <span>Комплименты</span></label>
+                <label class="admin-check"><input type="checkbox" id="showPredictionInput" checked> <span>Предсказания</span></label>
+                <label class="admin-check"><input type="checkbox" id="showGalleryInput" checked> <span>Фотографии</span></label>
+                <label class="admin-check"><input type="checkbox" id="showQuoteInput" checked> <span>Большая цитата</span></label>
+                <label class="admin-check"><input type="checkbox" id="showContestInput" checked> <span>Конкурс / цветок</span></label>
+                <label class="admin-check"><input type="checkbox" id="showTeamInput" checked> <span>Команда</span></label>
+                <label class="admin-check"><input type="checkbox" id="showSecretInput" checked> <span>Секрет</span></label>
+              </div>
+              <p class="admin-hint">Можно скрыть любые секции для конкретной девушки без удаления данных.</p>
             </div>
             <p id="savedMsg" class="admin-hint"></p>
           </div>
