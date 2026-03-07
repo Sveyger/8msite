@@ -8,6 +8,8 @@ const SUPABASE_ANON_KEY = 'sb_publishable_aJQbRNVHoJ_VmhAfx33m1Q_L_h3ujnY';
 const SUPABASE_TABLE = 'march8_profiles';
 const SUPABASE_BUCKET = 'media';
 const SUPABASE_GLOBAL_TABLE = 'march8_global_settings';
+const SUPABASE_SURVEY_INVITES_TABLE = 'march8_survey_invites';
+const SUPABASE_SURVEY_RESPONSES_TABLE = 'march8_survey_responses';
 
 const THEMES = {
   warm: { '--accent': '#C4956A', '--accent-light': '#E8CEB5', '--accent-dark': '#8B6914', '--accent-glow': 'rgba(196, 149, 106, 0.4)', '--bg-primary': '#0A0A0A', '--bg-secondary': '#111111', '--bg-card': '#1A1A1A', '--text-primary': '#F5F0EB', '--text-secondary': '#B8AFA6', '--text-muted': '#6B6460', '--gold': '#D4AF37', '--gold-light': '#F0D879' },
@@ -132,6 +134,8 @@ const state = {
   galleryOrder: [0, 1, 2],
   galleryBusy: false,
   galleryBound: false,
+  surveyItems: [],
+  selectedSurveyCode: null,
   backendFallbackReason: '',
   backendMode: 'local',
   supabase: null
@@ -312,6 +316,148 @@ async function uploadFileToStorage(file) {
 
   const { data } = state.supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(path);
   return data.publicUrl;
+}
+
+async function loadSurveyAdminData() {
+  if (state.backendMode !== 'supabase' || !state.supabase) {
+    state.surveyItems = [];
+    renderSurveyAdminList();
+    renderSurveyAdminDetail();
+    return;
+  }
+
+  const [{ data: invites, error: invitesError }, { data: responses, error: responsesError }] = await Promise.all([
+    state.supabase
+      .from(SUPABASE_SURVEY_INVITES_TABLE)
+      .select('*')
+      .order('display_name', { ascending: true }),
+    state.supabase
+      .from(SUPABASE_SURVEY_RESPONSES_TABLE)
+      .select('*')
+      .order('updated_at', { ascending: false })
+  ]);
+
+  if (invitesError) throw invitesError;
+  if (responsesError) throw responsesError;
+
+  const responseMap = new Map((responses || []).map((row) => [row.access_code, row]));
+  state.surveyItems = (invites || []).map((invite) => {
+    const response = responseMap.get(invite.access_code) || null;
+    return {
+      accessCode: invite.access_code,
+      displayName: invite.display_name,
+      response
+    };
+  });
+
+  if (!state.selectedSurveyCode || !state.surveyItems.some((x) => x.accessCode === state.selectedSurveyCode)) {
+    state.selectedSurveyCode = state.surveyItems[0]?.accessCode || null;
+  }
+
+  renderSurveyAdminList();
+  renderSurveyAdminDetail();
+}
+
+function getSelectedSurveyItem() {
+  return state.surveyItems.find((item) => item.accessCode === state.selectedSurveyCode) || null;
+}
+
+function renderSurveyAdminList() {
+  const list = document.getElementById('surveyResponsesList');
+  if (!list) return;
+  if (!state.surveyItems.length) {
+    list.innerHTML = '<p class="admin-hint">Опросы пока не загружены.</p>';
+    return;
+  }
+
+  list.innerHTML = state.surveyItems.map((item) => {
+    const response = item.response;
+    const status = response?.is_submitted ? 'Сдано' : (response ? 'Черновик' : 'Не начат');
+    const updated = response?.submitted_at || response?.updated_at || '';
+    return [
+      '<article class="admin-item' + (state.selectedSurveyCode === item.accessCode ? ' active' : '') + '" data-survey-code="' + escapeHtml(item.accessCode) + '">',
+      '<p class="admin-item-name">' + escapeHtml(item.displayName) + '</p>',
+      '<p class="admin-item-key">' + escapeHtml(item.accessCode) + '</p>',
+      '<p class="admin-hint">' + escapeHtml(status) + (updated ? ' · ' + escapeHtml(formatAdminDate(updated)) : '') + '</p>',
+      '</article>'
+    ].join('');
+  }).join('');
+
+  list.querySelectorAll('[data-survey-code]').forEach((node) => {
+    node.addEventListener('click', () => {
+      state.selectedSurveyCode = node.getAttribute('data-survey-code');
+      renderSurveyAdminList();
+      renderSurveyAdminDetail();
+    });
+  });
+}
+
+function renderSurveyAdminDetail() {
+  const detail = document.getElementById('surveyResponseDetail');
+  if (!detail) return;
+  const item = getSelectedSurveyItem();
+  if (!item) {
+    detail.innerHTML = '<p class="admin-hint">Выберите анкету слева.</p>';
+    return;
+  }
+
+  const response = item.response;
+  if (!response) {
+    detail.innerHTML = [
+      '<div class="survey-admin-grid">',
+      '<div class="survey-admin-card"><h4>' + escapeHtml(item.displayName) + '</h4><div class="survey-admin-meta">',
+      '<p><strong>Код:</strong> ' + escapeHtml(item.accessCode) + '</p>',
+      '<p><strong>Статус:</strong> Не начат</p>',
+      '</div></div></div>'
+    ].join('');
+    return;
+  }
+
+  const payload = response.payload && typeof response.payload === 'object' ? response.payload : {};
+  const photoUrls = normalizeLines(response.photo_urls);
+  const stepState = payload.stepState && typeof payload.stepState === 'object' ? payload.stepState : {};
+  const rows = [
+    ['Код', item.accessCode],
+    ['Статус', response.is_submitted ? 'Сдано' : 'Черновик'],
+    ['Сохранено', formatAdminDate(response.updated_at)],
+    ['Отправлено', response.submitted_at ? formatAdminDate(response.submitted_at) : '—'],
+    ['Имя в анкете', payload.name || '—'],
+    ['Дата рождения', payload.birthDate || '—'],
+    ['Класс', payload.grade || '—']
+  ];
+
+  const longBlocks = [
+    ['О себе', payload.exist],
+    ['Доп. информация', payload.about],
+    ['Отличительные черты', payload.signs],
+    ['Ожидания от подарка', payload.gift]
+  ];
+
+  detail.innerHTML = [
+    '<div class="survey-admin-grid">',
+    '<div class="survey-admin-card"><h4>' + escapeHtml(item.displayName) + '</h4><div class="survey-admin-meta">',
+    rows.map(([label, value]) => '<p><strong>' + escapeHtml(label) + ':</strong> ' + escapeHtml(String(value || '—')) + '</p>').join(''),
+    '<p><strong>Шаги:</strong> ' + escapeHtml(Object.keys(stepState).filter((key) => stepState[key]).join(', ') || '—') + '</p>',
+    '</div></div>',
+    longBlocks.map(([label, value]) => '<div class="survey-admin-card"><h4>' + escapeHtml(label) + '</h4><div class="survey-admin-meta"><p>' + escapeHtml(String(value || '—')) + '</p></div></div>').join(''),
+    photoUrls.length
+      ? '<div class="survey-admin-card"><h4>Фото</h4><div class="survey-admin-photo-grid">' + photoUrls.map((url) => '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer"><img src="' + escapeHtml(url) + '" alt="Фото опроса"></a>').join('') + '</div></div>'
+      : '',
+    '</div>'
+  ].join('');
+}
+
+function formatAdminDate(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 function makeProfile(key, source) {
@@ -1404,6 +1550,11 @@ function renderAdmin() {
   bindAdminEvents();
   fillGlobalForm();
   refreshList();
+  loadSurveyAdminData().catch((err) => {
+    console.error(err);
+    const detail = document.getElementById('surveyResponseDetail');
+    if (detail) detail.innerHTML = '<p class="admin-hint">Не удалось загрузить опросы.</p>';
+  });
   activateAdminTab('profile');
   if (!state.selectedKey) {
     const first = Object.keys(state.db.profiles)[0];
@@ -1414,6 +1565,7 @@ function renderAdmin() {
 function bindAdminEvents() {
   const form = document.getElementById('profileForm');
   const globalForm = document.getElementById('globalForm');
+  const surveyRefreshBtn = document.getElementById('surveyRefreshBtn');
   const uploadBtn = document.getElementById('uploadMediaBtn');
   const mediaInput = document.getElementById('mediaFileInput');
   const mediaTarget = document.getElementById('mediaTarget');
@@ -1429,6 +1581,17 @@ function bindAdminEvents() {
   if (searchInput && searchInput.dataset.bound !== '1') {
     searchInput.dataset.bound = '1';
     searchInput.addEventListener('input', () => refreshList());
+  }
+
+  if (surveyRefreshBtn && surveyRefreshBtn.dataset.bound !== '1') {
+    surveyRefreshBtn.dataset.bound = '1';
+    surveyRefreshBtn.addEventListener('click', () => {
+      loadSurveyAdminData().catch((err) => {
+        console.error(err);
+        const detail = document.getElementById('surveyResponseDetail');
+        if (detail) detail.innerHTML = '<p class="admin-hint">Не удалось обновить список опросов.</p>';
+      });
+    });
   }
 
   const photosInput = document.getElementById('photosInput');

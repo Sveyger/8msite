@@ -216,6 +216,7 @@
         <button type="button" class="mp-tab-btn" data-admin-tab="media">Медиа</button>
         <button type="button" class="mp-tab-btn" data-admin-tab="publish">Публикация</button>
         <button type="button" class="mp-tab-btn" data-admin-tab="global">Общие</button>
+        <button type="button" class="mp-tab-btn" data-admin-tab="survey">Опросы</button>
       </nav>
 
       <form id="profileForm" class="mp-panels">
@@ -445,6 +446,21 @@
           </div>
           <p id="globalSavedMsg" class="admin-hint"></p>
         </form>
+      </section>
+
+      <section class="admin-card mp-tab-panel" data-admin-tab-panel="survey">
+        <h3 class="admin-panel-title">Опросы девушек</h3>
+        <div class="admin-form survey-admin-layout">
+          <div>
+            <div class="admin-actions" style="justify-content:flex-start;margin-bottom:.8rem;">
+              <button class="admin-btn" id="surveyRefreshBtn" type="button">Обновить список</button>
+            </div>
+            <div id="surveyResponsesList" class="admin-list survey-admin-list"></div>
+          </div>
+          <div id="surveyResponseDetail" class="survey-admin-detail">
+            <p class="admin-hint">Выберите анкету слева.</p>
+          </div>
+        </div>
       </section>
     </main>
   </div>

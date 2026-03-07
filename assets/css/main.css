@@ -1057,7 +1057,7 @@ body.splash-lock {
 }
 
 .team-photo-img--crop {
-  object-fit: cover;
+  object-fit: cover !important;
 }
 
 .team-photo-fallback {
@@ -1923,11 +1923,72 @@ body[data-theme='girl_white'] .contest-result.lose {
   padding-top: .5rem;
   padding-bottom: .5rem;
 }
+.survey-admin-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+.survey-admin-list {
+  max-height: 70vh;
+}
+.survey-admin-detail {
+  min-height: 320px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 1rem;
+  padding: 1rem;
+  background: rgba(255,255,255,.02);
+}
+.survey-admin-grid {
+  display: grid;
+  gap: .75rem;
+}
+.survey-admin-card {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: .9rem;
+  padding: .8rem;
+  background: rgba(255,255,255,.02);
+}
+.survey-admin-card h4 {
+  margin: 0 0 .45rem;
+  font-size: .86rem;
+}
+.survey-admin-meta {
+  display: grid;
+  gap: .3rem;
+}
+.survey-admin-meta p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: .82rem;
+  line-height: 1.55;
+}
+.survey-admin-meta strong {
+  color: var(--text-primary);
+}
+.survey-admin-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .55rem;
+  margin-top: .55rem;
+}
+.survey-admin-photo-grid img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: .65rem;
+  border: 1px solid rgba(255,255,255,.08);
+}
 @media (min-width: 960px) {
   .admin-layout { grid-template-columns: 320px 1fr; }
   .admin-grid { grid-template-columns: 1fr 360px; }
   .admin-row { grid-template-columns: 1fr 1fr; }
   .admin-visibility-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 960px) {
+  .survey-admin-layout { grid-template-columns: 1fr; }
+  .survey-admin-list { max-height: none; }
 }
 
 /* ============================================
