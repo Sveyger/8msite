@@ -526,6 +526,10 @@
     submitBtn.addEventListener('click', onSubmitClick, true);
   }
 
+  function hasForbiddenDashInput() {
+    return Object.values(FIELD_IDS).some((id) => String(document.getElementById(id)?.value || '').includes('—'));
+  }
+
   async function onSubmitClick(event) {
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -543,6 +547,13 @@
     const required = ['f_name', 'f_age', 'f_grade', 'f_exist', 'f_about', 'f_signs'];
     const invalid = required.some((id) => !validateField(id));
     if (invalid) return;
+    if (hasForbiddenDashInput()) {
+      if (checkboxError) {
+        checkboxError.textContent = 'Пишите сами!';
+        checkboxError.classList.add('show');
+      }
+      return;
+    }
 
     app.submitBusy = true;
     const submitBtn = document.getElementById('sbtn');
