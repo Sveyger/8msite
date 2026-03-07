@@ -1790,6 +1790,7 @@ const allowedNames = [
 
 function showErr(f, e, m) { f.classList.add('err'); e.textContent = m; e.classList.add('show'); }
 function clearErr(f, e) { f.classList.remove('err'); e.classList.remove('show'); e.textContent = ''; }
+function hasForbiddenDashChar(value) { return String(value || '').includes('—'); }
 
 function validateField(id) {
   const el = document.getElementById(id);
@@ -1797,6 +1798,11 @@ function validateField(id) {
   if (!el || !er) return true;
   const val = el.value.trim();
   let ok = true;
+
+  if (hasForbiddenDashChar(val)) {
+    showErr(el, er, 'Пишите сами!');
+    return false;
+  }
 
   if (id === 'f_name') {
     const w = val.toLowerCase().split(/\s+/).filter(w => w.length > 0);
@@ -2161,6 +2167,13 @@ document.getElementById('skip_07').addEventListener('click', () => {
 
 /* 08 — GIFT */
 document.getElementById('btn_08').addEventListener('click', () => {
+  const giftEl = document.getElementById('f_gift');
+  const giftErr = document.getElementById('e_gift');
+  if (giftEl && giftErr && hasForbiddenDashChar(giftEl.value.trim())) {
+    showErr(giftEl, giftErr, 'Пишите сами!');
+    vibe([25,20,25]);
+    return;
+  }
   vibe(12);
   lockField('f_gift');
   const b08 = document.getElementById('btn_08');
