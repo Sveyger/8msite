@@ -1845,9 +1845,12 @@ function parseSurveyQa(value) {
 }
 
 function renderSurveyTable(rows) {
-  const head = '<table><thead><tr><th>Вопрос</th><th>Ответ</th></tr></thead><tbody>';
-  const body = rows.map((r) => '<tr><td>' + escapeHtml(r.q) + '</td><td>' + escapeHtml(r.a) + '</td></tr>').join('');
-  return head + body + '</tbody></table>';
+  const head = '<div class="survey-table-wrap"><table><thead><tr><th>Вопрос</th><th>Ответ</th></tr></thead><tbody>';
+  const body = rows.map((r, index) => (
+    '<tr class="survey-table-row" style="--row-index:' + index + ';">' +
+    '<td>' + escapeHtml(r.q) + '</td><td>' + escapeHtml(r.a) + '</td></tr>'
+  )).join('');
+  return head + body + '</tbody></table></div>';
 }
 
 function generateKey() {
