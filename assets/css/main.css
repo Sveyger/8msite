@@ -299,17 +299,19 @@ body.splash-lock {
 .secret-footer::before {
   content: '';
   position: absolute;
-  top: -1.2rem;
+  top: 50%;
   left: 50%;
-  width: min(100%, 26rem);
-  height: calc(100% + 2.4rem);
-  transform: translateX(-50%);
+  width: min(112%, 34rem);
+  height: calc(100% + 4.8rem);
+  transform: translate(-50%, -50%);
   pointer-events: none;
   background:
-    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent-glow) 12%, transparent), transparent 28%),
-    linear-gradient(180deg, rgba(255,255,255,.016), transparent 18%, transparent 82%, rgba(255,255,255,.012));
-  opacity: .72;
-  mask: linear-gradient(180deg, transparent 0%, rgba(0,0,0,.92) 10%, rgba(0,0,0,.92) 90%, transparent 100%);
+    radial-gradient(circle at 50% 14%, color-mix(in srgb, var(--accent-glow) 12%, transparent), transparent 34%),
+    radial-gradient(circle at 50% 82%, rgba(255,255,255,.028), transparent 42%),
+    radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.018), transparent 70%);
+  opacity: .48;
+  filter: blur(18px);
+  border-radius: 999px;
   z-index: -1;
 }
 
