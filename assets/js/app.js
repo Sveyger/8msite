@@ -39,13 +39,6 @@ const DEFAULT_PREDICTIONS_BELIEVE = [
   'Твое «да» в нужный момент откроет дверь в красивую новую историю.'
 ];
 
-const DEFAULT_PREDICTIONS_SKEPTIC = [
-  'Ты не веришь в предсказания, и правильно: твой главный прогноз строится твоими решениями.',
-  'Пока другие ждут знаки, ты создаешь результат сама. Это твой сильный стиль.',
-  'Твоя интуиция работает лучше любых гороскопов, когда ты к себе прислушиваешься.',
-  'Секретный прогноз редакции: ты сама автор лучшего сценария для своей жизни.'
-];
-
 const DEFAULT_PREDICTION_BUTTON = 'Узнать предсказание';
 const DEFAULT_ANSWERS_BUTTON = 'Посмотреть мои ответы';
 const DEFAULT_SKEPTIC_ANSWERS_MESSAGE = 'Вы не верите в предсказания :)';
@@ -93,7 +86,6 @@ const DEFAULT_PROFILE = {
   skepticAnswersMessage: DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
   surveyAnswers: [],
   predictionsBelieve: DEFAULT_PREDICTIONS_BELIEVE,
-  predictionsSkeptic: DEFAULT_PREDICTIONS_SKEPTIC,
   sectionVisibility: DEFAULT_SECTION_VISIBILITY,
   buttonLabel: 'Узнать правду о себе',
   mediaTip: 'From little girl to cover star',
@@ -338,7 +330,6 @@ function makeProfile(key, source) {
     skepticAnswersMessage: source.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
     surveyAnswers: normalizeLines(source.surveyAnswers),
     predictionsBelieve: normalizeLines(source.predictionsBelieve).length ? normalizeLines(source.predictionsBelieve) : DEFAULT_PREDICTIONS_BELIEVE,
-    predictionsSkeptic: normalizeLines(source.predictionsSkeptic).length ? normalizeLines(source.predictionsSkeptic) : DEFAULT_PREDICTIONS_SKEPTIC,
     sectionVisibility: normalizeSectionVisibility(source.sectionVisibility),
     buttonLabel: source.buttonLabel || 'Узнать правду о себе',
     mediaTip: source.mediaTip || 'From little girl to cover star',
@@ -362,7 +353,6 @@ function rowToProfile(row) {
     skepticAnswersMessage: row.skeptic_answers_message || DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
     surveyAnswers: normalizeLines(row.survey_answers),
     predictionsBelieve: normalizeLines(row.predictions_believe).length ? normalizeLines(row.predictions_believe) : DEFAULT_PREDICTIONS_BELIEVE,
-    predictionsSkeptic: normalizeLines(row.predictions_skeptic).length ? normalizeLines(row.predictions_skeptic) : DEFAULT_PREDICTIONS_SKEPTIC,
     sectionVisibility: normalizeSectionVisibility(row.section_visibility),
     buttonLabel: row.button_label || 'Узнать правду о себе',
     mediaTip: row.media_tip || 'From little girl to cover star',
@@ -386,7 +376,6 @@ function profileToRow(profile) {
     skeptic_answers_message: profile.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
     survey_answers: normalizeLines(profile.surveyAnswers),
     predictions_believe: normalizeLines(profile.predictionsBelieve),
-    predictions_skeptic: normalizeLines(profile.predictionsSkeptic),
     section_visibility: normalizeSectionVisibility(profile.sectionVisibility),
     button_label: profile.buttonLabel,
     media_tip: profile.mediaTip,
@@ -815,7 +804,7 @@ function initPredictionUi(profile) {
   answersBtn.classList.remove('is-active');
   sourceEl.textContent = state.predictionMode === 'believe'
     ? '— Астрологическая колонка VOGUE'
-    : '— Редакция рационального взгляда';
+    : '— Редакция';
   setChunkedText(textEl, '');
   sourceEl.classList.add('visible');
 }
@@ -834,22 +823,27 @@ function nextPrediction() {
   }
   if (answersBtn) answersBtn.classList.remove('is-active');
 
-  const list = state.predictionMode === 'skeptic'
-    ? normalizeLines(state.activeProfile.predictionsSkeptic)
-    : normalizeLines(state.activeProfile.predictionsBelieve);
-  const safeList = list.length ? list : (state.predictionMode === 'skeptic' ? DEFAULT_PREDICTIONS_SKEPTIC : DEFAULT_PREDICTIONS_BELIEVE);
-  const modeKey = state.predictionMode === 'skeptic' ? 'skeptic' : 'believe';
+  if (state.predictionMode === 'skeptic') {
+    sourceEl.textContent = '— Редакция';
+    sourceEl.classList.add('visible');
+    typeRevealText(textEl, state.activeProfile.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE, () => {
+      state.predictionBusy = false;
+    });
+    return;
+  }
+
+  const safeList = normalizeLines(state.activeProfile.predictionsBelieve).length
+    ? normalizeLines(state.activeProfile.predictionsBelieve)
+    : DEFAULT_PREDICTIONS_BELIEVE;
   const len = safeList.length;
-  const rawCursor = Number(state.predictionCursor[modeKey] || 0);
+  const rawCursor = Number(state.predictionCursor.believe || 0);
   const cursor = ((rawCursor % len) + len) % len;
 
-  sourceEl.textContent = state.predictionMode === 'skeptic'
-    ? '— Редакция рационального взгляда'
-    : '— Астрологическая колонка VOGUE';
+  sourceEl.textContent = '— Астрологическая колонка VOGUE';
   sourceEl.classList.add('visible');
 
   state.predictionIndex = cursor;
-  state.predictionCursor[modeKey] = (cursor + 1) % len;
+  state.predictionCursor.believe = (cursor + 1) % len;
   typeRevealText(textEl, safeList[cursor] || '', () => {
     state.predictionBusy = false;
   });
@@ -875,7 +869,7 @@ function showSurveyAnswers() {
   if (state.predictionAnswersVisible) {
     sourceEl.textContent = state.predictionMode === 'believe'
       ? '— Астрологическая колонка VOGUE'
-      : '— Редакция рационального взгляда';
+      : '— Редакция';
     animateHtmlSwap(textEl, '', () => {
       if (answersBtn) answersBtn.classList.remove('is-active');
       state.predictionAnswersVisible = false;
@@ -1362,7 +1356,6 @@ function bindAdminEvents() {
       skepticAnswersMessage: document.getElementById('skepticAnswersMessageInput').value.trim() || DEFAULT_SKEPTIC_ANSWERS_MESSAGE,
       surveyAnswers: normalizeLines(document.getElementById('surveyAnswersInput').value),
       predictionsBelieve: normalizeLines(document.getElementById('predictionsBelieveInput').value),
-      predictionsSkeptic: normalizeLines(document.getElementById('predictionsSkepticInput').value),
       sectionVisibility: {
         video: document.getElementById('showVideoInput').checked,
         compliment: document.getElementById('showComplimentInput').checked,
@@ -1591,7 +1584,6 @@ function selectProfile(key) {
   document.getElementById('skepticAnswersMessageInput').value = p.skepticAnswersMessage || DEFAULT_SKEPTIC_ANSWERS_MESSAGE;
   document.getElementById('surveyAnswersInput').value = normalizeLines(p.surveyAnswers).join('\n');
   document.getElementById('predictionsBelieveInput').value = normalizeLines(p.predictionsBelieve).join('\n');
-  document.getElementById('predictionsSkepticInput').value = normalizeLines(p.predictionsSkeptic).join('\n');
   document.getElementById('tipInput').value = p.mediaTip || 'From little girl to cover star';
   document.getElementById('quoteInput').value = p.quoteText || DEFAULT_PROFILE.quoteText;
   const vis = normalizeSectionVisibility(p.sectionVisibility);
@@ -1692,7 +1684,7 @@ function renderAdminPreview(profile) {
     .filter(([, visible]) => !visible)
     .map(([key]) => key)
     .join(', ') || 'нет';
-  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит' : 'не верит') + ' / ' + normalizeLines(profile.predictionsBelieve).length + ' / ' + normalizeLines(profile.predictionsSkeptic).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Скрытые блоки: ' + escapeHtml(hiddenSections) + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Команда: ' + normalizeTeamMembers(g.teamMembers).filter((x) => x.photo || x.label || x.role).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные коды конкурса: ' + normalizeContestCodes(g.contestCodes).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
+  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит / ' + normalizeLines(profile.predictionsBelieve).length : 'не верит / сообщение') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Скрытые блоки: ' + escapeHtml(hiddenSections) + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Команда: ' + normalizeTeamMembers(g.teamMembers).filter((x) => x.photo || x.label || x.role).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные коды конкурса: ' + normalizeContestCodes(g.contestCodes).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
 }
 
 function makeInitials(name) {

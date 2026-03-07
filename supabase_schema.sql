@@ -11,7 +11,6 @@
   skeptic_answers_message text not null default 'Вы не верите в предсказания :)',
   survey_answers jsonb not null default '[]'::jsonb,
   predictions_believe jsonb not null default '[]'::jsonb,
-  predictions_skeptic jsonb not null default '[]'::jsonb,
   section_visibility jsonb not null default '{}'::jsonb,
   button_label text not null default 'Узнать правду о себе',
   media_tip text not null default 'From little girl to cover star',
@@ -25,8 +24,8 @@ alter table public.march8_profiles add column if not exists prediction_button_la
 alter table public.march8_profiles add column if not exists skeptic_answers_message text not null default 'Вы не верите в предсказания :)';
 alter table public.march8_profiles add column if not exists survey_answers jsonb not null default '[]'::jsonb;
 alter table public.march8_profiles add column if not exists predictions_believe jsonb not null default '[]'::jsonb;
-alter table public.march8_profiles add column if not exists predictions_skeptic jsonb not null default '[]'::jsonb;
 alter table public.march8_profiles add column if not exists section_visibility jsonb not null default '{}'::jsonb;
+alter table public.march8_profiles drop column if exists predictions_skeptic;
 
 create table if not exists public.march8_global_settings (
   id text primary key default 'global',
