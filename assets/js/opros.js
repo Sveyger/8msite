@@ -549,6 +549,7 @@
     const submitText = document.getElementById('sbtnText');
     if (submitBtn) submitBtn.disabled = true;
     if (submitText) submitText.textContent = 'Сохранение анкеты...';
+    if (typeof stopHeavyEffects === 'function') stopHeavyEffects();
 
     try {
       app.stepState['7'] = true;
@@ -586,3 +587,7 @@
     }
   }
 })();
+
+
+
+
