@@ -42,21 +42,13 @@ html{scroll-behavior:smooth;color-scheme:dark;}
 body{
   font-family:var(--font-serif);
   background:var(--bg);color:var(--text);
-  min-height:100vh;overflow-x:hidden;
+  min-height:100vh;
+  min-height:100dvh;
+  overflow-x:hidden;
   -webkit-tap-highlight-color:transparent;
 }
 
 /* ── PERFORMANCE OPTIMIZATIONS ── */
-.card,
-.auth-box,
-.bridge-line,
-.bridge-slit,
-.photo-upload-area,
-.photo-thumb {
-  backface-visibility:hidden;
-  transform:translateZ(0);
-}
-.card,.auth-box,.fg,.hdr{will-change:auto;}
 .auth-input,
 .auth-btn-new,
 .fi,.ft,
@@ -65,11 +57,11 @@ body{
 .sbtn,
 .photo-upload-area{
   transition:
-    transform var(--t-fast) ease,
-    opacity var(--t-fast) ease,
-    border-color var(--t-med) ease,
-    background-color var(--t-med) ease,
-    color var(--t-med) ease;
+    transform var(--t-fast) var(--ease-out),
+    opacity var(--t-fast) var(--ease-out),
+    border-color var(--t-med) var(--ease-out),
+    background-color var(--t-med) var(--ease-out),
+    color var(--t-med) var(--ease-out);
 }
 
 /* ── AURORA BACKGROUND ── */
@@ -174,6 +166,7 @@ body{
     inset 0 -1px 0 rgba(0,0,0,.5);
   backdrop-filter:blur(12px);
   -webkit-backdrop-filter:blur(12px);
+  transform:translateZ(0);
 }
 .auth-bg-orb{
   position:absolute;
@@ -204,7 +197,7 @@ body{
   line-height:1.1;
   font-weight:400;
   color:#f1ede7;
-  letter-spacing:.04em;
+  letter-spacing:.02em;
   margin-bottom:14px;
   text-shadow:0 8px 24px rgba(0,0,0,.35);
 }
@@ -277,12 +270,6 @@ body{
   background:linear-gradient(180deg,rgba(255,255,255,.1),transparent 60%);
   pointer-events:none;
 }
-.auth-btn-new:hover{
-  transform:translateY(-1px);
-  box-shadow:
-    0 16px 32px rgba(212,184,143,.2),
-    0 6px 16px rgba(0,0,0,.22);
-}
 .auth-err{text-align:center;margin-top:12px;}
 
 .terminal-overlay{
@@ -341,11 +328,18 @@ body{
   position:relative;
   width:58%;
   height:1px;
-  background:linear-gradient(90deg, rgba(212,184,143,.15), var(--accent), rgba(212,184,143,.15));
+  background:linear-gradient(
+    90deg,
+    transparent,
+    rgba(212,184,143,.55),
+    var(--accent),
+    rgba(212,184,143,.55),
+    transparent
+  );
   opacity:0;
   transform:scaleX(0);
   transform-origin:50% 50%;
-  box-shadow:0 0 16px rgba(212,184,143,.25);
+  box-shadow:0 0 10px rgba(212,184,143,.18);
   --shim-x: 0%;
   --shim-o: 0;
 }
@@ -409,7 +403,9 @@ body{
 .wrap{
   position:relative;z-index:9990;max-width:620px;margin:0 auto;
   padding:calc(70px + env(safe-area-inset-top)) 24px calc(80px + env(safe-area-inset-bottom)) 24px;
-  min-height:100vh;display:none;opacity:0;perspective:1400px;
+  min-height:100vh;
+  min-height:100dvh;
+  display:none;opacity:0;perspective:1400px;
 }
 .hdr{margin-bottom:50px;opacity:0;text-align:center;}
 /* accent-only pen */
@@ -417,7 +413,7 @@ body{
   font-family:var(--font-display);
   font-size:clamp(3rem,8vw,4.4rem);
   font-weight:400;
-  letter-spacing:.04em;
+  letter-spacing:.02em;
   line-height:1.1;
   color:var(--text);
   margin-bottom:14px;
@@ -467,6 +463,7 @@ body{
     inset 1px 0 0 rgba(255,255,255,.03),
     inset -1px 0 0 rgba(255,255,255,.03);
   transform-style:preserve-3d;
+  transform:translateZ(0);
 }
 .card::before{
   content:'';
@@ -482,7 +479,7 @@ body{
   border-radius:inherit;
   pointer-events:none;
   z-index:0;
-  background:radial-gradient(700px circle at var(--glow-x,50%) var(--glow-y,50%),var(--accent-glow),transparent 42%);
+  background:radial-gradient(420px circle at var(--glow-x,50%) var(--glow-y,50%),var(--accent-glow),transparent 46%);
   opacity:var(--glow-opacity,0);
   transition:opacity .5s;
 }
@@ -522,8 +519,10 @@ body{
 
 .fg-status{
   font-family:var(--font-mono);
-  font-size:.52rem;
-  color:rgba(104,179,104,.85);
+  font-size:.5rem;
+  color:rgba(104,179,104,.72);
+  background:rgba(104,179,104,.03);
+  border:1px solid rgba(104,179,104,.10);
   letter-spacing:.16em;
   text-transform:uppercase;
   position:absolute;
@@ -531,10 +530,8 @@ body{
   opacity:0;
   transform:translateY(-4px);
   transition:opacity var(--t-med) ease, transform var(--t-med) ease;
-  background:rgba(104,179,104,.06);
   padding:4px 9px;
   border-radius:4px;
-  border:1px solid rgba(104,179,104,.14);
   display:flex;align-items:center;gap:6px;
 }
 .fg-status::before{
@@ -546,7 +543,7 @@ body{
 }
 .fg.field-done .fg-status{opacity:1;transform:translateY(0);}
 
-/* field labels — Cormorant italic, "дорого и тихо" */
+/* field labels */
 .fl{
   font-family:var(--font-serif);
   font-style:italic;
@@ -627,7 +624,6 @@ body{
   box-shadow:inset 0 3px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04);
 }
 .fi::placeholder,.ft::placeholder{color:rgba(74,71,66,.8);font-style:italic;}
-.fi:hover,.ft:hover{background:rgba(0,0,0,.38);border-color:rgba(255,255,255,.18);}
 .fi:focus,.ft:focus{
   background:rgba(0,0,0,.55);
   border-color:var(--accent-dim);
@@ -650,7 +646,7 @@ body{
 
 /* ── STEP BUTTON ── */
 .step-btn{
-  background:rgba(0,0,0,.3);
+  background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.22));
   border:1px solid rgba(255,255,255,.1);
   border-bottom:1px solid rgba(255,255,255,.06);
   color:var(--text-dim);
@@ -666,12 +662,6 @@ body{
   position:relative;
   overflow:hidden;
   box-shadow:0 4px 15px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.05);
-}
-.step-btn:hover{
-  border-color:rgba(166,137,101,.45);
-  color:var(--accent);
-  background:rgba(212,184,143,.04);
-  transform:translateY(-1px);
 }
 .step-btn:active{transform:translateY(1px);}
 .step-btn-row{display:flex;gap:10px;margin-top:20px;}
@@ -689,7 +679,6 @@ body{
   border-radius:9px;
   flex:0 0 auto;
 }
-.step-btn-skip:hover{border-color:var(--border-mid);color:var(--text-dim);}
 
 /* ── PHOTO UPLOAD ── */
 .photo-upload-area{
@@ -705,13 +694,13 @@ body{
   background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(212,184,143,.06),transparent);
   opacity:0;transition:opacity .4s;
 }
-.photo-upload-area:hover,.photo-upload-area.drag-over{
+.photo-upload-area.drag-over{
   border-color:rgba(166,137,101,.5);
   background:rgba(212,184,143,.04);
   transform:translateY(-1px);
   box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px rgba(212,184,143,.08);
 }
-.photo-upload-area:hover::before,.photo-upload-area.drag-over::before{opacity:1;}
+.photo-upload-area.drag-over::before{opacity:1;}
 .photo-upload-area.drag-over{border-style:solid;border-color:var(--accent);}
 #photoInput{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;}
 .photo-icon{
@@ -719,7 +708,6 @@ body{
   opacity:.35;transition:opacity .3s,transform .4s;line-height:1;
   filter:drop-shadow(0 0 10px rgba(212,184,143,.2));
 }
-.photo-upload-area:hover .photo-icon{opacity:.55;transform:scale(1.06);}
 .photo-upload-title{
   font-family:var(--font-serif);
   font-style:italic;
@@ -738,28 +726,26 @@ body{
 }
 .photo-previews{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
 .photo-thumb{
-  position:relative;width:80px;height:80px;border-radius:9px;overflow:hidden;
+  position:relative;
+  width:80px;height:80px;border-radius:9px;overflow:hidden;
   border:1px solid var(--border-mid);
-  opacity:0;transform:scale(.5) rotate(-5deg);
+  opacity:.001;transform:scale(.96);
   box-shadow:0 8px 20px rgba(0,0,0,.5);
   transition:
     transform .35s cubic-bezier(.34,1.56,.64,1),
     opacity .25s ease,
-    width .25s ease,
-    height .25s ease,
-    margin .25s ease,
     border-color .25s ease;
 }
-.photo-thumb.loaded{opacity:1;transform:scale(1) rotate(0);}
+.photo-thumb.loaded{opacity:1;transform:scale(1);}
+.photo-thumb img{
+  width:100%;height:100%;object-fit:cover;display:block;
+}
 .photo-thumb.removing{
   opacity:0;
   transform:scale(.72) rotate(6deg);
-  width:0;
-  height:0;
-  margin:0;
   border-color:transparent;
+  pointer-events:none;
 }
-.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 .photo-thumb-del{
   position:absolute;inset:0;background:rgba(0,0,0,.65);
   display:flex;align-items:center;justify-content:center;
@@ -767,7 +753,6 @@ body{
   font-family:var(--font-mono);font-size:.6rem;color:var(--error-text);
   letter-spacing:.04em;text-transform:uppercase;
 }
-.photo-thumb:hover .photo-thumb-del{opacity:1;}
 .photo-count-note{
   font-family:var(--font-mono);font-size:.6rem;
   color:var(--accent-dim);letter-spacing:.06em;
@@ -822,7 +807,6 @@ body{
   transition:border-color .25s ease, background-color .25s ease, box-shadow .25s ease;
   box-shadow:inset 0 3px 12px rgba(0,0,0,.25),0 4px 15px rgba(0,0,0,.2);
 }
-.checkbox-wrap:hover{border-color:var(--accent-dim);background:rgba(212,184,143,.03);}
 .checkbox-wrap input[type="checkbox"]{
   appearance:none;-webkit-appearance:none;
   width:24px;height:24px;
@@ -892,13 +876,6 @@ body{
   pointer-events:none;z-index:1;
 }
 .sbtn span{position:relative;z-index:2;text-shadow:0 2px 6px rgba(0,0,0,.5);}
-.sbtn:hover{
-  color:#000;border-color:var(--accent);
-  box-shadow:0 8px 28px rgba(212,184,143,.18),0 4px 12px rgba(0,0,0,.4);
-  transform:translateY(-1px);
-}
-.sbtn:hover::before{transform:translateX(0);}
-.sbtn:hover span{text-shadow:none;}
 .sbtn:active{transform:translateY(1px);}
 .sbtn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none;}
 
@@ -1020,6 +997,14 @@ body{
   margin-bottom:10px;
   text-transform:uppercase;
 }
+.s-line-3{
+  font-family:var(--font-serif);
+  font-style:italic;
+  font-size:1.1rem;
+  color:var(--text-vdim);
+  letter-spacing:.02em;
+  margin-top:14px;
+}
 .s-cursor{
   display:inline-block;
   width:8px;
@@ -1031,11 +1016,68 @@ body{
 }
 @keyframes cBl{0%,100%{opacity:1}50%{opacity:0}}
 
+/* HOVER ONLY ON DESKTOP */
+@media (hover: hover) and (pointer: fine) {
+  .fi:hover, .ft:hover {background:rgba(0,0,0,.38);border-color:rgba(255,255,255,.18);}
+  .checkbox-wrap:hover {border-color:var(--accent-dim);background:rgba(212,184,143,.03);}
+  .auth-btn-new:hover {
+    transform:translateY(-1px);
+    box-shadow: 0 16px 32px rgba(212,184,143,.2), 0 6px 16px rgba(0,0,0,.22);
+  }
+  .step-btn:hover {
+    border-color:rgba(166,137,101,.45);
+    color:var(--accent);
+    background:linear-gradient(180deg, rgba(212,184,143,.06), rgba(212,184,143,.02));
+    transform:translateY(-1px);
+  }
+  .step-btn-skip:hover {border-color:var(--border-mid);color:var(--text-dim);}
+  .photo-upload-area:hover {
+    border-color:rgba(166,137,101,.5);
+    background:rgba(212,184,143,.04);
+    transform:translateY(-1px);
+    box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px rgba(212,184,143,.08);
+  }
+  .photo-upload-area:hover::before {opacity:1;}
+  .photo-upload-area:hover .photo-icon {opacity:.55;transform:scale(1.06);}
+  .photo-thumb:hover .photo-thumb-del {opacity:1;}
+  .sbtn:hover {
+    color:#000;border-color:var(--accent);
+    box-shadow:0 8px 28px rgba(212,184,143,.18),0 4px 12px rgba(0,0,0,.4);
+    transform:translateY(-1px);
+  }
+  .sbtn:hover::before {transform:translateX(0);}
+  .sbtn:hover span {text-shadow:none;}
+}
+
 @media screen and (max-width:768px){
   .fi,.ft{font-size:16px !important;padding:16px;}
-  .au-1,.au-2,.au-3,.au-4,.au-5{filter: blur(54px) !important;}
-  .card{backdrop-filter: blur(10px);-webkit-backdrop-filter: blur(10px);}
-  .auth-box{backdrop-filter: blur(8px);-webkit-backdrop-filter: blur(8px);}
+
+  .au-1,.au-2,.au-3,.au-4,.au-5{
+    filter:blur(34px) !important;
+    animation-duration:28s !important;
+  }
+  .au-4, .au-5 {display:none;}
+  .noise {opacity:.02 !important;}
+  .au {mix-blend-mode:normal;}
+
+  /* убираем backdrop-filter — основной источник тормозов на мобилках */
+  .card{
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+    background:rgba(14,13,12,.88);
+  }
+
+  .auth-box{
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+    background:linear-gradient(180deg, rgba(16,16,15,.98), rgba(10,10,10,.99));
+  }
+
+  .s-lines{
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+    background:rgba(10,10,9,.86);
+  }
 }
 @media(max-width:480px){
   .wrap{padding:calc(48px + env(safe-area-inset-top)) 16px calc(60px + env(safe-area-inset-bottom)) 16px;}
@@ -1073,7 +1115,6 @@ body{
 </head>
 <body>
 
-<!-- AURORA -->
 <div id="aurora">
   <div class="au au-1"></div>
   <div class="au au-2"></div>
@@ -1084,7 +1125,6 @@ body{
 <div class="noise" id="noiseEl"></div>
 <div class="vignette" id="vignetteEl"></div>
 
-<!-- AUTH -->
 <div id="authOverlay" class="auth-overlay">
   <div class="auth-box">
     <div class="auth-bg-orb"></div>
@@ -1129,7 +1169,6 @@ body{
   <div class="bridge-slit"></div>
 </div>
 
-<!-- REJECTED -->
 <div id="rejectedScreen" class="rejected-screen">
   <div class="rej-text">Доступ закрыт.</div>
   <div class="rej-sub">Вы уже заполняли эту анкету ранее.</div>
@@ -1150,7 +1189,6 @@ body{
   <form class="card" id="qForm" autocomplete="off" novalidate>
     <div class="card-glow"></div>
 
-    <!-- 01 -->
     <div class="fg" data-num="01">
       <span class="fg-num">01</span><span class="fg-status">Зафиксировано</span>
       <label class="fl" for="f_name">Ваше имя</label>
@@ -1160,7 +1198,6 @@ body{
       <button type="button" class="step-btn" id="btn_01">Зафиксировать ответ</button>
     </div>
 
-    <!-- 02 -->
     <div class="fg" data-num="02">
       <span class="fg-num">02</span><span class="fg-status">Зафиксировано</span>
       <label class="fl" for="f_age">Дата рождения</label>
@@ -1170,7 +1207,6 @@ body{
       <button type="button" class="step-btn" id="btn_02">Зафиксировать ответ</button>
     </div>
 
-    <!-- 03 -->
     <div class="fg" data-num="03">
       <span class="fg-num">03</span><span class="fg-status">Зафиксировано</span>
       <label class="fl" for="f_grade">Ваш класс</label>
@@ -1180,7 +1216,6 @@ body{
       <button type="button" class="step-btn" id="btn_03">Зафиксировать ответ</button>
     </div>
 
-    <!-- 04 -->
     <div class="fg" data-num="04">
       <span class="fg-num">04</span><span class="fg-status">Зафиксировано</span>
       <label class="fl" for="f_exist">Расскажите о себе</label>
@@ -1192,7 +1227,6 @@ body{
       <button type="button" class="step-btn" id="btn_04">Зафиксировать ответ</button>
     </div>
 
-    <!-- 05 -->
     <div class="fg" data-num="05">
       <span class="fg-num">05</span><span class="fg-status">Зафиксировано</span>
       <label class="fl" for="f_about">Дополнительная информация</label>
@@ -1203,7 +1237,6 @@ body{
       <button type="button" class="step-btn" id="btn_05">Зафиксировать ответ</button>
     </div>
 
-    <!-- 06 -->
     <div class="fg" data-num="06">
       <span class="fg-num">06</span><span class="fg-status">Зафиксировано</span>
       <label class="fl" for="f_signs">Ваши отличительные черты</label>
@@ -1213,7 +1246,6 @@ body{
       <button type="button" class="step-btn" id="btn_06">Зафиксировать ответ</button>
     </div>
 
-    <!-- 07 — ФОТО -->
     <div class="fg" data-num="07">
       <span class="fg-num">07</span><span class="fg-status">Добавлено</span>
       <label class="fl">Детские фотографии <span class="fl-optional">необязательно</span></label>
@@ -1224,6 +1256,7 @@ body{
         <span class="photo-upload-title">Прикрепить фотографии</span>
         <div class="photo-upload-sub">JPG, PNG, WEBP · до 10 МБ каждый</div>
       </div>
+      <div class="ferr" id="e_photo"></div>
       <div class="photo-previews" id="photoPreviews"></div>
       <div class="photo-count-note" id="photoCountNote"></div>
       <div class="step-btn-row">
@@ -1232,7 +1265,6 @@ body{
       </div>
     </div>
 
-    <!-- 08 — ПОДАРОК -->
     <div class="fg" data-num="08">
       <span class="fg-num">08</span><span class="fg-status">Зафиксировано</span>
       <label class="fl" for="f_gift">Что вы ждёте от подарка? <span class="fl-optional">необязательно</span></label>
@@ -1246,7 +1278,6 @@ body{
       </div>
     </div>
 
-    <!-- CHECKBOX -->
     <div class="checkbox-wrap" id="cbWrap">
       <input type="checkbox" id="confirmCb" name="confirm">
       <label class="checkbox-label" for="confirmCb">
@@ -1267,14 +1298,12 @@ body{
   </footer>
 </div>
 
-<!-- DATE FLASH -->
 <div class="date-flash" id="dateFlash">
   <div class="df-line" id="dfLine"></div>
   <div class="df-num" id="dfNum">10.03.2026</div>
   <div class="df-sub" id="dfSub">дата события</div>
 </div>
 
-<!-- SUCCESS -->
 <div class="success" id="success">
   <div class="s-static" id="sStatic"></div>
   <div class="s-scan" id="sScan"></div>
@@ -1282,6 +1311,7 @@ body{
     <div class="s-line s-line-1" id="sLine1"></div>
     <div class="s-line s-line-2" id="sLine2">Данные успешно интегрированы.</div>
     <div class="s-line s-line-2" id="sLine3">Сеанс связи завершён.</div>
+    <div class="s-line s-line-3" id="sLine4">Спасибо за выполнение, настоящий праздник впереди.</div>
   </div>
 </div>
 
@@ -1294,6 +1324,15 @@ function onGsapReady(){ G = true; }
 <script>
 const isMobile = 'ontouchstart' in window || window.innerWidth <= 480;
 const noMotion = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+/* ══════════════════════════════════════════
+   HAPTIC ENGINE
+   ══════════════════════════════════════════ */
+function vibe(pattern) {
+  if (noMotion) return;
+  if (!('vibrate' in navigator)) return;
+  try { navigator.vibrate(pattern); } catch(e) {}
+}
 
 /* ══════════════════════════════════════════
    AURORA BACKGROUND — EVOLVES WITH PROGRESS
@@ -1441,7 +1480,12 @@ function showInfo(t) {
 document.querySelectorAll('.fi,.ft,.auth-input').forEach(el => {
   el.addEventListener('focus', () => {
     infoBar.classList.add('visible');
-    showInfo('Сбор данных активирован...');
+    if (isMobile) {
+      infoInner.style.transform = 'translateY(0)';
+      infoInner.innerHTML = 'Сбор данных активирован...';
+    } else {
+      showInfo('Сбор данных активирован...');
+    }
   });
   el.addEventListener('blur', () => {
     setTimeout(() => infoBar.classList.remove('visible'), 3000);
@@ -1449,26 +1493,22 @@ document.querySelectorAll('.fi,.ft,.auth-input').forEach(el => {
 });
 
 /* ══════════════════════════════════
-   REJECTION CHECK
-   ══════════════════════════════════ */
-const authOverlay = document.getElementById('authOverlay');
-const mainWrap = document.getElementById('mainWrap');
-const rejScreen = document.getElementById('rejectedScreen');
-
-function showRejectScreen() {
-  if (authOverlay) authOverlay.style.display = 'none';
-  if (mainWrap) mainWrap.style.display = 'none';
-  rejScreen.style.display = 'flex';
-}
-
-/* ══════════════════════════════════
    AUTH
    ══════════════════════════════════ */
 const validKeys = ['VOID-77','ECHO-13','NULL-00','ROOT-99','ABYSS-42'];
+const authOverlay = document.getElementById('authOverlay');
+const mainWrap = document.getElementById('mainWrap');
+const rejectedScreen = document.getElementById('rejectedScreen');
 const authBtn = document.getElementById('authBtn');
 const authKeyInput = document.getElementById('authKey');
 const authErr = document.getElementById('authErr');
 const terminalOverlay = document.getElementById('terminalOverlay');
+
+function showRejectedScreen() {
+  if (authOverlay) authOverlay.style.display = 'none';
+  if (mainWrap) mainWrap.style.display = 'none';
+  if (rejectedScreen) rejectedScreen.style.display = 'flex';
+}
 
 authKeyInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') authBtn.click();
@@ -1479,17 +1519,20 @@ authBtn.addEventListener('click', () => {
   authErr.classList.remove('show');
 
   if (!key) {
+    vibe([40, 30, 40]);
     authErr.textContent = 'ОШИБКА: Ключ не введён.';
     authErr.classList.add('show');
     return;
   }
 
   if (!validKeys.includes(key) && key !== 'TEST-00') {
+    vibe([40, 30, 40]);
     authErr.textContent = 'ОШИБКА: Неверный ключ.';
     authErr.classList.add('show');
     return;
   }
 
+  vibe(20);
   authBtn.disabled = true;
   authKeyInput.disabled = true;
 
@@ -1542,59 +1585,48 @@ function playAuthToFormTransition() {
   const mainHdr = document.querySelector('.hdr');
   const firstFg = document.querySelector('.fg[data-num="01"]');
 
-  setAuroraStage(0);
-
-  const mainTitle = document.getElementById('mainTitle');
-  const mainSub = document.getElementById('mainSub');
-  const titleText = mainTitle.innerHTML;
-  const subText = mainSub.innerHTML.replace(/<br>/g, '\n');
-
-  /* Очищаем текст сразу, запустим scramble после появления формы */
-  mainTitle.innerHTML = '';
-  mainSub.innerHTML = '';
+  const useLiteBridge = isMobile || window.innerWidth <= 768;
 
   bridge.classList.add('active');
 
-  /* gsap.set гарантирует opacity:0 до первого кадра — нет flash */
-  gsap.set(mainWrap,  { display: 'block', opacity: 1 });
-  gsap.set(firstFg,   { display: 'block', opacity: 0, y: 14 });
-  gsap.set(mainHdr,   { opacity: 0, y: 18 });
-  gsap.set(formCard,  { opacity: 0, y: 18, scale: 0.992 });
-
-  if (!G || noMotion) {
-    authOverlay.remove();
+  if (!G || noMotion || typeof gsap === 'undefined') {
+    mainWrap.style.display = 'block';
+    mainWrap.style.opacity = '1';
+    firstFg.style.display = 'block';
     formCard.style.opacity = '1';
-    firstFg.style.opacity = '1';
     mainHdr.style.opacity = '1';
+    firstFg.style.opacity = '1';
+    authOverlay.remove();
     bridge.remove();
-    mainTitle.innerHTML = titleText;
-    mainSub.innerHTML = subText.replace(/\n/g, '<br>');
     return;
   }
 
-  if (typeof ScrollTrigger !== 'undefined') gsap.registerPlugin(ScrollTrigger);
-  gyroCardRX = gsap.quickTo('.card','rotationX',{duration:.42,ease:'power2.out'});
-  gyroCardRY = gsap.quickTo('.card','rotationY',{duration:.42,ease:'power2.out'});
+  gsap.set(mainWrap, { display: 'block', opacity: 1 });
+  gsap.set(formCard, { opacity: 0, y: 20, scale: 0.992 });
+  gsap.set(mainHdr, { opacity: 0, y: 10 });
+  gsap.set(firstFg, { display: 'block', opacity: 0, y: 10 });
 
-  /* will-change только на время перехода */
-  authOverlay.style.willChange = 'opacity, transform';
-  authBox.style.willChange = 'opacity, transform';
-  formCard.style.willChange = 'opacity, transform';
-  bridgeLine.style.willChange = 'opacity, transform';
-  bridgeSlit.style.willChange = 'opacity, transform';
+  gsap.set(bridgeVeil, { opacity: 0 });
+  gsap.set(bridgeLine, { opacity: 0, scaleX: 0.6, transformOrigin: '50% 50%' });
 
-  gsap.set(bridgeLine, { scaleX: 0, opacity: 0, transformOrigin: '50% 50%' });
-  gsap.set(bridgeSlit, { opacity: 0, scaleX: 0.35, transformOrigin: '50% 50%' });
+  if (!useLiteBridge) {
+    gsap.set(bridgeGlow, { opacity: 0, scale: 0.9 });
+    gsap.set(bridgeSlit, { opacity: 0, scaleX: 0.8, transformOrigin: '50% 50%' });
+  } else {
+    gsap.set([bridgeGlow, bridgeSlit], { opacity: 0 });
+  }
 
-  document.getElementById('vignetteEl').style.background =
-    'radial-gradient(ellipse 52% 38% at 50% 50%, transparent 0%, rgba(0,0,0,.9) 100%)';
+  authOverlay.style.willChange = 'opacity';
+  authBox.style.willChange = 'transform, opacity';
+  formCard.style.willChange = 'transform, opacity';
+  bridgeLine.style.willChange = 'transform, opacity';
 
   const tl = gsap.timeline({
-    defaults: { ease: 'power3.out' },
+    defaults: { ease: 'power2.out' },
     onComplete: () => {
       authOverlay.remove();
       bridge.remove();
-      [authOverlay, authBox, formCard, bridgeLine, bridgeSlit].forEach(el => {
+      [authOverlay, authBox, formCard, bridgeLine].forEach(el => {
         if (el) el.style.willChange = 'auto';
       });
     }
@@ -1603,107 +1635,86 @@ function playAuthToFormTransition() {
   tl
     .to(authBox, {
       opacity: 0,
-      y: -18,
-      scale: 0.985,
-      duration: 0.22,
+      y: -10,
+      scale: 0.992,
+      duration: 0.24,
       ease: 'power2.inOut'
     }, 0)
+
+    .to(authOverlay, {
+      opacity: 0,
+      duration: 0.30,
+      ease: 'power1.out'
+    }, 0.04)
 
     .to(bridgeVeil, {
       opacity: 1,
       duration: 0.18
-    }, 0.04)
+    }, 0.06)
 
-    /* scaleX вместо width — нет reflow */
     .to(bridgeLine, {
+      opacity: 0.95,
       scaleX: 1,
-      opacity: 1,
+      duration: 0.26,
+      ease: 'power2.out'
+    }, 0.10);
+
+  if (!useLiteBridge) {
+    tl.to(bridgeGlow, {
+      opacity: 0.55,
+      scale: 1,
       duration: 0.22,
       ease: 'power2.out'
-    }, 0.10)
-
-    .fromTo(bridgeGlow,
-      { opacity: 0, scale: 0.7 },
-      { opacity: 1, scale: 1, duration: 0.22 },
-      0.14
-    )
-
-    /* короткий fade вместо резкого .set */
-    .to(authOverlay, {
-      opacity: 0,
-      duration: 0.12,
-      ease: 'power1.out'
-    }, 0.26)
-
-    .set(authOverlay, { pointerEvents: 'none' }, 0.38)
-
+    }, 0.14)
     .to(bridgeSlit, {
-      opacity: 1,
+      opacity: 0.45,
       scaleX: 1,
       duration: 0.20,
       ease: 'power2.out'
-    }, 0.28)
+    }, 0.18);
+  }
 
+  tl
     .to(formCard, {
       opacity: 1,
       y: 0,
       scale: 1,
-      duration: 0.48,
+      duration: 0.42,
       ease: 'power3.out'
-    }, 0.34)
+    }, 0.24)
 
     .to(mainHdr, {
       opacity: 1,
       y: 0,
-      duration: 0.28,
-      ease: 'power2.out'
-    }, 0.44)
+      duration: 0.24
+    }, 0.34)
 
     .to(firstFg, {
       opacity: 1,
       y: 0,
-      duration: 0.26,
-      ease: 'power2.out'
-    }, 0.52)
-
-    /* scramble запускается ПОСЛЕ появления формы */
-    .add(() => {
-      scrambleText(mainTitle, titleText, 700);
-      setTimeout(() => scrambleText(mainSub, subText, 900), 120);
-      if (firstFg) {
-        const fl = firstFg.querySelector('.fl');
-        if (fl) {
-          const t = fl.textContent.trim();
-          fl.innerHTML = '<span class="fl-scramble"></span>';
-          scrambleText(fl.querySelector('.fl-scramble'), t, 500);
-          setTimeout(() => { fl.textContent = t; }, 510);
-        }
-      }
-    }, 0.62)
+      duration: 0.22
+    }, 0.40)
 
     .to(bridgeLine, {
       opacity: 0,
-      duration: 0.14
-    }, 0.66)
-
-    .to(bridgeGlow, {
-      opacity: 0,
-      scale: 1.08,
       duration: 0.16,
       ease: 'power2.in'
-    }, 0.68)
+    }, 0.54);
 
-    .to(bridgeSlit, {
+  if (!useLiteBridge) {
+    tl.to([bridgeGlow, bridgeSlit], {
       opacity: 0,
-      scaleX: 1.04,
-      duration: 0.16,
+      duration: 0.14,
+      stagger: 0.02,
       ease: 'power2.in'
-    }, 0.70)
+    }, 0.56);
+  }
 
-    .to(bridgeVeil, {
-      opacity: 0,
-      duration: 0.18
-    }, 0.72);
+  tl.to(bridgeVeil, {
+    opacity: 0,
+    duration: 0.18,
+    ease: 'power2.in'
+  }, 0.58);
 }
 
 /* ══════════════════════════════════
@@ -1769,7 +1780,9 @@ function validateField(id) {
 
   if (id === 'f_name') {
     const w = val.toLowerCase().split(/\s+/).filter(w => w.length > 0);
-    const allowed = w.length >= 2 && (allowedNames.includes(w[0]+' '+w[1]) || allowedNames.includes(w[1]+' '+w[0]));
+    const checkStr = w.length >= 2 ? (w[0]+' '+w[1]) : val.toLowerCase();
+    const checkStrRev = w.length >= 2 ? (w[1]+' '+w[0]) : '';
+    const allowed = allowedNames.includes(checkStr) || allowedNames.includes(checkStrRev) || allowedNames.includes(val.toLowerCase());
     if (!val) { showErr(el,er,E.ne); ok=false; }
     else if (w.length < 3) { showErr(el,er,E.n3); ok=false; }
     else if (!allowed) { showErr(el,er,E.nf); ok=false; }
@@ -1804,20 +1817,17 @@ function validateField(id) {
   return ok;
 }
 
-/* Progress */
-const cb = document.getElementById('confirmCb');
+/* Progress Logic Update */
+const stepsState = {
+  1:false, 2:false, 3:false, 4:false, 5:false, 6:false,
+  7:false, 8:false, confirm:false
+};
+
 function updateProgress() {
-  const checks = [
-    !!document.getElementById('f_name')?.value.trim(),
-    !!document.getElementById('f_age')?.value.trim(),
-    !!document.getElementById('f_grade')?.value.trim(),
-    countWords(document.getElementById('f_exist')?.value||'') >= 50,
-    (document.getElementById('f_about')?.value.trim().length||0) >= 12,
-    (document.getElementById('f_signs')?.value.trim().length||0) >= 10,
-    cb && cb.checked
-  ].filter(Boolean).length;
+  const done = Object.values(stepsState).filter(Boolean).length;
+  const total = Object.keys(stepsState).length;
   const pf = document.getElementById('progFill');
-  if (pf) pf.style.width = Math.round((checks/7)*100)+'%';
+  if (pf) pf.style.width = Math.round((done / total) * 100) + '%';
 }
 
 /* Word count */
@@ -1853,15 +1863,23 @@ document.getElementById('f_gift')?.addEventListener('input', () => {
   const el = document.getElementById(id);
   const er = document.getElementById('e_'+id.replace('f_',''));
   if (el && er) {
-    el.addEventListener('input', () => { clearErr(el,er); updateProgress(); });
-    el.addEventListener('change', updateProgress);
+    el.addEventListener('input', () => { clearErr(el,er); });
   }
 });
-if (cb) cb.addEventListener('change', updateProgress);
 
 /* ══════════════════════════════════
    REVEAL NEXT FIELD
    ══════════════════════════════════ */
+function scrollIntoViewIfNeeded(el) {
+  if(!el) return;
+  const rect = el.getBoundingClientRect();
+  const vh = window.innerHeight;
+  const outOfView = rect.top < 80 || rect.bottom > vh - 80;
+  if (outOfView) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
 function revealField(num) {
   if (num > 8) {
     const cbW = document.getElementById('cbWrap');
@@ -1883,7 +1901,7 @@ function revealField(num) {
       subW.style.opacity = '1';
       ftrW.style.opacity = '1';
     }
-    setTimeout(() => cbW.scrollIntoView({behavior:'smooth',block:'center'}), 320);
+    setTimeout(() => scrollIntoViewIfNeeded(cbW), 320);
     return;
   }
 
@@ -1898,7 +1916,7 @@ function revealField(num) {
     fg.style.display = 'block';
     fg.style.opacity = '1';
   }
-  setTimeout(() => fg.scrollIntoView({behavior:'smooth',block:'center'}), 320);
+  setTimeout(() => scrollIntoViewIfNeeded(fg), 320);
 }
 
 function lockField(id) {
@@ -1918,12 +1936,14 @@ function lockField(id) {
   const btn = document.getElementById('btn_0' + (i+1));
   if (!btn) return;
   btn.addEventListener('click', () => {
-    if (!validateField(id)) return;
+    if (!validateField(id)) { vibe([25,20,25]); return; }
+    vibe(12);
     lockField(id);
     btn.classList.add('is-hiding');
     setTimeout(() => btn.remove(), 260);
     const fg = document.getElementById(id).closest('.fg');
     if (fg) fg.classList.add('field-done');
+    stepsState[i+1] = true;
     updateProgress();
     advanceAurora();
     revealField(i + 2);
@@ -1937,6 +1957,7 @@ const photoInput = document.getElementById('photoInput');
 const photoArea = document.getElementById('photoArea');
 const photoPreviews = document.getElementById('photoPreviews');
 const photoCountNote = document.getElementById('photoCountNote');
+const photoErr = document.getElementById('e_photo');
 let uploadedFiles = [];
 
 function makeFileId() {
@@ -1952,6 +1973,7 @@ function updatePhotoCount() {
 }
 
 function removePhoto(id) {
+  vibe(18);
   const item = uploadedFiles.find(x => x.id === id);
   if (!item || !item.thumbEl) return;
 
@@ -1960,15 +1982,11 @@ function removePhoto(id) {
 
   uploadedFiles = uploadedFiles.filter(x => x.id !== id);
 
-  const rect = thumb.getBoundingClientRect();
-  thumb.style.width = rect.width + 'px';
-  thumb.style.height = rect.height + 'px';
+  let cleaned = false;
 
-  requestAnimationFrame(() => { thumb.classList.add('removing'); });
-
-  const onEnd = (e) => {
-    if (e.propertyName !== 'height') return;
-    thumb.removeEventListener('transitionend', onEnd);
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
     if (img) img.src = '';
     if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
     thumb.remove();
@@ -1978,19 +1996,40 @@ function removePhoto(id) {
     updatePhotoCount();
   };
 
-  thumb.addEventListener('transitionend', onEnd);
+  requestAnimationFrame(() => { 
+    thumb.style.opacity = '0';
+    thumb.style.transform = 'scale(.72)';
+    setTimeout(cleanup, 250);
+  });
 }
 
 function addPhotos(files) {
+  photoErr.classList.remove('show');
+  photoErr.textContent = '';
+  
+  const validFiles = [];
+  const filesArray = Array.from(files);
+  
+  for (const file of filesArray) {
+    if (!file.type.startsWith('image/')) {
+        photoErr.textContent = 'Ошибка: Выбранный файл не является изображением.';
+        photoErr.classList.add('show');
+        continue;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+        photoErr.textContent = 'Ошибка: Размер файла ' + file.name + ' превышает 10 МБ.';
+        photoErr.classList.add('show');
+        continue;
+    }
+    validFiles.push(file);
+  }
+
   const freeSlots = Math.max(0, 10 - uploadedFiles.length);
 
-  Array.from(files).slice(0, freeSlots).forEach(file => {
-    if (!file.type.startsWith('image/')) return;
-    if (file.size > 10 * 1024 * 1024) return;
-
+  validFiles.slice(0, freeSlots).forEach(file => {
+    vibe(10);
     const id = makeFileId();
     const previewUrl = URL.createObjectURL(file);
-
     const item = { id, file, previewUrl, thumbEl: null };
 
     const thumb = document.createElement('div');
@@ -1998,15 +2037,14 @@ function addPhotos(files) {
     thumb.dataset.id = id;
 
     const img = document.createElement('img');
-    img.src = previewUrl;
     img.alt = '';
-    img.loading = 'lazy';
     img.decoding = 'async';
+    img.draggable = false;
 
     const del = document.createElement('div');
     del.className = 'photo-thumb-del';
     del.textContent = 'удалить';
-    del.addEventListener('click', () => { removePhoto(id); });
+    del.addEventListener('click', () => removePhoto(id));
 
     thumb.appendChild(img);
     thumb.appendChild(del);
@@ -2015,10 +2053,33 @@ function addPhotos(files) {
     item.thumbEl = thumb;
     uploadedFiles.push(item);
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => thumb.classList.add('loaded'));
-    });
+    let loadedOnce = false;
 
+    const markLoaded = () => {
+      if (loadedOnce) return;
+      loadedOnce = true;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          thumb.classList.add('loaded');
+        });
+      });
+    };
+
+    img.onload = markLoaded;
+
+    img.onerror = () => {
+      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      uploadedFiles = uploadedFiles.filter(x => x.id !== id);
+      thumb.remove();
+      updatePhotoCount();
+      photoErr.textContent = 'Ошибка загрузки файла ' + file.name + '.';
+      photoErr.classList.add('show');
+    };
+
+    img.src = previewUrl;
+
+    if (img.complete) markLoaded();
+    setTimeout(markLoaded, 120);
     updatePhotoCount();
   });
 }
@@ -2045,28 +2106,42 @@ photoArea.addEventListener('dragleave', () => photoArea.classList.remove('drag-o
 photoArea.addEventListener('drop', e => { e.preventDefault(); photoArea.classList.remove('drag-over'); addPhotos(e.dataTransfer.files); });
 
 document.getElementById('btn_07').addEventListener('click', () => {
+  vibe(12);
   const b07 = document.getElementById('btn_07');
   const s07 = document.getElementById('skip_07');
   b07.classList.add('is-hiding'); setTimeout(() => b07.remove(), 260);
   s07.classList.add('is-hiding'); setTimeout(() => s07.remove(), 260);
   document.querySelector('.fg[data-num="07"]').classList.add('field-done');
+  
+  stepsState[7] = true;
+  updateProgress();
+  
   photoInput.disabled = true;
   photoArea.style.pointerEvents = 'none';
   photoArea.style.opacity = '.5';
+  photoPreviews.style.pointerEvents = 'none'; /* Фикс удаления фото после сохранения */
+  
   advanceAurora();
   revealField(8);
 });
+
 document.getElementById('skip_07').addEventListener('click', () => {
+  vibe(8);
   const b07 = document.getElementById('btn_07');
   const s07 = document.getElementById('skip_07');
   b07.classList.add('is-hiding'); setTimeout(() => b07.remove(), 260);
   s07.classList.add('is-hiding'); setTimeout(() => s07.remove(), 260);
+  
+  stepsState[7] = true;
+  updateProgress();
+  
   advanceAurora();
   revealField(8);
 });
 
 /* 08 — GIFT */
 document.getElementById('btn_08').addEventListener('click', () => {
+  vibe(12);
   lockField('f_gift');
   const b08 = document.getElementById('btn_08');
   const s08 = document.getElementById('skip_08');
@@ -2075,14 +2150,24 @@ document.getElementById('btn_08').addEventListener('click', () => {
   if (document.getElementById('f_gift').value.trim()) {
     document.querySelector('.fg[data-num="08"]').classList.add('field-done');
   }
+  
+  stepsState[8] = true;
+  updateProgress();
+  
   advanceAurora();
   revealField(9);
 });
+
 document.getElementById('skip_08').addEventListener('click', () => {
+  vibe(8);
   const b08 = document.getElementById('btn_08');
   const s08 = document.getElementById('skip_08');
   b08.classList.add('is-hiding'); setTimeout(() => b08.remove(), 260);
   s08.classList.add('is-hiding'); setTimeout(() => s08.remove(), 260);
+  
+  stepsState[8] = true;
+  updateProgress();
+  
   advanceAurora();
   revealField(9);
 });
@@ -2095,55 +2180,24 @@ let glowRAF = null;
 let glowX = 0;
 let glowY = 0;
 
-cardEl.addEventListener('mousemove', e => {
-  glowX = e.clientX;
-  glowY = e.clientY;
-  if (glowRAF) return;
+if (!isMobile) {
+  cardEl.addEventListener('mousemove', e => {
+    glowX = e.clientX;
+    glowY = e.clientY;
+    if (glowRAF) return;
 
-  glowRAF = requestAnimationFrame(() => {
-    const r = cardEl.getBoundingClientRect();
-    cardEl.style.setProperty('--glow-x', (glowX - r.left) + 'px');
-    cardEl.style.setProperty('--glow-y', (glowY - r.top) + 'px');
-    cardEl.style.setProperty('--glow-opacity', '.92');
-    glowRAF = null;
+    glowRAF = requestAnimationFrame(() => {
+      const r = cardEl.getBoundingClientRect();
+      cardEl.style.setProperty('--glow-x', (glowX - r.left) + 'px');
+      cardEl.style.setProperty('--glow-y', (glowY - r.top) + 'px');
+      cardEl.style.setProperty('--glow-opacity', '.55');
+      glowRAF = null;
+    });
   });
-});
-cardEl.addEventListener('mouseleave', () => cardEl.style.setProperty('--glow-opacity', '0'));
-cardEl.addEventListener('touchmove', e => {
-  if (!e.touches[0]) return;
-  glowX = e.touches[0].clientX;
-  glowY = e.touches[0].clientY;
-  if (glowRAF) return;
-  glowRAF = requestAnimationFrame(() => {
-    const r = cardEl.getBoundingClientRect();
-    cardEl.style.setProperty('--glow-x',(glowX-r.left)+'px');
-    cardEl.style.setProperty('--glow-y',(glowY-r.top)+'px');
-    cardEl.style.setProperty('--glow-opacity','.92');
-    glowRAF = null;
-  });
-},{passive:true});
-cardEl.addEventListener('touchend',()=>setTimeout(()=>cardEl.style.setProperty('--glow-opacity','0'),900));
-
-if (window.DeviceOrientationEvent && isMobile) {
-  let ga = false;
-  function startGyro() {
-    if (ga) return; ga = true;
-    window.addEventListener('deviceorientation', e => {
-      const gx = Math.max(-20,Math.min(20,e.gamma||0));
-      const gy = Math.max(-20,Math.min(20,(e.beta||0)-45));
-      if (gyroCardRX && gyroCardRY) {
-        gyroCardRX(-gy/10);
-        gyroCardRY(gx/10);
-      }
-    },{passive:true});
-  }
-  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-    document.addEventListener('touchstart', function ask() {
-      DeviceOrientationEvent.requestPermission().then(r=>{ if(r==='granted') startGyro(); }).catch(()=>{});
-      document.removeEventListener('touchstart',ask);
-    },{once:true});
-  } else startGyro();
+  cardEl.addEventListener('mouseleave', () => cardEl.style.setProperty('--glow-opacity', '0'));
 }
+
+/* Gyro удалён для мобильных устройств ради стабильности UX */
 
 /* Vignette on focus */
 const vigEl = document.getElementById('vignetteEl');
@@ -2166,13 +2220,25 @@ window.addEventListener('scroll', () => {
    CHECKBOX
    ══════════════════════════════════ */
 let cbLocked = false;
-if (cb) {
-  cb.addEventListener('change', () => {
-    if (cbLocked) { cb.checked = true; return; }
-    if (cb.checked) {
+const confirmCb = document.getElementById('confirmCb');
+if (confirmCb) {
+  confirmCb.addEventListener('change', (e) => {
+    if (cbLocked) { 
+        e.preventDefault();
+        confirmCb.checked = true; 
+        stepsState.confirm = true;
+        updateProgress();
+        return; 
+    }
+    if (confirmCb.checked) {
       cbLocked = true;
-      cb.style.cursor = 'not-allowed';
+      confirmCb.style.cursor = 'not-allowed';
       document.getElementById('cbNote').textContent = 'Подтверждение получено и зафиксировано.';
+      stepsState.confirm = true;
+      updateProgress();
+    } else {
+      stepsState.confirm = false;
+      updateProgress();
     }
   });
 }
@@ -2187,26 +2253,23 @@ const proc = ['Шифрование пакета...','Передача на се
 
 sbtn.addEventListener('click', () => {
   const eC = document.getElementById('e_cb');
-  if (!cb || !cb.checked) {
+  if (!confirmCb || !confirmCb.checked) {
     eC.textContent = E.ce;
     eC.classList.add('show');
-    /* Haptic: ошибка */
-    if (navigator.vibrate) navigator.vibrate([60, 30, 60]);
+    vibe([60, 30, 60]);
     if (G && !noMotion) gsap.fromTo(sbtn, {x:0}, {x:8,duration:.07,repeat:5,yoyo:true,ease:'none'});
     return;
   }
   eC.classList.remove('show');
   sbtn.disabled = true;
-  /* Haptic: начало отправки */
-  if (navigator.vibrate) navigator.vibrate(25);
+  vibe(25);
   let i = 0;
   function step() {
     if (i < proc.length) {
       scrambleText(sbtnTxt, proc[i++], 280);
       setTimeout(step, 480+Math.random()*280);
     } else {
-      /* Haptic: завершено */
-      if (navigator.vibrate) navigator.vibrate([40, 60, 120]);
+      vibe([40, 60, 120]);
       setTimeout(launchDateFlash, 500);
     }
   }
@@ -2222,7 +2285,6 @@ function launchDateFlash() {
   const dfSub = document.getElementById('dfSub');
   const dfLine = document.getElementById('dfLine');
 
-  /* important keep */
   mainWrap.style.pointerEvents = 'none';
 
   if (G && !noMotion) {
@@ -2330,20 +2392,22 @@ function launchSuccess() {
   const l1 = document.getElementById('sLine1');
   const l2 = document.getElementById('sLine2');
   const l3 = document.getElementById('sLine3');
+  const l4 = document.getElementById('sLine4');
   const linesWrap = document.querySelector('.s-lines');
 
   l1.innerHTML = '';
   l2.style.opacity = '0';
   l3.style.opacity = '0';
+  l4.style.opacity = '0';
   l2.style.transform = 'translateY(14px)';
   l3.style.transform = 'translateY(14px)';
+  l4.style.transform = 'translateY(14px)';
 
   if (G && !noMotion) {
     gsap.set(successEl, { opacity: 1 });
     gsap.set(linesWrap, { opacity: 0, y: 20, scale: 0.985 });
     gsap.set(sc, { opacity: 0, scaleX: 0.2, transformOrigin: '50% 50%' });
 
-    /* important keep */
     gsap.set(l1, { opacity: 1, y: 0 });
 
     const tl = gsap.timeline();
@@ -2385,7 +2449,13 @@ function launchSuccess() {
       y: 0,
       duration: 0.42,
       ease: 'power3.out'
-    }, 1.34);
+    }, 1.34)
+    .to(l4, {
+      opacity: 1,
+      y: 0,
+      duration: 0.42,
+      ease: 'power3.out'
+    }, 1.52);
 
   } else {
     linesWrap.style.opacity = '1';
@@ -2396,18 +2466,20 @@ function launchSuccess() {
     l2.style.transform = 'translateY(0)';
     l3.style.opacity = '1';
     l3.style.transform = 'translateY(0)';
+    l4.style.opacity = '1';
+    l4.style.transform = 'translateY(0)';
   }
 }
 
 function typeWriter(el, text, cur, spd, onDone) {
   el.innerHTML = '';
+  const textNode = document.createTextNode('');
+  el.appendChild(textNode);
   el.appendChild(cur);
   let i = 0;
   function tick() {
     if (i <= text.length) {
-      el.innerHTML = '';
-      el.appendChild(document.createTextNode(text.slice(0,i)));
-      el.appendChild(cur);
+      textNode.nodeValue = text.slice(0, i);
       i++;
       setTimeout(tick, spd + Math.random()*22);
     } else if (onDone) {

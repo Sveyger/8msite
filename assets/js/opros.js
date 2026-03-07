@@ -319,6 +319,7 @@
   }
 
   function applyStepStateToUi(confirmed) {
+    syncInlineProgressState(confirmed);
     let nextStep = 1;
     while (nextStep <= 8 && app.stepState[String(nextStep)]) {
       finalizeStepUi(nextStep);
@@ -340,6 +341,15 @@
       if (cbNote) cbNote.textContent = 'Подтверждение получено и зафиксировано.';
       showSubmitAreaImmediate();
     }
+  }
+
+  function syncInlineProgressState(confirmed) {
+    if (typeof stepsState === 'undefined' || !stepsState) return;
+    Object.keys(stepsState).forEach((key) => {
+      if (key === 'confirm') return;
+      stepsState[key] = !!app.stepState[String(key)];
+    });
+    stepsState.confirm = !!confirmed;
   }
 
   function bindDraftPersistence() {
