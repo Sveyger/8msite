@@ -53,7 +53,7 @@ values ('global')
 on conflict (id) do nothing;
 
 insert into public.admin_users (user_id)
-values ('03fee3db-dff4-4c7f-9be7-6133a167ed3f')
+values ('03fee3db-d1f4-4c7f-9be7-6133a167ed3f')
 on conflict (user_id) do nothing;
 
 alter table public.march8_profiles enable row level security;
