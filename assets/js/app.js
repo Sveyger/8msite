@@ -99,6 +99,7 @@ const DEFAULT_GLOBAL_SETTINGS = {
   creditsLines: DEFAULT_CREDITS,
   teamMembers: DEFAULT_TEAM_MEMBERS,
   hapticsEnabled: DEFAULT_HAPTICS_ENABLED,
+  teamPhotoCrop: false,
   contestTitle: DEFAULT_CONTEST_TITLE,
   contestHint: DEFAULT_CONTEST_HINT,
   contestButtonLabel: DEFAULT_CONTEST_BUTTON,
@@ -388,6 +389,7 @@ function rowToGlobalSettings(row) {
     creditsLines: row.credits_lines,
     teamMembers: row.team_members,
     hapticsEnabled: row.haptics_enabled,
+    teamPhotoCrop: row.team_photo_crop,
     contestTitle: row.contest_title,
     contestHint: row.contest_hint,
     contestButtonLabel: row.contest_button_label,
@@ -404,6 +406,7 @@ function globalSettingsToRow(settings) {
     credits_lines: normalizeLines(settings.creditsLines),
     team_members: normalizeTeamMembers(settings.teamMembers),
     haptics_enabled: settings.hapticsEnabled !== false,
+    team_photo_crop: !!settings.teamPhotoCrop,
     contest_title: settings.contestTitle || DEFAULT_CONTEST_TITLE,
     contest_hint: settings.contestHint || DEFAULT_CONTEST_HINT,
     contest_button_label: settings.contestButtonLabel || DEFAULT_CONTEST_BUTTON,
@@ -421,6 +424,7 @@ function normalizeGlobalSettings(source) {
     creditsLines: normalizeLines(s.creditsLines).length ? normalizeLines(s.creditsLines) : DEFAULT_CREDITS,
     teamMembers: normalizeTeamMembers(s.teamMembers),
     hapticsEnabled: s.hapticsEnabled !== false,
+    teamPhotoCrop: !!s.teamPhotoCrop,
     contestTitle: s.contestTitle || DEFAULT_CONTEST_TITLE,
     contestHint: s.contestHint || DEFAULT_CONTEST_HINT,
     contestButtonLabel: s.contestButtonLabel || DEFAULT_CONTEST_BUTTON,
@@ -925,10 +929,11 @@ function renderTeamGrid() {
   const wrap = document.getElementById('teamGrid');
   if (!wrap) return;
   const members = normalizeTeamMembers(state.globalSettings.teamMembers);
+  const cropClass = state.globalSettings?.teamPhotoCrop ? ' team-photo-img--crop' : '';
   wrap.innerHTML = members.map((member, idx) => {
     const initials = makeInitials(member.label || member.role || String(idx + 1));
     const media = member.photo
-      ? '<img class="team-photo-img" src="' + escapeHtml(member.photo) + '" alt="' + escapeHtml(member.label || member.role) + '">'
+      ? '<img class="team-photo-img' + cropClass + '" src="' + escapeHtml(member.photo) + '" alt="' + escapeHtml(member.label || member.role) + '">'
       : '<div class="team-photo-fallback">' + escapeHtml(initials) + '</div>';
     return [
       '<article class="team-card">',
@@ -1638,6 +1643,7 @@ function bindAdminEvents() {
         creditsLines: state.globalSettings.creditsLines,
         teamMembers: collectTeamMembersFromManager(),
         hapticsEnabled: !!document.getElementById('hapticsEnabledInput').checked,
+        teamPhotoCrop: !!document.getElementById('teamPhotoCropInput').checked,
         contestTitle: document.getElementById('contestTitleInput').value.trim() || DEFAULT_CONTEST_TITLE,
         contestHint: document.getElementById('contestHintInput').value.trim() || DEFAULT_CONTEST_HINT,
         contestButtonLabel: document.getElementById('contestButtonInput').value.trim() || DEFAULT_CONTEST_BUTTON,
@@ -1762,7 +1768,8 @@ function fillGlobalForm() {
   const contestLoseTextInput = document.getElementById('contestLoseTextInput');
   const contestCodesInput = document.getElementById('contestCodesInput');
   const hapticsEnabledInput = document.getElementById('hapticsEnabledInput');
-  if (!contestTitleInput || !contestHintInput || !contestButtonInput || !contestWinTextInput || !contestLoseTextInput || !contestCodesInput || !hapticsEnabledInput) return;
+  const teamPhotoCropInput = document.getElementById('teamPhotoCropInput');
+  if (!contestTitleInput || !contestHintInput || !contestButtonInput || !contestWinTextInput || !contestLoseTextInput || !contestCodesInput || !hapticsEnabledInput || !teamPhotoCropInput) return;
 
   contestTitleInput.value = g.contestTitle || DEFAULT_CONTEST_TITLE;
   contestHintInput.value = g.contestHint || DEFAULT_CONTEST_HINT;
@@ -1771,6 +1778,7 @@ function fillGlobalForm() {
   contestLoseTextInput.value = g.contestLoseText || DEFAULT_CONTEST_LOSE;
   contestCodesInput.value = normalizeContestCodes(g.contestCodes).map((x) => x.code + (x.flower ? ' | ' + x.flower : '')).join('\n');
   hapticsEnabledInput.checked = g.hapticsEnabled !== false;
+  teamPhotoCropInput.checked = !!g.teamPhotoCrop;
 }
 
 function renderTeamMembersManager() {
