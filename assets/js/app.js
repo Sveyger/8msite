@@ -867,7 +867,7 @@ function showSurveyAnswers() {
     sourceEl.textContent = state.predictionMode === 'believe'
       ? '— Астрологическая колонка VOGUE'
       : '— Редакция';
-    animateHtmlSwap(textEl, '', () => {
+    animateSurveyTableClose(textEl, () => {
       if (answersBtn) answersBtn.classList.remove('is-active');
       state.predictionAnswersVisible = false;
       state.predictionBusy = false;
@@ -879,7 +879,7 @@ function showSurveyAnswers() {
     const tableRows = parseSurveyQa(state.activeProfile.surveyAnswers);
     sourceEl.textContent = '— Твои ответы';
     if (tableRows.length) {
-      animateHtmlSwap(textEl, renderSurveyTable(tableRows), () => {
+      animateSurveyTableOpen(textEl, renderSurveyTable(tableRows), () => {
         if (answersBtn) answersBtn.classList.add('is-active');
         state.predictionAnswersVisible = true;
         state.predictionBusy = false;
@@ -1143,6 +1143,70 @@ function animateHtmlSwap(el, html, onDone) {
       if (typeof onDone === 'function') onDone();
     }, 320);
   }, 180);
+}
+
+function animateSurveyTableOpen(el, html, onDone) {
+  clearRevealAnimation(el);
+  const nextHtml = String(html || '');
+  const runId = Date.now() + Math.random();
+  el.__revealRun = runId;
+  el.classList.remove('fading', 'switching', 'is-typing');
+  el.innerHTML = nextHtml;
+
+  const wrap = el.querySelector('.survey-table-wrap');
+  if (!wrap) {
+    if (typeof onDone === 'function') onDone();
+    return;
+  }
+
+  wrap.classList.remove('is-open', 'is-closing');
+  wrap.style.maxHeight = '0px';
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (el.__revealRun !== runId) return;
+      wrap.classList.add('is-open');
+      wrap.style.maxHeight = wrap.scrollHeight + 'px';
+      el.__revealTimer = setTimeout(() => {
+        if (el.__revealRun !== runId) return;
+        wrap.style.maxHeight = 'none';
+        el.__revealTimer = null;
+        if (typeof onDone === 'function') onDone();
+      }, 430);
+    });
+  });
+}
+
+function animateSurveyTableClose(el, onDone) {
+  clearRevealAnimation(el);
+  const runId = Date.now() + Math.random();
+  el.__revealRun = runId;
+  el.classList.remove('fading', 'switching', 'is-typing');
+
+  const wrap = el.querySelector('.survey-table-wrap');
+  if (!wrap) {
+    el.innerHTML = '';
+    if (typeof onDone === 'function') onDone();
+    return;
+  }
+
+  wrap.classList.remove('is-closing');
+  wrap.style.maxHeight = wrap.scrollHeight + 'px';
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (el.__revealRun !== runId) return;
+      wrap.classList.remove('is-open');
+      wrap.classList.add('is-closing');
+      wrap.style.maxHeight = '0px';
+      el.__revealTimer = setTimeout(() => {
+        if (el.__revealRun !== runId) return;
+        el.innerHTML = '';
+        el.__revealTimer = null;
+        if (typeof onDone === 'function') onDone();
+      }, 420);
+    });
+  });
 }
 
 function applyStaticChunkHover() {
@@ -1846,8 +1910,8 @@ function parseSurveyQa(value) {
 
 function renderSurveyTable(rows) {
   const head = '<div class="survey-table-wrap"><table><thead><tr><th>Вопрос</th><th>Ответ</th></tr></thead><tbody>';
-  const body = rows.map((r, index) => (
-    '<tr class="survey-table-row" style="--row-index:' + index + ';">' +
+  const body = rows.map((r) => (
+    '<tr>' +
     '<td>' + escapeHtml(r.q) + '</td><td>' + escapeHtml(r.a) + '</td></tr>'
   )).join('');
   return head + body + '</tbody></table></div>';

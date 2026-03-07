@@ -824,7 +824,8 @@ body.splash-lock {
 
 .prediction-text table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   margin-top: .15rem;
   font-family: 'Montserrat', sans-serif;
   font-size: .83rem;
@@ -832,27 +833,43 @@ body.splash-lock {
 }
 
 .survey-table-wrap {
-  animation: surveyTableShellIn .48s cubic-bezier(.22, .8, .2, 1);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-18px);
+  max-height: 0;
+  transition:
+    max-height .42s cubic-bezier(.22, .8, .2, 1),
+    opacity .28s ease,
+    transform .42s cubic-bezier(.22, .8, .2, 1);
+}
+
+.survey-table-wrap.is-open {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.survey-table-wrap.is-closing {
+  opacity: 0;
+  transform: translateY(-18px);
 }
 
 .survey-table-wrap table {
-  overflow: hidden;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--bg-card) 84%, transparent);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent-light) 7%, rgba(255,255,255,.02)), color-mix(in srgb, var(--bg-card) 92%, transparent)),
+    color-mix(in srgb, var(--bg-card) 84%, transparent);
   backdrop-filter: blur(10px);
-}
-
-.survey-table-row {
-  opacity: 0;
-  transform: translateY(10px);
-  animation: surveyTableRowIn .52s cubic-bezier(.22, .8, .2, 1) forwards;
-  animation-delay: calc(var(--row-index, 0) * 70ms + 90ms);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, rgba(255,255,255,.08));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 18px 42px rgba(0,0,0,.16);
 }
 
 .prediction-text th,
 .prediction-text td {
-  border: 1px solid rgba(255,255,255,.14);
-  padding: .55rem .62rem;
+  border-right: 1px solid color-mix(in srgb, var(--accent) 14%, rgba(255,255,255,.08));
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 12%, rgba(255,255,255,.08));
+  padding: .78rem .82rem;
   vertical-align: top;
   text-align: left;
 }
@@ -860,38 +877,37 @@ body.splash-lock {
 .prediction-text th {
   font-size: .66rem;
   text-transform: uppercase;
-  letter-spacing: .12em;
+  letter-spacing: .18em;
   color: var(--text-primary);
-  background: rgba(255,255,255,.04);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 18%, rgba(255,255,255,.03)), rgba(255,255,255,.02));
+}
+
+.prediction-text th:last-child,
+.prediction-text td:last-child {
+  border-right: none;
+}
+
+.prediction-text tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.prediction-text tbody tr:nth-child(even) td {
+  background: rgba(255,255,255,.018);
+}
+
+.prediction-text tbody tr:hover td {
+  background: color-mix(in srgb, var(--accent-glow) 12%, rgba(255,255,255,.02));
 }
 
 .prediction-text td:first-child {
-  width: 44%;
+  width: 38%;
   color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.5;
 }
 
-@keyframes surveyTableShellIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(.985);
-    filter: blur(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-}
-
-@keyframes surveyTableRowIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.prediction-text td:last-child {
+  line-height: 1.62;
 }
 
 /* ============================================
