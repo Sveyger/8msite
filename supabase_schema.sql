@@ -275,6 +275,97 @@ begin
 end;
 $$;
 
+create or replace function public.march8_replace_survey_code(
+  p_old_code text,
+  p_new_code text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_old_code text := upper(trim(coalesce(p_old_code, '')));
+  v_new_code text := upper(trim(coalesce(p_new_code, '')));
+  v_invite public.march8_survey_invites%rowtype;
+  v_response public.march8_survey_responses%rowtype;
+  v_has_response boolean := false;
+begin
+  if not exists (
+    select 1 from public.admin_users au
+    where au.user_id = auth.uid()
+  ) then
+    return jsonb_build_object('ok', false, 'reason', 'forbidden');
+  end if;
+
+  if v_old_code = '' or v_new_code = '' then
+    return jsonb_build_object('ok', false, 'reason', 'empty_code');
+  end if;
+
+  if v_old_code = v_new_code then
+    return jsonb_build_object('ok', false, 'reason', 'same_code');
+  end if;
+
+  select * into v_invite
+  from public.march8_survey_invites
+  where access_code = v_old_code;
+
+  if not found then
+    return jsonb_build_object('ok', false, 'reason', 'old_code_not_found');
+  end if;
+
+  if exists (
+    select 1 from public.march8_survey_invites
+    where access_code = v_new_code
+  ) then
+    return jsonb_build_object('ok', false, 'reason', 'new_code_exists');
+  end if;
+
+  select * into v_response
+  from public.march8_survey_responses
+  where access_code = v_old_code;
+  v_has_response := found;
+
+  insert into public.march8_survey_invites (access_code, display_name, created_at, updated_at)
+  values (v_new_code, v_invite.display_name, v_invite.created_at, now());
+
+  if v_has_response then
+    insert into public.march8_survey_responses (
+      access_code,
+      invite_name,
+      payload,
+      photo_urls,
+      is_submitted,
+      started_at,
+      updated_at,
+      submitted_at
+    )
+    values (
+      v_new_code,
+      v_response.invite_name,
+      v_response.payload,
+      v_response.photo_urls,
+      v_response.is_submitted,
+      v_response.started_at,
+      now(),
+      v_response.submitted_at
+    );
+
+    delete from public.march8_survey_responses
+    where access_code = v_old_code;
+  end if;
+
+  delete from public.march8_survey_invites
+  where access_code = v_old_code;
+
+  return jsonb_build_object(
+    'ok', true,
+    'old_code', v_old_code,
+    'new_code', v_new_code
+  );
+end;
+$$;
+
 drop policy if exists "admin_users_self_select" on public.admin_users;
 create policy "admin_users_self_select" on public.admin_users
 for select

@@ -387,6 +387,27 @@ async function resetSurveyResponse(code) {
   await loadSurveyAdminData();
 }
 
+async function replaceSurveyCode(oldCode, newCode) {
+  if (state.backendMode !== 'supabase' || !state.supabase || !oldCode || !newCode) return;
+  const nextCode = String(newCode).trim().toUpperCase();
+  const currentCode = String(oldCode).trim().toUpperCase();
+  if (!nextCode) throw new Error('empty_code');
+  if (nextCode === currentCode) return currentCode;
+
+  const { data, error } = await state.supabase.rpc('march8_replace_survey_code', {
+    p_old_code: currentCode,
+    p_new_code: nextCode
+  });
+  if (error) throw error;
+  if (!data?.ok) {
+    throw new Error(String(data?.reason || 'replace_failed'));
+  }
+
+  state.selectedSurveyCode = data.new_code || nextCode;
+  await loadSurveyAdminData();
+  return state.selectedSurveyCode;
+}
+
 function getStoragePathFromPublicUrl(url) {
   const value = String(url || '').trim();
   if (!value) return '';
@@ -448,11 +469,15 @@ function renderSurveyAdminDetail() {
   if (!response) {
     detail.innerHTML = [
       '<div class="survey-admin-grid">',
-      '<div class="survey-admin-card"><h4>' + escapeHtml(item.displayName) + '</h4><div class="survey-admin-meta">',
+      '<div class="survey-admin-card"><div class="admin-actions" style="justify-content:space-between;align-items:center;margin-bottom:.8rem;"><h4>' + escapeHtml(item.displayName) + '</h4></div><div class="survey-admin-meta">',
       '<p><strong>Код:</strong> ' + escapeHtml(item.accessCode) + '</p>',
       '<p><strong>Статус:</strong> Не начат</p>',
+      '</div><div class="admin-actions" style="margin-top:1rem;align-items:center;">',
+      '<input class="admin-input" id="surveyCodeReplaceInput" type="text" value="' + escapeHtml(item.accessCode) + '" placeholder="Новый код">',
+      '<button class="admin-btn" id="surveyCodeReplaceBtn" type="button">Заменить ключ</button>',
       '</div></div></div>'
     ].join('');
+    bindSurveyCodeReplace(item.accessCode);
     return;
   }
 
@@ -481,6 +506,9 @@ function renderSurveyAdminDetail() {
     '<div class="survey-admin-card"><div class="admin-actions" style="justify-content:space-between;align-items:center;margin-bottom:.8rem;"><h4>' + escapeHtml(item.displayName) + '</h4><button class="admin-btn admin-btn--danger" id="surveyResetBtn" type="button">Откатить опрос</button></div><div class="survey-admin-meta">',
     rows.map(([label, value]) => '<p><strong>' + escapeHtml(label) + ':</strong> ' + escapeHtml(String(value || '—')) + '</p>').join(''),
     '<p><strong>Шаги:</strong> ' + escapeHtml(Object.keys(stepState).filter((key) => stepState[key]).join(', ') || '—') + '</p>',
+    '</div><div class="admin-actions" style="margin-top:1rem;align-items:center;">',
+    '<input class="admin-input" id="surveyCodeReplaceInput" type="text" value="' + escapeHtml(item.accessCode) + '" placeholder="Новый код">',
+    '<button class="admin-btn" id="surveyCodeReplaceBtn" type="button">Заменить ключ</button>',
     '</div></div>',
     longBlocks.map(([label, value]) => '<div class="survey-admin-card"><h4>' + escapeHtml(label) + '</h4><div class="survey-admin-meta"><p>' + escapeHtml(String(value || '—')) + '</p></div></div>').join(''),
     photoUrls.length
@@ -502,6 +530,40 @@ function renderSurveyAdminDetail() {
       }
     });
   }
+  bindSurveyCodeReplace(item.accessCode);
+}
+
+function bindSurveyCodeReplace(currentCode) {
+  const replaceBtn = document.getElementById('surveyCodeReplaceBtn');
+  const replaceInput = document.getElementById('surveyCodeReplaceInput');
+  if (!replaceBtn || !replaceInput) return;
+
+  replaceBtn.addEventListener('click', async () => {
+    const nextCode = String(replaceInput.value || '').trim().toUpperCase();
+    if (!nextCode) {
+      alert('Введите новый ключ.');
+      return;
+    }
+    replaceBtn.disabled = true;
+    replaceInput.disabled = true;
+    try {
+      await replaceSurveyCode(currentCode, nextCode);
+    } catch (error) {
+      console.error(error);
+      const reason = String(error?.message || '');
+      if (reason === 'new_code_exists') {
+        alert('Такой ключ уже занят.');
+      } else if (reason === 'same_code') {
+        alert('Новый ключ совпадает с текущим.');
+      } else if (reason === 'empty_code') {
+        alert('Введите новый ключ.');
+      } else {
+        alert('Не удалось заменить ключ. Проверьте права доступа и SQL в Supabase.');
+      }
+      replaceBtn.disabled = false;
+      replaceInput.disabled = false;
+    }
+  });
 }
 
 function formatAdminDate(value) {
