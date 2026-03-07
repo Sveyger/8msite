@@ -1427,6 +1427,66 @@ body.splash-lock {
   margin-top: 1.5rem;
 }
 
+:root[data-theme='girl_white'] .brand-logo span,
+body[data-theme='girl_white'] .brand-logo span {
+  background: linear-gradient(135deg, #2e241c 18%, #7a6754 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+:root[data-theme='girl_white'] .story-name,
+body[data-theme='girl_white'] .story-name,
+:root[data-theme='girl_white'] .quote-big mark,
+body[data-theme='girl_white'] .quote-big mark {
+  color: #8f6f52;
+  text-shadow: 0 0 18px rgba(159, 133, 108, .18);
+}
+
+:root[data-theme='girl_white'] .video-overlay-top,
+:root[data-theme='girl_white'] .video-overlay-bottom,
+body[data-theme='girl_white'] .video-overlay-top,
+body[data-theme='girl_white'] .video-overlay-bottom {
+  background: linear-gradient(180deg, rgba(33, 26, 20, .34), transparent);
+}
+
+:root[data-theme='girl_white'] .video-overlay-bottom,
+body[data-theme='girl_white'] .video-overlay-bottom {
+  background: linear-gradient(0deg, rgba(33, 26, 20, .46), transparent);
+}
+
+:root[data-theme='girl_white'] .video-overlay-text,
+body[data-theme='girl_white'] .video-overlay-text,
+:root[data-theme='girl_white'] .compliment-source,
+body[data-theme='girl_white'] .compliment-source,
+:root[data-theme='girl_white'] .prediction-source,
+body[data-theme='girl_white'] .prediction-source,
+:root[data-theme='girl_white'] .quote-author,
+body[data-theme='girl_white'] .quote-author,
+:root[data-theme='girl_white'] .gallery-hint,
+body[data-theme='girl_white'] .gallery-hint,
+:root[data-theme='girl_white'] .team-subtitle,
+body[data-theme='girl_white'] .team-subtitle,
+:root[data-theme='girl_white'] .secret-trigger,
+body[data-theme='girl_white'] .secret-trigger {
+  color: #5f4f43;
+}
+
+:root[data-theme='girl_white'] .team-card-name,
+body[data-theme='girl_white'] .team-card-name {
+  color: #f5eee6;
+}
+
+:root[data-theme='girl_white'] .contest-result.win,
+body[data-theme='girl_white'] .contest-result.win {
+  color: #285742;
+}
+
+:root[data-theme='girl_white'] .contest-result.lose,
+body[data-theme='girl_white'] .contest-result.lose {
+  color: #8a433d;
+}
+
 /* ============================================
    SECRET FOOTER вЂ” Hidden Words
    ============================================ */

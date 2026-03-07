@@ -478,6 +478,8 @@ function showOnly(id) {
 function applyTheme(themeName) {
   const theme = THEMES[themeName] || THEMES.warm;
   Object.entries(theme).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+  document.documentElement.setAttribute('data-theme', themeName);
+  if (document.body) document.body.setAttribute('data-theme', themeName);
 }
 
 function renderGirlPage(profile) {
