@@ -56,6 +56,7 @@ const DEFAULT_CONTEST_BUTTON = 'Проверить код';
 const DEFAULT_CONTEST_WIN = 'Поздравляем! Код подтвержден.';
 const DEFAULT_CONTEST_LOSE = 'Код не найден. Проверьте ввод.';
 const DEFAULT_CONTEST_CODES = [];
+const DEFAULT_HAPTICS_ENABLED = true;
 const DEFAULT_TEAM_MEMBERS = [
   { role: 'Админ', label: 'Админ 1', photo: '' },
   { role: 'Ведущий', label: 'Ведущий', photo: '' },
@@ -97,6 +98,7 @@ const DEFAULT_GLOBAL_SETTINGS = {
   answersButtonLabel: DEFAULT_ANSWERS_BUTTON,
   creditsLines: DEFAULT_CREDITS,
   teamMembers: DEFAULT_TEAM_MEMBERS,
+  hapticsEnabled: DEFAULT_HAPTICS_ENABLED,
   contestTitle: DEFAULT_CONTEST_TITLE,
   contestHint: DEFAULT_CONTEST_HINT,
   contestButtonLabel: DEFAULT_CONTEST_BUTTON,
@@ -385,6 +387,7 @@ function rowToGlobalSettings(row) {
     answersButtonLabel: row.answers_button_label,
     creditsLines: row.credits_lines,
     teamMembers: row.team_members,
+    hapticsEnabled: row.haptics_enabled,
     contestTitle: row.contest_title,
     contestHint: row.contest_hint,
     contestButtonLabel: row.contest_button_label,
@@ -400,6 +403,7 @@ function globalSettingsToRow(settings) {
     answers_button_label: settings.answersButtonLabel || DEFAULT_ANSWERS_BUTTON,
     credits_lines: normalizeLines(settings.creditsLines),
     team_members: normalizeTeamMembers(settings.teamMembers),
+    haptics_enabled: settings.hapticsEnabled !== false,
     contest_title: settings.contestTitle || DEFAULT_CONTEST_TITLE,
     contest_hint: settings.contestHint || DEFAULT_CONTEST_HINT,
     contest_button_label: settings.contestButtonLabel || DEFAULT_CONTEST_BUTTON,
@@ -416,6 +420,7 @@ function normalizeGlobalSettings(source) {
     answersButtonLabel: s.answersButtonLabel || DEFAULT_ANSWERS_BUTTON,
     creditsLines: normalizeLines(s.creditsLines).length ? normalizeLines(s.creditsLines) : DEFAULT_CREDITS,
     teamMembers: normalizeTeamMembers(s.teamMembers),
+    hapticsEnabled: s.hapticsEnabled !== false,
     contestTitle: s.contestTitle || DEFAULT_CONTEST_TITLE,
     contestHint: s.contestHint || DEFAULT_CONTEST_HINT,
     contestButtonLabel: s.contestButtonLabel || DEFAULT_CONTEST_BUTTON,
@@ -473,6 +478,16 @@ function showOnly(id) {
   Object.keys(els).forEach((key) => {
     els[key].classList.toggle('hidden', key !== id);
   });
+}
+
+function triggerHaptic(pattern) {
+  if (!state.globalSettings?.hapticsEnabled) return;
+  if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
+  try {
+    navigator.vibrate(pattern || 10);
+  } catch {
+    // no-op
+  }
 }
 
 function applyTheme(themeName) {
@@ -669,6 +684,7 @@ function goGallery(dir) {
   const slides = getGallerySlides();
   if (slides.length < 3 || state.galleryBusy) return;
   state.galleryBusy = true;
+  triggerHaptic(8);
 
   const order = state.galleryOrder;
   let wrapIdx;
@@ -777,6 +793,7 @@ function nextCompliment() {
   const btn = document.getElementById('complimentBtn');
 
   createSparkles(btn);
+  triggerHaptic(10);
   state.complimentIndex = (state.complimentIndex + 1) % Math.max(compliments.length, 1);
   typeRevealText(textEl, compliments[state.complimentIndex] || DEFAULT_COMPLIMENTS[0], () => {
     btn.textContent = 'Еще комплимент \u2728';
@@ -810,6 +827,7 @@ function nextPrediction() {
   if (!state.activeProfile || state.predictionBusy) return;
   state.predictionBusy = true;
   state.predictionAnswersVisible = false;
+  triggerHaptic(10);
 
   const textEl = document.getElementById('predictionText');
   const sourceEl = document.getElementById('predictionSource');
@@ -849,6 +867,7 @@ function nextPrediction() {
 function showSurveyAnswers() {
   if (!state.activeProfile || state.predictionBusy) return;
   state.predictionBusy = true;
+  triggerHaptic(state.predictionAnswersVisible ? 8 : [8, 22, 10]);
 
   const textEl = document.getElementById('predictionText');
   const sourceEl = document.getElementById('predictionSource');
@@ -950,12 +969,14 @@ function initContestUi(profile) {
     const items = normalizeContestCodes(profile?.contestCodes);
     const hit = items.find((x) => x.code.toUpperCase() === code);
     if (hit) {
+      triggerHaptic([14, 26, 18]);
       resultEl.textContent = (profile?.contestWinText || DEFAULT_CONTEST_WIN) + ' ' + (hit.flower ? 'Твой цветок: ' + hit.flower + '.' : '');
       resultEl.className = 'contest-result win';
       flowerEmoji.textContent = detectFlowerEmoji(hit.flower);
       flowerWrap.classList.remove('hidden');
       return;
     }
+    triggerHaptic([26, 42, 12]);
     resultEl.textContent = profile?.contestLoseText || DEFAULT_CONTEST_LOSE;
     resultEl.className = 'contest-result lose';
     flowerWrap.classList.add('hidden');
@@ -1233,6 +1254,7 @@ function applyStaticChunkHover() {
 function closeSplash() {
   const splash = document.getElementById('splash');
   if (!splash || splash.classList.contains('closing')) return;
+  triggerHaptic([12, 18, 14]);
   splash.classList.add('closing');
   setTimeout(() => {
     splash.style.display = 'none';
@@ -1615,6 +1637,7 @@ function bindAdminEvents() {
         answersButtonLabel: state.globalSettings.answersButtonLabel || DEFAULT_ANSWERS_BUTTON,
         creditsLines: state.globalSettings.creditsLines,
         teamMembers: collectTeamMembersFromManager(),
+        hapticsEnabled: !!document.getElementById('hapticsEnabledInput').checked,
         contestTitle: document.getElementById('contestTitleInput').value.trim() || DEFAULT_CONTEST_TITLE,
         contestHint: document.getElementById('contestHintInput').value.trim() || DEFAULT_CONTEST_HINT,
         contestButtonLabel: document.getElementById('contestButtonInput').value.trim() || DEFAULT_CONTEST_BUTTON,
@@ -1738,7 +1761,8 @@ function fillGlobalForm() {
   const contestWinTextInput = document.getElementById('contestWinTextInput');
   const contestLoseTextInput = document.getElementById('contestLoseTextInput');
   const contestCodesInput = document.getElementById('contestCodesInput');
-  if (!contestTitleInput || !contestHintInput || !contestButtonInput || !contestWinTextInput || !contestLoseTextInput || !contestCodesInput) return;
+  const hapticsEnabledInput = document.getElementById('hapticsEnabledInput');
+  if (!contestTitleInput || !contestHintInput || !contestButtonInput || !contestWinTextInput || !contestLoseTextInput || !contestCodesInput || !hapticsEnabledInput) return;
 
   contestTitleInput.value = g.contestTitle || DEFAULT_CONTEST_TITLE;
   contestHintInput.value = g.contestHint || DEFAULT_CONTEST_HINT;
@@ -1746,6 +1770,7 @@ function fillGlobalForm() {
   contestWinTextInput.value = g.contestWinText || DEFAULT_CONTEST_WIN;
   contestLoseTextInput.value = g.contestLoseText || DEFAULT_CONTEST_LOSE;
   contestCodesInput.value = normalizeContestCodes(g.contestCodes).map((x) => x.code + (x.flower ? ' | ' + x.flower : '')).join('\n');
+  hapticsEnabledInput.checked = g.hapticsEnabled !== false;
 }
 
 function renderTeamMembersManager() {
