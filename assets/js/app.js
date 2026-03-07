@@ -1,7 +1,6 @@
 ﻿const STORAGE_KEY = 'march8_master_profiles_v3';
 const GLOBAL_STORAGE_KEY = 'march8_global_settings_v1';
-const AUTH_KEY = 'march8_admin_auth';
-const ADMIN_CODE = 'ANVLM8';
+const ADMIN_EMAIL = 'admin@8m.local';
 
 // Fill these values for production on GitHub Pages.
 const SUPABASE_URL = 'https://xpfaragwxgmstrkaizcv.supabase.co';
@@ -159,7 +158,7 @@ async function bootstrap() {
     return;
   }
 
-  renderAdminEntry();
+  await renderAdminEntry();
   setAppReady(true);
 }
 
@@ -169,11 +168,6 @@ async function initBackend() {
     state.backendMode = 'supabase';
     await loadProfiles();
     await loadGlobalSettings();
-    if (!Object.keys(state.db.profiles).length) {
-      const seed = makeProfile(generateKey(), DEFAULT_PROFILE);
-      await upsertProfile(seed);
-      state.db.profiles[seed.id] = seed;
-    }
     return;
   }
 
@@ -233,7 +227,6 @@ async function loadGlobalSettings() {
 
   if (!data) {
     state.globalSettings = { ...DEFAULT_GLOBAL_SETTINGS };
-    await upsertGlobalSettings(state.globalSettings);
     return;
   }
 
@@ -1247,8 +1240,18 @@ function toggleSecret() {
   content.classList.toggle('open');
 }
 
-function renderAdminEntry() {
-  const authed = sessionStorage.getItem(AUTH_KEY) === '1';
+async function isAdminAuthenticated() {
+  if (state.backendMode !== 'supabase' || !state.supabase?.auth) return false;
+  const { data, error } = await state.supabase.auth.getSession();
+  if (error) {
+    console.error('Supabase auth session read failed.', error);
+    return false;
+  }
+  return !!data?.session;
+}
+
+async function renderAdminEntry() {
+  const authed = await isAdminAuthenticated();
   if (authed) {
     renderAdmin();
     return;
@@ -1258,13 +1261,30 @@ function renderAdminEntry() {
   const loginBtn = document.getElementById('adminLoginBtn');
   const codeInput = document.getElementById('adminCode');
   const loginMsg = document.getElementById('adminLoginMsg');
-  loginBtn.onclick = () => {
-    if (codeInput.value.trim() === ADMIN_CODE) {
-      sessionStorage.setItem(AUTH_KEY, '1');
-      renderAdmin();
-    } else {
-      loginMsg.textContent = 'Неверный код доступа.';
+  loginBtn.onclick = async () => {
+    if (state.backendMode !== 'supabase' || !state.supabase?.auth) {
+      loginMsg.textContent = 'Безопасный вход работает только через Supabase Auth.';
+      return;
     }
+    const password = codeInput.value.trim();
+    if (!password) {
+      loginMsg.textContent = 'Введите пароль.';
+      return;
+    }
+    loginBtn.disabled = true;
+    loginMsg.textContent = 'Вход...';
+    const { error } = await state.supabase.auth.signInWithPassword({
+      email: ADMIN_EMAIL,
+      password
+    });
+    loginBtn.disabled = false;
+    if (error) {
+      loginMsg.textContent = 'Неверный пароль или админ-пользователь еще не создан.';
+      return;
+    }
+    codeInput.value = '';
+    loginMsg.textContent = '';
+    renderAdmin();
   };
 }
 
@@ -1418,7 +1438,12 @@ function bindAdminEvents() {
   };
 
   document.getElementById('logoutBtn').onclick = () => {
-    sessionStorage.removeItem(AUTH_KEY);
+    if (state.backendMode === 'supabase' && state.supabase?.auth) {
+      state.supabase.auth.signOut().finally(() => {
+        location.href = location.pathname;
+      });
+      return;
+    }
     location.href = location.pathname;
   };
 

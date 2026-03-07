@@ -50,49 +50,48 @@ on conflict (id) do nothing;
 alter table public.march8_profiles enable row level security;
 alter table public.march8_global_settings enable row level security;
 
--- Demo mode policies for frontend-only app (anon key in browser).
--- This is convenient, but not fully secure against enumeration.
+-- Public read, authenticated admin write.
 drop policy if exists "march8_profiles_select" on public.march8_profiles;
 create policy "march8_profiles_select" on public.march8_profiles
 for select
-to anon
+to anon, authenticated
 using (true);
 
 drop policy if exists "march8_profiles_insert" on public.march8_profiles;
 create policy "march8_profiles_insert" on public.march8_profiles
 for insert
-to anon
+to authenticated
 with check (true);
 
 drop policy if exists "march8_profiles_update" on public.march8_profiles;
 create policy "march8_profiles_update" on public.march8_profiles
 for update
-to anon
+to authenticated
 using (true)
 with check (true);
 
 drop policy if exists "march8_profiles_delete" on public.march8_profiles;
 create policy "march8_profiles_delete" on public.march8_profiles
 for delete
-to anon
+to authenticated
 using (true);
 
 drop policy if exists "march8_global_settings_select" on public.march8_global_settings;
 create policy "march8_global_settings_select" on public.march8_global_settings
 for select
-to anon
+to anon, authenticated
 using (true);
 
 drop policy if exists "march8_global_settings_insert" on public.march8_global_settings;
 create policy "march8_global_settings_insert" on public.march8_global_settings
 for insert
-to anon
+to authenticated
 with check (true);
 
 drop policy if exists "march8_global_settings_update" on public.march8_global_settings;
 create policy "march8_global_settings_update" on public.march8_global_settings
 for update
-to anon
+to authenticated
 using (true)
 with check (true);
 
@@ -112,14 +111,14 @@ drop policy if exists "media_anon_insert" on storage.objects;
 create policy "media_anon_insert"
 on storage.objects
 for insert
-to anon
+to authenticated
 with check (bucket_id = 'media');
 
 drop policy if exists "media_anon_update" on storage.objects;
 create policy "media_anon_update"
 on storage.objects
 for update
-to anon
+to authenticated
 using (bucket_id = 'media')
 with check (bucket_id = 'media');
 
@@ -127,5 +126,5 @@ drop policy if exists "media_anon_delete" on storage.objects;
 create policy "media_anon_delete"
 on storage.objects
 for delete
-to anon
+to authenticated
 using (bucket_id = 'media');
