@@ -88,6 +88,10 @@
     if (draft) writeCache({ ...draft, completed: true });
   }
 
+  function clearCompletedLocally(code) {
+    localStorage.removeItem(getDoneKey(code));
+  }
+
   function buildDraft() {
     return {
       code: app.code,
@@ -171,11 +175,18 @@
       const serverDraft = normalizeDraftFromSession(data);
       const localDraft = readCache(code);
 
-      if (data.is_submitted || isCompletedLocally(code) || localDraft?.completed) {
+      if (data.is_submitted) {
         markCompletedLocally(code, serverDraft || localDraft || { code });
         showRejected('Доступ закрыт.', 'Вы уже заполняли эту анкету ранее.');
         app.authBusy = false;
         return;
+      }
+
+      let usableLocalDraft = localDraft;
+      if (isCompletedLocally(code) || localDraft?.completed) {
+        clearCompletedLocally(code);
+        localStorage.removeItem(getCacheKey(code));
+        usableLocalDraft = null;
       }
 
       app.code = code;
@@ -190,7 +201,7 @@
 
       playAuthToFormTransition();
 
-      const draft = pickLatestDraft(serverDraft, localDraft);
+      const draft = pickLatestDraft(serverDraft, usableLocalDraft);
       setTimeout(() => {
         if (draft) restoreDraft(draft);
         else writeCache(buildDraft());

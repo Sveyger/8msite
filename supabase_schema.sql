@@ -365,6 +365,15 @@ using (exists (
   where au.user_id = auth.uid()
 ));
 
+drop policy if exists "march8_survey_responses_admin_delete" on public.march8_survey_responses;
+create policy "march8_survey_responses_admin_delete" on public.march8_survey_responses
+for delete
+to authenticated
+using (exists (
+  select 1 from public.admin_users au
+  where au.user_id = auth.uid()
+));
+
 -- Storage bucket and policies for media upload from frontend.
 insert into storage.buckets (id, name, public)
 values ('media', 'media', true)

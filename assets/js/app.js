@@ -358,6 +358,49 @@ async function loadSurveyAdminData() {
   renderSurveyAdminDetail();
 }
 
+async function resetSurveyResponse(code) {
+  if (state.backendMode !== 'supabase' || !state.supabase || !code) return;
+  const item = state.surveyItems.find((entry) => entry.accessCode === code) || null;
+  const label = item?.displayName || code;
+  const confirmed = window.confirm('Откатить опрос для "' + label + '"? Черновик и финальный ответ будут удалены.');
+  if (!confirmed) return;
+
+  const photoUrls = normalizeLines(item?.response?.photo_urls);
+  if (photoUrls.length) {
+    const storagePaths = photoUrls
+      .map((url) => getStoragePathFromPublicUrl(url))
+      .filter(Boolean);
+    if (storagePaths.length) {
+      const { error: storageError } = await state.supabase.storage.from(SUPABASE_BUCKET).remove(storagePaths);
+      if (storageError) {
+        console.warn('Survey photo cleanup failed:', storageError);
+      }
+    }
+  }
+
+  const { error } = await state.supabase
+    .from(SUPABASE_SURVEY_RESPONSES_TABLE)
+    .delete()
+    .eq('access_code', code);
+
+  if (error) throw error;
+  await loadSurveyAdminData();
+}
+
+function getStoragePathFromPublicUrl(url) {
+  const value = String(url || '').trim();
+  if (!value) return '';
+  const marker = '/storage/v1/object/public/' + SUPABASE_BUCKET + '/';
+  const markerIndex = value.indexOf(marker);
+  if (markerIndex === -1) return '';
+  const rawPath = value.slice(markerIndex + marker.length).split('?')[0];
+  try {
+    return decodeURIComponent(rawPath);
+  } catch {
+    return rawPath;
+  }
+}
+
 function getSelectedSurveyItem() {
   return state.surveyItems.find((item) => item.accessCode === state.selectedSurveyCode) || null;
 }
@@ -435,7 +478,7 @@ function renderSurveyAdminDetail() {
 
   detail.innerHTML = [
     '<div class="survey-admin-grid">',
-    '<div class="survey-admin-card"><h4>' + escapeHtml(item.displayName) + '</h4><div class="survey-admin-meta">',
+    '<div class="survey-admin-card"><div class="admin-actions" style="justify-content:space-between;align-items:center;margin-bottom:.8rem;"><h4>' + escapeHtml(item.displayName) + '</h4><button class="admin-btn admin-btn--danger" id="surveyResetBtn" type="button">Откатить опрос</button></div><div class="survey-admin-meta">',
     rows.map(([label, value]) => '<p><strong>' + escapeHtml(label) + ':</strong> ' + escapeHtml(String(value || '—')) + '</p>').join(''),
     '<p><strong>Шаги:</strong> ' + escapeHtml(Object.keys(stepState).filter((key) => stepState[key]).join(', ') || '—') + '</p>',
     '</div></div>',
@@ -445,6 +488,20 @@ function renderSurveyAdminDetail() {
       : '',
     '</div>'
   ].join('');
+
+  const resetBtn = document.getElementById('surveyResetBtn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', async () => {
+      resetBtn.disabled = true;
+      try {
+        await resetSurveyResponse(item.accessCode);
+      } catch (error) {
+        console.error(error);
+        alert('Не удалось откатить опрос. Проверьте права доступа и подключение к Supabase.');
+        resetBtn.disabled = false;
+      }
+    });
+  }
 }
 
 function formatAdminDate(value) {
