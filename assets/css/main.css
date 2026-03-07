@@ -1477,6 +1477,24 @@ body[data-theme='girl_white'] .team-card-name {
   color: #f5eee6;
 }
 
+:root[data-theme='girl_white'] .splash-greeting,
+body[data-theme='girl_white'] .splash-greeting {
+  color: #7f6248;
+  text-shadow: 0 0 24px rgba(159, 133, 108, .22);
+}
+
+:root[data-theme='girl_white'] .compliment-button,
+body[data-theme='girl_white'] .compliment-button {
+  color: #2b2118;
+  background: linear-gradient(135deg, #d7c3af, #ede1d4);
+  box-shadow: 0 10px 24px rgba(159, 133, 108, .18);
+}
+
+:root[data-theme='girl_white'] .compliment-button:hover,
+body[data-theme='girl_white'] .compliment-button:hover {
+  box-shadow: 0 12px 28px rgba(159, 133, 108, .22);
+}
+
 :root[data-theme='girl_white'] .contest-result.win,
 body[data-theme='girl_white'] .contest-result.win {
   color: #285742;
