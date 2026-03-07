@@ -41,16 +41,32 @@ create table if not exists public.march8_global_settings (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.admin_users (
+  user_id uuid primary key,
+  created_at timestamptz not null default now()
+);
+
 alter table public.march8_global_settings add column if not exists team_members jsonb not null default '[]'::jsonb;
 
 insert into public.march8_global_settings (id)
 values ('global')
 on conflict (id) do nothing;
 
+insert into public.admin_users (user_id)
+values ('03fee3db-dff4-4c7f-9be7-6133a167ed3f')
+on conflict (user_id) do nothing;
+
 alter table public.march8_profiles enable row level security;
 alter table public.march8_global_settings enable row level security;
+alter table public.admin_users enable row level security;
 
--- Public read, authenticated admin write.
+drop policy if exists "admin_users_self_select" on public.admin_users;
+create policy "admin_users_self_select" on public.admin_users
+for select
+to authenticated
+using (user_id = auth.uid());
+
+-- Public read, whitelisted admin write.
 drop policy if exists "march8_profiles_select" on public.march8_profiles;
 create policy "march8_profiles_select" on public.march8_profiles
 for select
@@ -61,20 +77,32 @@ drop policy if exists "march8_profiles_insert" on public.march8_profiles;
 create policy "march8_profiles_insert" on public.march8_profiles
 for insert
 to authenticated
-with check (true);
+with check (exists (
+  select 1 from public.admin_users au
+  where au.user_id = auth.uid()
+));
 
 drop policy if exists "march8_profiles_update" on public.march8_profiles;
 create policy "march8_profiles_update" on public.march8_profiles
 for update
 to authenticated
-using (true)
-with check (true);
+using (exists (
+  select 1 from public.admin_users au
+  where au.user_id = auth.uid()
+))
+with check (exists (
+  select 1 from public.admin_users au
+  where au.user_id = auth.uid()
+));
 
 drop policy if exists "march8_profiles_delete" on public.march8_profiles;
 create policy "march8_profiles_delete" on public.march8_profiles
 for delete
 to authenticated
-using (true);
+using (exists (
+  select 1 from public.admin_users au
+  where au.user_id = auth.uid()
+));
 
 drop policy if exists "march8_global_settings_select" on public.march8_global_settings;
 create policy "march8_global_settings_select" on public.march8_global_settings
@@ -86,14 +114,23 @@ drop policy if exists "march8_global_settings_insert" on public.march8_global_se
 create policy "march8_global_settings_insert" on public.march8_global_settings
 for insert
 to authenticated
-with check (true);
+with check (exists (
+  select 1 from public.admin_users au
+  where au.user_id = auth.uid()
+));
 
 drop policy if exists "march8_global_settings_update" on public.march8_global_settings;
 create policy "march8_global_settings_update" on public.march8_global_settings
 for update
 to authenticated
-using (true)
-with check (true);
+using (exists (
+  select 1 from public.admin_users au
+  where au.user_id = auth.uid()
+))
+with check (exists (
+  select 1 from public.admin_users au
+  where au.user_id = auth.uid()
+));
 
 -- Storage bucket and policies for media upload from frontend.
 insert into storage.buckets (id, name, public)
@@ -112,19 +149,43 @@ create policy "media_anon_insert"
 on storage.objects
 for insert
 to authenticated
-with check (bucket_id = 'media');
+with check (
+  bucket_id = 'media'
+  and exists (
+    select 1 from public.admin_users au
+    where au.user_id = auth.uid()
+  )
+);
 
 drop policy if exists "media_anon_update" on storage.objects;
 create policy "media_anon_update"
 on storage.objects
 for update
 to authenticated
-using (bucket_id = 'media')
-with check (bucket_id = 'media');
+using (
+  bucket_id = 'media'
+  and exists (
+    select 1 from public.admin_users au
+    where au.user_id = auth.uid()
+  )
+)
+with check (
+  bucket_id = 'media'
+  and exists (
+    select 1 from public.admin_users au
+    where au.user_id = auth.uid()
+  )
+);
 
 drop policy if exists "media_anon_delete" on storage.objects;
 create policy "media_anon_delete"
 on storage.objects
 for delete
 to authenticated
-using (bucket_id = 'media');
+using (
+  bucket_id = 'media'
+  and exists (
+    select 1 from public.admin_users au
+    where au.user_id = auth.uid()
+  )
+);

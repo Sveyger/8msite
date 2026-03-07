@@ -1242,12 +1242,24 @@ function toggleSecret() {
 
 async function isAdminAuthenticated() {
   if (state.backendMode !== 'supabase' || !state.supabase?.auth) return false;
-  const { data, error } = await state.supabase.auth.getSession();
+  const { data, error } = await state.supabase.auth.getUser();
   if (error) {
-    console.error('Supabase auth session read failed.', error);
+    console.error('Supabase auth user read failed.', error);
     return false;
   }
-  return !!data?.session;
+  const user = data?.user;
+  if (!user?.id) return false;
+  const { data: adminRow, error: adminError } = await state.supabase
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .limit(1)
+    .maybeSingle();
+  if (adminError) {
+    console.error('Admin whitelist check failed.', adminError);
+    return false;
+  }
+  return !!adminRow;
 }
 
 async function renderAdminEntry() {
@@ -1277,9 +1289,16 @@ async function renderAdminEntry() {
       email: ADMIN_EMAIL,
       password
     });
-    loginBtn.disabled = false;
     if (error) {
+      loginBtn.disabled = false;
       loginMsg.textContent = 'Неверный пароль или админ-пользователь еще не создан.';
+      return;
+    }
+    const allowed = await isAdminAuthenticated();
+    loginBtn.disabled = false;
+    if (!allowed) {
+      await state.supabase.auth.signOut();
+      loginMsg.textContent = 'Этот аккаунт не добавлен в список админов.';
       return;
     }
     codeInput.value = '';
