@@ -130,16 +130,13 @@
       <p class="quote-author">— Главный редактор</p>
     </section>
 
-    <section class="contest-section reveal" id="contestSection">
-      <div class="contest-title" id="contestTitle">Конкурс цветов</div>
-      <p class="contest-hint" id="contestHint">Введите код победителя, чтобы открыть свой приз.</p>
-      <div class="contest-form">
-        <input id="contestCodeInput" class="contest-input" type="text" placeholder="Введите код">
-        <button id="contestCheckBtn" class="contest-btn" type="button">Проверить код</button>
-      </div>
-      <div id="contestResult" class="contest-result"></div>
-      <div id="contestFlower" class="contest-flower hidden">
-        <div class="contest-flower-emoji" id="contestFlowerEmoji">🌸</div>
+    <section class="contest-section reveal hidden" id="contestSection">
+      <div class="contest-place" id="contestPlace">1 место</div>
+      <div class="contest-title" id="contestTitle">Победа в конкурсе</div>
+      <p class="contest-hint" id="contestHint">Вы заняли призовое место в этапе с кроссвордом.</p>
+      <div class="contest-award-card">
+        <p class="contest-award-lead" id="contestAwardLead">Вы заняли 1 место в конкурсе.</p>
+        <p class="contest-award-prize" id="contestAwardPrize">Ваш подарок: роза и сладкий подарок.</p>
       </div>
     </section>
 
@@ -432,33 +429,47 @@
             <p class="admin-hint">Если заполнить поле, перед заставкой на каждой странице девушки сначала появится ввод пароля.</p>
           </div>
 
-          <div class="admin-row">
-            <div>
-              <label class="admin-label" for="contestTitleInput">Заголовок конкурса</label>
-              <input class="admin-input" id="contestTitleInput" placeholder="Конкурс цветов">
-            </div>
-            <div>
-              <label class="admin-label" for="contestButtonInput">Текст кнопки конкурса</label>
-              <input class="admin-input" id="contestButtonInput" placeholder="Проверить код">
-            </div>
+          <div>
+            <label class="admin-label" for="contestTitleInput">Заголовок блока победителей</label>
+            <input class="admin-input" id="contestTitleInput" placeholder="Победа в конкурсе">
           </div>
           <div>
-            <label class="admin-label" for="contestHintInput">Подсказка конкурса</label>
-            <input class="admin-input" id="contestHintInput" placeholder="Введите код победителя, чтобы открыть свой приз.">
+            <label class="admin-label" for="contestHintInput">Подпись блока победителей</label>
+            <input class="admin-input" id="contestHintInput" placeholder="Вы заняли призовое место в этапе с кроссвордом.">
           </div>
-          <div class="admin-row">
-            <div>
-              <label class="admin-label" for="contestWinTextInput">Текст при победе</label>
-              <input class="admin-input" id="contestWinTextInput" placeholder="Поздравляем! Код подтвержден.">
+          <div class="photo-manager">
+            <div class="admin-label">Победители конкурса</div>
+            <div class="admin-row">
+              <div>
+                <label class="admin-label" for="contestWinner1Input">1 место</label>
+                <select class="admin-select" id="contestWinner1Input"></select>
+              </div>
+              <div>
+                <label class="admin-label" for="contestPrize1Input">Подарок</label>
+                <input class="admin-input" id="contestPrize1Input" placeholder="Роза и сладкий подарок">
+              </div>
             </div>
-            <div>
-              <label class="admin-label" for="contestLoseTextInput">Текст при ошибке</label>
-              <input class="admin-input" id="contestLoseTextInput" placeholder="Код не найден. Проверьте ввод.">
+            <div class="admin-row">
+              <div>
+                <label class="admin-label" for="contestWinner2Input">2 место</label>
+                <select class="admin-select" id="contestWinner2Input"></select>
+              </div>
+              <div>
+                <label class="admin-label" for="contestPrize2Input">Подарок</label>
+                <input class="admin-input" id="contestPrize2Input" placeholder="Роза и сладкий подарок">
+              </div>
             </div>
-          </div>
-          <div>
-            <label class="admin-label" for="contestCodesInput">Коды победителей (по строкам: КОД | Цветок)</label>
-            <textarea class="admin-textarea" id="contestCodesInput" placeholder="ROSE-2026 | Роза&#10;PEONY-77 | Пион"></textarea>
+            <div class="admin-row">
+              <div>
+                <label class="admin-label" for="contestWinner3Input">3 место</label>
+                <select class="admin-select" id="contestWinner3Input"></select>
+              </div>
+              <div>
+                <label class="admin-label" for="contestPrize3Input">Подарок</label>
+                <input class="admin-input" id="contestPrize3Input" placeholder="Роза и сладкий подарок">
+              </div>
+            </div>
+            <p class="admin-hint">Выберите уже существующие страницы девушек. Только у выбранных победительниц появится этот блок на сайте.</p>
           </div>
           <div class="admin-actions">
             <button class="admin-btn admin-btn--accent" id="globalSaveBtn" type="submit">Сохранить общие</button>

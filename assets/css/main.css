@@ -927,73 +927,53 @@ body.splash-lock {
   color: var(--text-primary);
 }
 
+.contest-place {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5.8rem;
+  margin-bottom: .7rem;
+  padding: .42rem .9rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent-light) 40%, transparent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--text-primary);
+  font-family: 'Montserrat', sans-serif;
+  font-size: .7rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
 .contest-hint {
   margin: .6rem 0 1rem;
   color: var(--text-secondary);
   font-size: .95rem;
 }
 
-.contest-form {
-  display: flex;
-  gap: .45rem;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
+.contest-award-card {
+  margin-top: .95rem;
+  padding: 1rem 1.15rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255,255,255,.1);
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent-light) 18%, transparent), transparent 42%),
+    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
+  box-shadow: 0 20px 40px rgba(0,0,0,.18);
 }
 
-.contest-input {
-  width: min(260px, 90vw);
-  border: 1px solid rgba(255,255,255,.2);
-  border-radius: 999px;
-  background: rgba(255,255,255,.05);
+.contest-award-lead {
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.12rem, 4.4vw, 1.35rem);
+  line-height: 1.35;
   color: var(--text-primary);
-  font-family: 'Montserrat', sans-serif;
-  font-size: .88rem;
-  padding: .72rem .95rem;
-  text-transform: uppercase;
 }
 
-.contest-btn {
-  border: 1px solid color-mix(in srgb, var(--accent) 55%, rgba(255,255,255,.18));
-  border-radius: 999px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, rgba(255,255,255,.02)), color-mix(in srgb, var(--accent-light) 20%, rgba(255,255,255,.01)));
-  color: var(--text-primary);
-  font-family: 'Montserrat', sans-serif;
-  font-size: .7rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  padding: .78rem 1.1rem;
-  cursor: pointer;
-}
-
-.contest-result {
-  margin-top: .9rem;
-  min-height: 1.4rem;
+.contest-award-prize {
+  margin: .55rem 0 0;
   color: var(--text-secondary);
-}
-
-.contest-result.win {
-  color: var(--accent-light);
-}
-
-.contest-result.lose {
-  color: #d8b7b7;
-}
-
-.contest-flower {
-  margin-top: .65rem;
-}
-
-.contest-flower-emoji {
-  font-size: clamp(2.2rem, 9vw, 3.2rem);
-  animation: flowerBloom .9s cubic-bezier(.2,.72,.2,1);
-  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--accent-glow) 45%, transparent));
-}
-
-@keyframes flowerBloom {
-  0% { transform: scale(.35) rotate(-8deg); opacity: 0; }
-  70% { transform: scale(1.15) rotate(4deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
+  line-height: 1.55;
+  font-size: .95rem;
 }
 
 .team-section {
@@ -1588,14 +1568,12 @@ body[data-theme='girl_white'] .compliment-button:hover {
   box-shadow: 0 12px 28px rgba(159, 133, 108, .22);
 }
 
-:root[data-theme='girl_white'] .contest-result.win,
-body[data-theme='girl_white'] .contest-result.win {
-  color: #285742;
-}
-
-:root[data-theme='girl_white'] .contest-result.lose,
-body[data-theme='girl_white'] .contest-result.lose {
-  color: #8a433d;
+:root[data-theme='girl_white'] .contest-award-card,
+body[data-theme='girl_white'] .contest-award-card {
+  border-color: rgba(72, 56, 42, .12);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(205, 190, 174, .2), transparent 42%),
+    linear-gradient(180deg, rgba(255,255,255,.32), rgba(255,255,255,.12));
 }
 
 /* ============================================

@@ -53,12 +53,17 @@ const DEFAULT_CREDITS = [
   'Design & Development — Team',
   'With Love — Всегда \u2665'
 ];
-const DEFAULT_CONTEST_TITLE = 'Конкурс цветов';
-const DEFAULT_CONTEST_HINT = 'Введите код победителя, чтобы открыть свой приз.';
+const DEFAULT_CONTEST_TITLE = 'Победа в конкурсе';
+const DEFAULT_CONTEST_HINT = 'Вы заняли призовое место в этапе с кроссвордом.';
 const DEFAULT_CONTEST_BUTTON = 'Проверить код';
 const DEFAULT_CONTEST_WIN = 'Поздравляем! Код подтвержден.';
 const DEFAULT_CONTEST_LOSE = 'Код не найден. Проверьте ввод.';
 const DEFAULT_CONTEST_CODES = [];
+const DEFAULT_CONTEST_WINNERS = [
+  { place: 1, profileId: '', prize: '' },
+  { place: 2, profileId: '', prize: '' },
+  { place: 3, profileId: '', prize: '' }
+];
 const DEFAULT_HAPTICS_ENABLED = true;
 const DEFAULT_GIRL_ROUTE_PASSWORD = '';
 const DEFAULT_TEAM_MEMBERS = [
@@ -110,7 +115,8 @@ const DEFAULT_GLOBAL_SETTINGS = {
   contestButtonLabel: DEFAULT_CONTEST_BUTTON,
   contestWinText: DEFAULT_CONTEST_WIN,
   contestLoseText: DEFAULT_CONTEST_LOSE,
-  contestCodes: DEFAULT_CONTEST_CODES
+  contestCodes: DEFAULT_CONTEST_CODES,
+  contestWinners: DEFAULT_CONTEST_WINNERS
 };
 
 const els = {
@@ -805,7 +811,8 @@ function rowToGlobalSettings(row) {
     contestButtonLabel: row.contest_button_label,
     contestWinText: row.contest_win_text,
     contestLoseText: row.contest_lose_text,
-    contestCodes: row.contest_codes
+    contestCodes: row.contest_codes,
+    contestWinners: row.contest_winners
   });
 }
 
@@ -824,6 +831,7 @@ function globalSettingsToRow(settings) {
     contest_win_text: settings.contestWinText || DEFAULT_CONTEST_WIN,
     contest_lose_text: settings.contestLoseText || DEFAULT_CONTEST_LOSE,
     contest_codes: normalizeContestCodes(settings.contestCodes),
+    contest_winners: normalizeContestWinners(settings.contestWinners),
     updated_at: new Date().toISOString()
   };
 }
@@ -842,7 +850,8 @@ function normalizeGlobalSettings(source) {
     contestButtonLabel: s.contestButtonLabel || DEFAULT_CONTEST_BUTTON,
     contestWinText: s.contestWinText || DEFAULT_CONTEST_WIN,
     contestLoseText: s.contestLoseText || DEFAULT_CONTEST_LOSE,
-    contestCodes: normalizeContestCodes(s.contestCodes)
+    contestCodes: normalizeContestCodes(s.contestCodes),
+    contestWinners: normalizeContestWinners(s.contestWinners)
   };
 }
 
@@ -1021,7 +1030,7 @@ function renderGirlPage(profile, options = {}) {
   });
   initPredictionUi(profile);
   renderTeamGrid();
-  initContestUi(state.globalSettings);
+  initContestUi(profile);
 
   document.getElementById('videoOverlayBottom').textContent = profile.mediaTip || 'From little girl to cover star';
   document.getElementById('quoteBig').innerHTML = profile.quoteText || DEFAULT_PROFILE.quoteText;
@@ -1441,49 +1450,36 @@ function renderTeamGrid() {
   }).join('');
 }
 
+function getContestWinnerForProfile(profileId) {
+  const winners = normalizeContestWinners(state.globalSettings?.contestWinners);
+  return winners.find((item) => item.profileId && item.profileId === profileId) || null;
+}
+
 function initContestUi(profile) {
+  const sectionEl = document.getElementById('contestSection');
+  const placeEl = document.getElementById('contestPlace');
   const titleEl = document.getElementById('contestTitle');
   const hintEl = document.getElementById('contestHint');
-  const inputEl = document.getElementById('contestCodeInput');
-  const buttonEl = document.getElementById('contestCheckBtn');
-  const resultEl = document.getElementById('contestResult');
-  const flowerWrap = document.getElementById('contestFlower');
-  const flowerEmoji = document.getElementById('contestFlowerEmoji');
-  if (!titleEl || !hintEl || !inputEl || !buttonEl || !resultEl || !flowerWrap || !flowerEmoji) return;
+  const leadEl = document.getElementById('contestAwardLead');
+  const prizeEl = document.getElementById('contestAwardPrize');
+  if (!sectionEl || !placeEl || !titleEl || !hintEl || !leadEl || !prizeEl) return;
 
-  titleEl.textContent = profile?.contestTitle || DEFAULT_CONTEST_TITLE;
-  hintEl.textContent = profile?.contestHint || DEFAULT_CONTEST_HINT;
-  buttonEl.textContent = profile?.contestButtonLabel || DEFAULT_CONTEST_BUTTON;
-  resultEl.textContent = '';
-  resultEl.className = 'contest-result';
-  flowerWrap.classList.add('hidden');
-  inputEl.value = '';
+  const winner = getContestWinnerForProfile(profile?.id);
+  const visibility = normalizeSectionVisibility(profile?.sectionVisibility);
+  const shouldShow = !!winner && visibility.contest !== false;
 
-  const check = () => {
-    const code = inputEl.value.trim().toUpperCase();
-    const items = normalizeContestCodes(profile?.contestCodes);
-    const hit = items.find((x) => x.code.toUpperCase() === code);
-    if (hit) {
-      triggerHaptic([14, 26, 18]);
-      resultEl.textContent = (profile?.contestWinText || DEFAULT_CONTEST_WIN) + ' ' + (hit.flower ? 'Твой цветок: ' + hit.flower + '.' : '');
-      resultEl.className = 'contest-result win';
-      flowerEmoji.textContent = detectFlowerEmoji(hit.flower);
-      flowerWrap.classList.remove('hidden');
-      return;
-    }
-    triggerHaptic([26, 42, 12]);
-    resultEl.textContent = profile?.contestLoseText || DEFAULT_CONTEST_LOSE;
-    resultEl.className = 'contest-result lose';
-    flowerWrap.classList.add('hidden');
-  };
+  sectionEl.classList.toggle('hidden', !shouldShow);
+  if (!shouldShow) {
+    updateMainDividers();
+    return;
+  }
 
-  buttonEl.onclick = check;
-  inputEl.onkeydown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      check();
-    }
-  };
+  placeEl.textContent = `${winner.place} место`;
+  titleEl.textContent = state.globalSettings?.contestTitle || DEFAULT_CONTEST_TITLE;
+  hintEl.textContent = state.globalSettings?.contestHint || DEFAULT_CONTEST_HINT;
+  leadEl.textContent = `Вы заняли ${winner.place} место в конкурсе!`;
+  prizeEl.textContent = `Ваш подарок: ${winner.prize || 'приз будет объявлен организатором.'}`;
+  updateMainDividers();
 }
 
 function detectFlowerEmoji(name) {
@@ -2170,10 +2166,11 @@ function bindAdminEvents() {
         teamPhotoCrop: !!document.getElementById('teamPhotoCropInput').checked,
         contestTitle: document.getElementById('contestTitleInput').value.trim() || DEFAULT_CONTEST_TITLE,
         contestHint: document.getElementById('contestHintInput').value.trim() || DEFAULT_CONTEST_HINT,
-        contestButtonLabel: document.getElementById('contestButtonInput').value.trim() || DEFAULT_CONTEST_BUTTON,
-        contestWinText: document.getElementById('contestWinTextInput').value.trim() || DEFAULT_CONTEST_WIN,
-        contestLoseText: document.getElementById('contestLoseTextInput').value.trim() || DEFAULT_CONTEST_LOSE,
-        contestCodes: normalizeContestCodes(document.getElementById('contestCodesInput').value)
+        contestButtonLabel: DEFAULT_CONTEST_BUTTON,
+        contestWinText: DEFAULT_CONTEST_WIN,
+        contestLoseText: DEFAULT_CONTEST_LOSE,
+        contestCodes: [],
+        contestWinners: collectContestWinnersFromForm()
       });
       await upsertGlobalSettings(next);
       fillGlobalForm();
@@ -2224,6 +2221,8 @@ function refreshList() {
   if (!filtered.length) {
     list.innerHTML = '<p class="admin-hint">Ничего не найдено.</p>';
   }
+
+  renderContestWinnerOptions();
 }
 
 function selectProfile(key) {
@@ -2285,26 +2284,26 @@ function fillGlobalForm() {
   const g = normalizeGlobalSettings(state.globalSettings);
   state.globalSettings = g;
   renderTeamMembersManager();
+  renderContestWinnerOptions();
   const contestTitleInput = document.getElementById('contestTitleInput');
   const contestHintInput = document.getElementById('contestHintInput');
-  const contestButtonInput = document.getElementById('contestButtonInput');
-  const contestWinTextInput = document.getElementById('contestWinTextInput');
-  const contestLoseTextInput = document.getElementById('contestLoseTextInput');
-  const contestCodesInput = document.getElementById('contestCodesInput');
   const hapticsEnabledInput = document.getElementById('hapticsEnabledInput');
   const publicAccessPasswordInput = document.getElementById('publicAccessPasswordInput');
   const teamPhotoCropInput = document.getElementById('teamPhotoCropInput');
-  if (!contestTitleInput || !contestHintInput || !contestButtonInput || !contestWinTextInput || !contestLoseTextInput || !contestCodesInput || !hapticsEnabledInput || !publicAccessPasswordInput || !teamPhotoCropInput) return;
+  const contestPrize1Input = document.getElementById('contestPrize1Input');
+  const contestPrize2Input = document.getElementById('contestPrize2Input');
+  const contestPrize3Input = document.getElementById('contestPrize3Input');
+  if (!contestTitleInput || !contestHintInput || !hapticsEnabledInput || !publicAccessPasswordInput || !teamPhotoCropInput || !contestPrize1Input || !contestPrize2Input || !contestPrize3Input) return;
 
   contestTitleInput.value = g.contestTitle || DEFAULT_CONTEST_TITLE;
   contestHintInput.value = g.contestHint || DEFAULT_CONTEST_HINT;
-  contestButtonInput.value = g.contestButtonLabel || DEFAULT_CONTEST_BUTTON;
-  contestWinTextInput.value = g.contestWinText || DEFAULT_CONTEST_WIN;
-  contestLoseTextInput.value = g.contestLoseText || DEFAULT_CONTEST_LOSE;
-  contestCodesInput.value = normalizeContestCodes(g.contestCodes).map((x) => x.code + (x.flower ? ' | ' + x.flower : '')).join('\n');
   hapticsEnabledInput.checked = g.hapticsEnabled !== false;
   publicAccessPasswordInput.value = g.girlRoutePassword || '';
   teamPhotoCropInput.checked = !!g.teamPhotoCrop;
+  const winners = normalizeContestWinners(g.contestWinners);
+  contestPrize1Input.value = winners[0]?.prize || '';
+  contestPrize2Input.value = winners[1]?.prize || '';
+  contestPrize3Input.value = winners[2]?.prize || '';
 }
 
 function renderTeamMembersManager() {
@@ -2329,6 +2328,51 @@ function renderTeamMembersManager() {
   }).join('');
 }
 
+function renderContestWinnerOptions() {
+  const selects = [
+    document.getElementById('contestWinner1Input'),
+    document.getElementById('contestWinner2Input'),
+    document.getElementById('contestWinner3Input')
+  ];
+  if (selects.some((el) => !el)) return;
+
+  const options = Object.values(state.db.profiles)
+    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ru'))
+    .map((profile) => ({
+      id: profile.id,
+      label: `${profile.name || 'Без имени'} (${profile.id})`
+    }));
+
+  const selectedValues = normalizeContestWinners(state.globalSettings.contestWinners).map((item) => item.profileId || '');
+  selects.forEach((select, idx) => {
+    const current = selectedValues[idx] || '';
+    select.innerHTML = [
+      '<option value="">Не выбрано</option>',
+      ...options.map((option) => '<option value="' + escapeHtml(option.id) + '"' + (option.id === current ? ' selected' : '') + '>' + escapeHtml(option.label) + '</option>')
+    ].join('');
+  });
+}
+
+function collectContestWinnersFromForm() {
+  return normalizeContestWinners([
+    {
+      place: 1,
+      profileId: document.getElementById('contestWinner1Input')?.value || '',
+      prize: document.getElementById('contestPrize1Input')?.value || ''
+    },
+    {
+      place: 2,
+      profileId: document.getElementById('contestWinner2Input')?.value || '',
+      prize: document.getElementById('contestPrize2Input')?.value || ''
+    },
+    {
+      place: 3,
+      profileId: document.getElementById('contestWinner3Input')?.value || '',
+      prize: document.getElementById('contestPrize3Input')?.value || ''
+    }
+  ]);
+}
+
 function collectTeamMembersFromManager() {
   const wrap = document.getElementById('teamMembersManager');
   if (!wrap) return normalizeTeamMembers(state.globalSettings.teamMembers);
@@ -2351,7 +2395,7 @@ function renderAdminPreview(profile) {
     .filter(([, visible]) => !visible)
     .map(([key]) => key)
     .join(', ') || 'нет';
-  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит / ' + normalizeLines(profile.predictionsBelieve).length : 'не верит / сообщение') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Скрытые блоки: ' + escapeHtml(hiddenSections) + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Команда: ' + normalizeTeamMembers(g.teamMembers).filter((x) => x.photo || x.label || x.role).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Глобальные коды конкурса: ' + normalizeContestCodes(g.contestCodes).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
+  wrap.innerHTML = '<div style="border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px;"><p style="margin:0;font-weight:700;">Предпросмотр: ' + escapeHtml(profile.name || 'Героиня') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Тема: ' + escapeHtml(profile.theme || 'warm') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Фото: ' + normalizeLines(profile.photos).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Комплименты: ' + normalizeLines(profile.compliments).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Предсказания: ' + (profile.believesPredictions ? 'верит / ' + normalizeLines(profile.predictionsBelieve).length : 'не верит / сообщение') + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Ответы опроса: ' + normalizeLines(profile.surveyAnswers).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Скрытые блоки: ' + escapeHtml(hiddenSections) + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Команда: ' + normalizeTeamMembers(g.teamMembers).filter((x) => x.photo || x.label || x.role).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Победителей конкурса: ' + normalizeContestWinners(g.contestWinners).filter((x) => x.profileId).length + '</p><p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;">Backend: ' + state.backendMode + '</p></div>';
 }
 
 function makeInitials(name) {
@@ -2416,6 +2460,23 @@ function normalizeContestCodes(value) {
       };
     })
     .filter((x) => x.code);
+}
+
+function normalizeContestWinners(value) {
+  const base = DEFAULT_CONTEST_WINNERS.map((item) => ({ ...item }));
+  if (!Array.isArray(value)) return base;
+
+  value.forEach((raw, index) => {
+    const place = Number(raw?.place || index + 1);
+    if (!Number.isFinite(place) || place < 1 || place > 3) return;
+    base[place - 1] = {
+      place,
+      profileId: String(raw?.profileId || raw?.profile_id || '').trim(),
+      prize: String(raw?.prize || '').trim()
+    };
+  });
+
+  return base;
 }
 
 function normalizeTeamMembers(value) {
