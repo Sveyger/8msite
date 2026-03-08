@@ -455,6 +455,96 @@ function getStoragePathFromPublicUrl(url) {
   }
 }
 
+function escapeCsvCell(value) {
+  const normalized = String(value == null ? '' : value).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  return '"' + normalized.replace(/"/g, '""') + '"';
+}
+
+function getSurveyStatusLabel(response) {
+  return response?.is_submitted ? 'Сдано' : (response ? 'Черновик' : 'Не начат');
+}
+
+function buildSurveyCsvRows() {
+  const headers = [
+    'Код',
+    'Имя',
+    'Статус',
+    'Сохранено',
+    'Отправлено',
+    'Имя в анкете',
+    'Дата рождения',
+    'Класс',
+    'О себе',
+    'Дополнительная информация',
+    'Отличительные черты',
+    'Ожидания от подарка',
+    'Шаг 1',
+    'Шаг 2',
+    'Шаг 3',
+    'Шаг 4',
+    'Шаг 5',
+    'Шаг 6',
+    'Шаг 7',
+    'Шаг 8',
+    'Фото URL'
+  ];
+
+  const rows = state.surveyItems.map((item) => {
+    const response = item.response;
+    const payload = response?.payload && typeof response.payload === 'object' ? response.payload : {};
+    const stepState = payload.stepState && typeof payload.stepState === 'object' ? payload.stepState : {};
+    const photoUrls = normalizeLines(response?.photo_urls).join('\n');
+
+    return [
+      item.accessCode,
+      item.displayName || '',
+      getSurveyStatusLabel(response),
+      response?.updated_at ? formatAdminDate(response.updated_at) : '',
+      response?.submitted_at ? formatAdminDate(response.submitted_at) : '',
+      payload.name || '',
+      payload.birthDate || '',
+      payload.grade || '',
+      payload.exist || '',
+      payload.about || '',
+      payload.signs || '',
+      payload.gift || '',
+      stepState['1'] ? 'Да' : '',
+      stepState['2'] ? 'Да' : '',
+      stepState['3'] ? 'Да' : '',
+      stepState['4'] ? 'Да' : '',
+      stepState['5'] ? 'Да' : '',
+      stepState['6'] ? 'Да' : '',
+      stepState['7'] ? 'Да' : '',
+      stepState['8'] ? 'Да' : '',
+      photoUrls
+    ];
+  });
+
+  return [headers, ...rows];
+}
+
+function exportSurveyResponsesCsv() {
+  if (!state.surveyItems.length) {
+    alert('Нет данных для экспорта.');
+    return;
+  }
+
+  const csv = buildSurveyCsvRows()
+    .map((row) => row.map(escapeCsvCell).join(';'))
+    .join('\r\n');
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `march8-survey-${stamp}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function getSelectedSurveyItem() {
   return state.surveyItems.find((item) => item.accessCode === state.selectedSurveyCode) || null;
 }
@@ -1738,6 +1828,7 @@ function bindAdminEvents() {
   const form = document.getElementById('profileForm');
   const globalForm = document.getElementById('globalForm');
   const surveyRefreshBtn = document.getElementById('surveyRefreshBtn');
+  const surveyExportCsvBtn = document.getElementById('surveyExportCsvBtn');
   const uploadBtn = document.getElementById('uploadMediaBtn');
   const mediaInput = document.getElementById('mediaFileInput');
   const mediaTarget = document.getElementById('mediaTarget');
@@ -1763,6 +1854,21 @@ function bindAdminEvents() {
         const detail = document.getElementById('surveyResponseDetail');
         if (detail) detail.innerHTML = '<p class="admin-hint">Не удалось обновить список опросов.</p>';
       });
+    });
+  }
+
+  if (surveyExportCsvBtn && surveyExportCsvBtn.dataset.bound !== '1') {
+    surveyExportCsvBtn.dataset.bound = '1';
+    surveyExportCsvBtn.addEventListener('click', async () => {
+      try {
+        if (!state.surveyItems.length) {
+          await loadSurveyAdminData();
+        }
+        exportSurveyResponsesCsv();
+      } catch (err) {
+        console.error(err);
+        alert('Не удалось выгрузить CSV. Проверьте подключение к Supabase.');
+      }
     });
   }
 
