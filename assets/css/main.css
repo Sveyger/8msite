@@ -1558,6 +1558,24 @@ body[data-theme='girl_white'] .splash-greeting {
   text-shadow: 0 0 24px rgba(159, 133, 108, .22);
 }
 
+:root[data-theme='girl_white'] .girl-password-card,
+body[data-theme='girl_white'] .girl-password-card {
+  background: linear-gradient(180deg, rgba(245, 238, 229, .96), rgba(232, 223, 212, .97));
+  border-color: rgba(79, 59, 43, .12);
+}
+
+:root[data-theme='girl_white'] .girl-password-title,
+body[data-theme='girl_white'] .girl-password-title,
+:root[data-theme='girl_white'] .girl-password-kicker,
+body[data-theme='girl_white'] .girl-password-kicker {
+  color: #2d2218;
+}
+
+:root[data-theme='girl_white'] .girl-password-subtitle,
+body[data-theme='girl_white'] .girl-password-subtitle {
+  color: #6d5f53;
+}
+
 :root[data-theme='girl_white'] .compliment-button,
 body[data-theme='girl_white'] .compliment-button {
   color: #2b2118;
@@ -1789,6 +1807,61 @@ body[data-theme='girl_white'] .contest-result.lose {
    ============================================ */
 .hidden { display: none !important; }
 .route-shell { width: 100%; }
+.girl-password-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background:
+    radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 35%),
+    radial-gradient(circle at 80% 15%, color-mix(in srgb, var(--gold) 16%, transparent), transparent 32%),
+    rgba(7, 7, 9, .82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.girl-password-card {
+  width: min(100%, 430px);
+  padding: 1.25rem;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(180deg, rgba(18,18,22,.94), rgba(10,10,12,.96));
+  box-shadow: 0 22px 60px rgba(0,0,0,.34);
+}
+.girl-password-kicker {
+  margin-bottom: .55rem;
+  color: var(--text-muted);
+  font-family: 'Montserrat', sans-serif;
+  font-size: .68rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+.girl-password-title {
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+}
+.girl-password-subtitle {
+  margin: .7rem 0 1rem;
+  color: var(--text-secondary);
+}
+.girl-password-form {
+  display: grid;
+  gap: .75rem;
+}
+.girl-password-input {
+  font-size: .95rem;
+  padding: .78rem .92rem;
+}
+.girl-password-btn {
+  width: 100%;
+}
+.girl-password-error {
+  min-height: 1.1rem;
+  margin-top: .65rem;
+  color: #ffb1b1;
+}
 .state { max-width: 560px; margin: 3.5rem auto; padding: 1.2rem; border: 1px solid rgba(255,255,255,.12); border-radius: 1rem; background: rgba(18,18,18,.9); text-align: center; }
 .state h2 { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: .6rem; }
 .admin-shell { max-width: 1120px; margin: 0 auto; padding: 1rem; }

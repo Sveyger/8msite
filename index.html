@@ -9,6 +9,19 @@
 </head>
 <body>
 <div class="route-shell hidden" id="girlRoute">
+  <div class="girl-password-gate hidden" id="girlPasswordGate">
+    <div class="girl-password-card">
+      <div class="girl-password-kicker">Private Access</div>
+      <h2 class="girl-password-title">Вход на страницу</h2>
+      <p class="girl-password-subtitle">Введите общий пароль, чтобы открыть поздравление.</p>
+      <div class="girl-password-form">
+        <input class="admin-input girl-password-input" id="girlPasswordInput" type="password" placeholder="Введите пароль">
+        <button class="compliment-button girl-password-btn" id="girlPasswordBtn" type="button">Открыть страницу</button>
+      </div>
+      <p class="admin-hint girl-password-error" id="girlPasswordError"></p>
+    </div>
+  </div>
+
   <div class="splash" id="splash" onclick="closeSplash()">
     <div class="splash-flowers" id="splashFlowers"></div>
     <div class="splash-vogue"><span>VOGUE</span></div>
@@ -411,6 +424,12 @@
           <div>
             <label class="admin-check"><input type="checkbox" id="teamPhotoCropInput"> <span>Обрезать фото команды вместо растягивания</span></label>
             <p class="admin-hint">Работает только для блока «Команда вечера».</p>
+          </div>
+
+          <div>
+            <label class="admin-label" for="publicAccessPasswordInput">Единый пароль для страниц девушек</label>
+            <input class="admin-input" id="publicAccessPasswordInput" type="text" placeholder="Оставьте пустым, чтобы отключить пароль">
+            <p class="admin-hint">Если заполнить поле, перед заставкой на каждой странице девушки сначала появится ввод пароля.</p>
           </div>
 
           <div class="admin-row">

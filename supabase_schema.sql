@@ -33,6 +33,7 @@ create table if not exists public.march8_global_settings (
   credits_lines jsonb not null default '[]'::jsonb,
   team_members jsonb not null default '[]'::jsonb,
   haptics_enabled boolean not null default true,
+  girl_route_password text not null default '',
   team_photo_crop boolean not null default false,
   contest_title text not null default 'Конкурс цветов',
   contest_hint text not null default 'Введите код победителя, чтобы открыть свой приз.',
@@ -68,6 +69,7 @@ create table if not exists public.admin_users (
 
 alter table public.march8_global_settings add column if not exists team_members jsonb not null default '[]'::jsonb;
 alter table public.march8_global_settings add column if not exists haptics_enabled boolean not null default true;
+alter table public.march8_global_settings add column if not exists girl_route_password text not null default '';
 alter table public.march8_global_settings add column if not exists team_photo_crop boolean not null default false;
 alter table public.march8_survey_invites add column if not exists display_name text not null default '';
 alter table public.march8_survey_responses add column if not exists invite_name text not null default '';

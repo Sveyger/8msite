@@ -1,5 +1,6 @@
 ﻿const STORAGE_KEY = 'march8_master_profiles_v3';
 const GLOBAL_STORAGE_KEY = 'march8_global_settings_v1';
+const GIRL_GATE_STORAGE_KEY = 'march8_girl_route_password_v1';
 const ADMIN_EMAIL = 'admin@8m.local';
 
 // Fill these values for production on GitHub Pages.
@@ -59,6 +60,7 @@ const DEFAULT_CONTEST_WIN = 'Поздравляем! Код подтвержде
 const DEFAULT_CONTEST_LOSE = 'Код не найден. Проверьте ввод.';
 const DEFAULT_CONTEST_CODES = [];
 const DEFAULT_HAPTICS_ENABLED = true;
+const DEFAULT_GIRL_ROUTE_PASSWORD = '';
 const DEFAULT_TEAM_MEMBERS = [
   { role: 'Админ', label: 'Админ 1', photo: '' },
   { role: 'Ведущий', label: 'Ведущий', photo: '' },
@@ -101,6 +103,7 @@ const DEFAULT_GLOBAL_SETTINGS = {
   creditsLines: DEFAULT_CREDITS,
   teamMembers: DEFAULT_TEAM_MEMBERS,
   hapticsEnabled: DEFAULT_HAPTICS_ENABLED,
+  girlRoutePassword: DEFAULT_GIRL_ROUTE_PASSWORD,
   teamPhotoCrop: false,
   contestTitle: DEFAULT_CONTEST_TITLE,
   contestHint: DEFAULT_CONTEST_HINT,
@@ -795,6 +798,7 @@ function rowToGlobalSettings(row) {
     creditsLines: row.credits_lines,
     teamMembers: row.team_members,
     hapticsEnabled: row.haptics_enabled,
+    girlRoutePassword: row.girl_route_password,
     teamPhotoCrop: row.team_photo_crop,
     contestTitle: row.contest_title,
     contestHint: row.contest_hint,
@@ -812,6 +816,7 @@ function globalSettingsToRow(settings) {
     credits_lines: normalizeLines(settings.creditsLines),
     team_members: normalizeTeamMembers(settings.teamMembers),
     haptics_enabled: settings.hapticsEnabled !== false,
+    girl_route_password: String(settings.girlRoutePassword || '').trim(),
     team_photo_crop: !!settings.teamPhotoCrop,
     contest_title: settings.contestTitle || DEFAULT_CONTEST_TITLE,
     contest_hint: settings.contestHint || DEFAULT_CONTEST_HINT,
@@ -830,6 +835,7 @@ function normalizeGlobalSettings(source) {
     creditsLines: normalizeLines(s.creditsLines).length ? normalizeLines(s.creditsLines) : DEFAULT_CREDITS,
     teamMembers: normalizeTeamMembers(s.teamMembers),
     hapticsEnabled: s.hapticsEnabled !== false,
+    girlRoutePassword: String(s.girlRoutePassword || '').trim(),
     teamPhotoCrop: !!s.teamPhotoCrop,
     contestTitle: s.contestTitle || DEFAULT_CONTEST_TITLE,
     contestHint: s.contestHint || DEFAULT_CONTEST_HINT,
@@ -890,6 +896,58 @@ function showOnly(id) {
   });
 }
 
+function isGirlRouteUnlocked(requiredPassword) {
+  const normalized = String(requiredPassword || '').trim();
+  if (!normalized) return true;
+  try {
+    return sessionStorage.getItem(GIRL_GATE_STORAGE_KEY) === normalized;
+  } catch {
+    return false;
+  }
+}
+function markGirlRouteUnlocked(password) {
+  try {
+    sessionStorage.setItem(GIRL_GATE_STORAGE_KEY, String(password || '').trim());
+  } catch {
+    // no-op
+  }
+}
+function bindGirlPasswordGate(profile) {
+  const gate = document.getElementById('girlPasswordGate');
+  const input = document.getElementById('girlPasswordInput');
+  const button = document.getElementById('girlPasswordBtn');
+  const error = document.getElementById('girlPasswordError');
+  const requiredPassword = String(state.globalSettings?.girlRoutePassword || '').trim();
+  if (!gate || !input || !button || !error) return;
+  error.textContent = '';
+  input.value = '';
+  const submit = () => {
+    const typed = String(input.value || '').trim();
+    if (!typed) {
+      error.textContent = 'Введите пароль.';
+      return;
+    }
+    if (typed !== requiredPassword) {
+      error.textContent = 'Неверный пароль.';
+      input.select();
+      return;
+    }
+    markGirlRouteUnlocked(requiredPassword);
+    gate.classList.add('hidden');
+    error.textContent = '';
+    input.value = '';
+    renderGirlPage(profile, { skipPasswordGate: true });
+  };
+  button.onclick = submit;
+  input.onkeydown = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      submit();
+    }
+  };
+  setTimeout(() => input.focus(), 40);
+}
+
 function triggerHaptic(pattern) {
   if (!state.globalSettings?.hapticsEnabled) return;
   if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
@@ -907,10 +965,28 @@ function applyTheme(themeName) {
   if (document.body) document.body.setAttribute('data-theme', themeName);
 }
 
-function renderGirlPage(profile) {
+function renderGirlPage(profile, options = {}) {
+  const gate = document.getElementById('girlPasswordGate');
+  const requiredPassword = String(state.globalSettings?.girlRoutePassword || '').trim();
+  if (!options.skipPasswordGate && requiredPassword && !isGirlRouteUnlocked(requiredPassword)) {
+    applyTheme(profile.theme);
+    initFlowers();
+    showOnly('girlRoute');
+    setSplashScrollLock(true);
+    document.getElementById('mainContent').classList.remove('visible');
+    const splash = document.getElementById('splash');
+    if (splash) {
+      splash.classList.remove('closing');
+      splash.style.display = '';
+    }
+    if (gate) gate.classList.remove('hidden');
+    bindGirlPasswordGate(profile);
+    return;
+  }
   applyTheme(profile.theme);
   initFlowers();
   showOnly('girlRoute');
+  if (gate) gate.classList.add('hidden');
   setSplashScrollLock(true);
   applyProfileSectionVisibility(profile.sectionVisibility);
   state.activeProfile = profile;
@@ -2084,6 +2160,7 @@ function bindAdminEvents() {
         creditsLines: state.globalSettings.creditsLines,
         teamMembers: collectTeamMembersFromManager(),
         hapticsEnabled: !!document.getElementById('hapticsEnabledInput').checked,
+        girlRoutePassword: document.getElementById('publicAccessPasswordInput').value.trim(),
         teamPhotoCrop: !!document.getElementById('teamPhotoCropInput').checked,
         contestTitle: document.getElementById('contestTitleInput').value.trim() || DEFAULT_CONTEST_TITLE,
         contestHint: document.getElementById('contestHintInput').value.trim() || DEFAULT_CONTEST_HINT,
@@ -2209,8 +2286,9 @@ function fillGlobalForm() {
   const contestLoseTextInput = document.getElementById('contestLoseTextInput');
   const contestCodesInput = document.getElementById('contestCodesInput');
   const hapticsEnabledInput = document.getElementById('hapticsEnabledInput');
+  const publicAccessPasswordInput = document.getElementById('publicAccessPasswordInput');
   const teamPhotoCropInput = document.getElementById('teamPhotoCropInput');
-  if (!contestTitleInput || !contestHintInput || !contestButtonInput || !contestWinTextInput || !contestLoseTextInput || !contestCodesInput || !hapticsEnabledInput || !teamPhotoCropInput) return;
+  if (!contestTitleInput || !contestHintInput || !contestButtonInput || !contestWinTextInput || !contestLoseTextInput || !contestCodesInput || !hapticsEnabledInput || !publicAccessPasswordInput || !teamPhotoCropInput) return;
 
   contestTitleInput.value = g.contestTitle || DEFAULT_CONTEST_TITLE;
   contestHintInput.value = g.contestHint || DEFAULT_CONTEST_HINT;
@@ -2219,6 +2297,7 @@ function fillGlobalForm() {
   contestLoseTextInput.value = g.contestLoseText || DEFAULT_CONTEST_LOSE;
   contestCodesInput.value = normalizeContestCodes(g.contestCodes).map((x) => x.code + (x.flower ? ' | ' + x.flower : '')).join('\n');
   hapticsEnabledInput.checked = g.hapticsEnabled !== false;
+  publicAccessPasswordInput.value = g.girlRoutePassword || '';
   teamPhotoCropInput.checked = !!g.teamPhotoCrop;
 }
 
@@ -2402,4 +2481,5 @@ function escapeHtml(input) {
 }
 
 document.addEventListener('dblclick', (e) => e.preventDefault());
+
 
