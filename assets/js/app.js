@@ -53,7 +53,7 @@ const DEFAULT_CREDITS = [
   'Design & Development — Team',
   'With Love — Всегда \u2665'
 ];
-const DEFAULT_CONTEST_TITLE = 'Победа в конкурсе';
+const DEFAULT_CONTEST_TITLE = 'Конкурс';
 const DEFAULT_CONTEST_HINT = 'Вы заняли призовое место в этапе с кроссвордом.';
 const DEFAULT_CONTEST_BUTTON = 'Проверить код';
 const DEFAULT_CONTEST_WIN = 'Поздравляем! Код подтвержден.';

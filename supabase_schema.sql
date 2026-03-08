@@ -35,7 +35,7 @@ create table if not exists public.march8_global_settings (
   haptics_enabled boolean not null default true,
   girl_route_password text not null default '',
   team_photo_crop boolean not null default false,
-  contest_title text not null default 'Победа в конкурсе',
+  contest_title text not null default 'Конкурс',
   contest_hint text not null default 'Вы заняли призовое место в этапе с кроссвордом.',
   contest_button_label text not null default 'Проверить код',
   contest_win_text text not null default 'Поздравляем! Код подтвержден.',
@@ -85,6 +85,10 @@ alter table public.march8_survey_responses add column if not exists submitted_at
 insert into public.march8_global_settings (id)
 values ('global')
 on conflict (id) do nothing;
+
+update public.march8_global_settings
+set contest_title = 'Конкурс'
+where contest_title in ('Конкурс цветов', 'Победа в конкурсе');
 
 insert into public.march8_survey_invites (access_code, display_name)
 values
