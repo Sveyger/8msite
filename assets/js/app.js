@@ -1455,6 +1455,11 @@ function getContestWinnerForProfile(profileId) {
   return winners.find((item) => item.profileId && item.profileId === profileId) || null;
 }
 
+function toRomanPlace(place) {
+  const map = { 1: 'I', 2: 'II', 3: 'III' };
+  return map[Number(place)] || String(place || '');
+}
+
 function initContestUi(profile) {
   const sectionEl = document.getElementById('contestSection');
   const placeEl = document.getElementById('contestPlace');
@@ -1474,10 +1479,11 @@ function initContestUi(profile) {
     return;
   }
 
-  placeEl.textContent = `${winner.place} место`;
+  const romanPlace = toRomanPlace(winner.place);
+  placeEl.textContent = `${romanPlace} место`;
   titleEl.textContent = state.globalSettings?.contestTitle || DEFAULT_CONTEST_TITLE;
   hintEl.textContent = state.globalSettings?.contestHint || DEFAULT_CONTEST_HINT;
-  leadEl.textContent = `Вы заняли ${winner.place} место в конкурсе!`;
+  leadEl.textContent = `Вы заняли ${romanPlace} место в конкурсе!`;
   prizeEl.textContent = `Ваш подарок: ${winner.prize || 'приз будет объявлен организатором.'}`;
   updateMainDividers();
 }
