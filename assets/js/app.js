@@ -967,17 +967,18 @@ function applyTheme(themeName) {
 
 function renderGirlPage(profile, options = {}) {
   const gate = document.getElementById('girlPasswordGate');
+  const splash = document.getElementById('splash');
+  const mainContent = document.getElementById('mainContent');
   const requiredPassword = String(state.globalSettings?.girlRoutePassword || '').trim();
   if (!options.skipPasswordGate && requiredPassword && !isGirlRouteUnlocked(requiredPassword)) {
     applyTheme(profile.theme);
     initFlowers();
     showOnly('girlRoute');
-    setSplashScrollLock(true);
-    document.getElementById('mainContent').classList.remove('visible');
-    const splash = document.getElementById('splash');
+    setSplashScrollLock(false);
+    if (mainContent) mainContent.classList.remove('visible');
     if (splash) {
       splash.classList.remove('closing');
-      splash.style.display = '';
+      splash.style.display = 'none';
     }
     if (gate) gate.classList.remove('hidden');
     bindGirlPasswordGate(profile);
@@ -987,6 +988,11 @@ function renderGirlPage(profile, options = {}) {
   initFlowers();
   showOnly('girlRoute');
   if (gate) gate.classList.add('hidden');
+  if (splash) {
+    splash.classList.remove('closing');
+    splash.style.display = '';
+  }
+  if (mainContent) mainContent.classList.remove('visible');
   setSplashScrollLock(true);
   applyProfileSectionVisibility(profile.sectionVisibility);
   state.activeProfile = profile;
