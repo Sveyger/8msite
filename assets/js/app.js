@@ -66,6 +66,7 @@ const DEFAULT_CONTEST_WINNERS = [
 ];
 const DEFAULT_HAPTICS_ENABLED = true;
 const DEFAULT_GIRL_ROUTE_PASSWORD = '';
+const DEFAULT_GIRL_ROUTE_PASSWORD_ENABLED = true;
 const DEFAULT_TEAM_MEMBERS = [
   { role: 'Админ', label: 'Админ 1', photo: '', audio: '' },
   { role: 'Ведущий', label: 'Ведущий', photo: '', audio: '' },
@@ -110,6 +111,7 @@ const DEFAULT_GLOBAL_SETTINGS = {
   creditsLines: DEFAULT_CREDITS,
   teamMembers: DEFAULT_TEAM_MEMBERS,
   hapticsEnabled: DEFAULT_HAPTICS_ENABLED,
+  girlRoutePasswordEnabled: DEFAULT_GIRL_ROUTE_PASSWORD_ENABLED,
   girlRoutePassword: DEFAULT_GIRL_ROUTE_PASSWORD,
   teamPhotoCrop: false,
   contestTitle: DEFAULT_CONTEST_TITLE,
@@ -812,6 +814,7 @@ function rowToGlobalSettings(row) {
     creditsLines: row.credits_lines,
     teamMembers: row.team_members,
     hapticsEnabled: row.haptics_enabled,
+    girlRoutePasswordEnabled: row.girl_route_password_enabled,
     girlRoutePassword: row.girl_route_password,
     teamPhotoCrop: row.team_photo_crop,
     contestTitle: row.contest_title,
@@ -831,6 +834,7 @@ function globalSettingsToRow(settings) {
     credits_lines: normalizeLines(settings.creditsLines),
     team_members: normalizeTeamMembers(settings.teamMembers),
     haptics_enabled: settings.hapticsEnabled !== false,
+    girl_route_password_enabled: settings.girlRoutePasswordEnabled !== false,
     girl_route_password: String(settings.girlRoutePassword || '').trim(),
     team_photo_crop: !!settings.teamPhotoCrop,
     contest_title: settings.contestTitle || DEFAULT_CONTEST_TITLE,
@@ -851,6 +855,7 @@ function normalizeGlobalSettings(source) {
     creditsLines: normalizeLines(s.creditsLines).length ? normalizeLines(s.creditsLines) : DEFAULT_CREDITS,
     teamMembers: normalizeTeamMembers(s.teamMembers),
     hapticsEnabled: s.hapticsEnabled !== false,
+    girlRoutePasswordEnabled: s.girlRoutePasswordEnabled !== false,
     girlRoutePassword: String(s.girlRoutePassword || '').trim(),
     teamPhotoCrop: !!s.teamPhotoCrop,
     contestTitle: s.contestTitle || DEFAULT_CONTEST_TITLE,
@@ -987,7 +992,8 @@ function renderGirlPage(profile, options = {}) {
   const gate = document.getElementById('girlPasswordGate');
   const splash = document.getElementById('splash');
   const mainContent = document.getElementById('mainContent');
-  const requiredPassword = String(state.globalSettings?.girlRoutePassword || '').trim();
+  const passwordEnabled = state.globalSettings?.girlRoutePasswordEnabled !== false;
+  const requiredPassword = passwordEnabled ? String(state.globalSettings?.girlRoutePassword || '').trim() : '';
   if (!options.skipPasswordGate && requiredPassword && !isGirlRouteUnlocked(requiredPassword)) {
     applyTheme(profile.theme);
     initFlowers();
@@ -2314,6 +2320,7 @@ function bindAdminEvents() {
         creditsLines: state.globalSettings.creditsLines,
         teamMembers: collectTeamMembersFromManager(),
         hapticsEnabled: !!document.getElementById('hapticsEnabledInput').checked,
+        girlRoutePasswordEnabled: !!document.getElementById('publicAccessPasswordEnabledInput').checked,
         girlRoutePassword: document.getElementById('publicAccessPasswordInput').value.trim(),
         teamPhotoCrop: !!document.getElementById('teamPhotoCropInput').checked,
         contestTitle: document.getElementById('contestTitleInput').value.trim() || DEFAULT_CONTEST_TITLE,
@@ -2443,16 +2450,18 @@ function fillGlobalForm() {
   const contestTitleInput = document.getElementById('contestTitleInput');
   const contestHintInput = document.getElementById('contestHintInput');
   const hapticsEnabledInput = document.getElementById('hapticsEnabledInput');
+  const publicAccessPasswordEnabledInput = document.getElementById('publicAccessPasswordEnabledInput');
   const publicAccessPasswordInput = document.getElementById('publicAccessPasswordInput');
   const teamPhotoCropInput = document.getElementById('teamPhotoCropInput');
   const contestPrize1Input = document.getElementById('contestPrize1Input');
   const contestPrize2Input = document.getElementById('contestPrize2Input');
   const contestPrize3Input = document.getElementById('contestPrize3Input');
-  if (!contestTitleInput || !contestHintInput || !hapticsEnabledInput || !publicAccessPasswordInput || !teamPhotoCropInput || !contestPrize1Input || !contestPrize2Input || !contestPrize3Input) return;
+  if (!contestTitleInput || !contestHintInput || !hapticsEnabledInput || !publicAccessPasswordEnabledInput || !publicAccessPasswordInput || !teamPhotoCropInput || !contestPrize1Input || !contestPrize2Input || !contestPrize3Input) return;
 
   contestTitleInput.value = g.contestTitle || DEFAULT_CONTEST_TITLE;
   contestHintInput.value = g.contestHint || DEFAULT_CONTEST_HINT;
   hapticsEnabledInput.checked = g.hapticsEnabled !== false;
+  publicAccessPasswordEnabledInput.checked = g.girlRoutePasswordEnabled !== false;
   publicAccessPasswordInput.value = g.girlRoutePassword || '';
   teamPhotoCropInput.checked = !!g.teamPhotoCrop;
   const winners = normalizeContestWinners(g.contestWinners);

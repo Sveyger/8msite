@@ -475,9 +475,14 @@
           </div>
 
           <div>
+            <label class="admin-check"><input type="checkbox" id="publicAccessPasswordEnabledInput" checked> <span>Требовать пароль для страниц девушек</span></label>
+            <p class="admin-hint">Можно временно выключить вход по паролю, не удаляя сам пароль из поля ниже.</p>
+          </div>
+
+          <div>
             <label class="admin-label" for="publicAccessPasswordInput">Единый пароль для страниц девушек</label>
-            <input class="admin-input" id="publicAccessPasswordInput" type="text" placeholder="Оставьте пустым, чтобы отключить пароль">
-            <p class="admin-hint">Если заполнить поле, перед заставкой на каждой странице девушки сначала появится ввод пароля.</p>
+            <input class="admin-input" id="publicAccessPasswordInput" type="text" placeholder="Оставьте пустым, чтобы не спрашивать пароль">
+            <p class="admin-hint">Если пароль включен и поле заполнено, перед заставкой на каждой странице девушки сначала появится ввод пароля.</p>
           </div>
 
           <div>
