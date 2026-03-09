@@ -374,6 +374,14 @@
             <p class="admin-hint">Ссылка для QR:</p>
             <p id="profileLink" class="admin-token">Выберите профиль</p>
             <p class="admin-hint">Передавайте только эту ссылку конкретной девушке.</p>
+            <div class="publish-qr-card" id="publishQrCard">
+              <div class="publish-qr-canvas-wrap">
+                <canvas id="profileQrCanvas" width="320" height="400"></canvas>
+              </div>
+              <div class="admin-actions" style="justify-content:center;">
+                <button class="admin-btn" id="downloadQrBtn" type="button">Скачать QR в PNG</button>
+              </div>
+            </div>
             <div id="adminPreview" class="mp-preview-wrap"></div>
           </div>
         </section>
@@ -411,6 +419,31 @@
               <button class="admin-btn" id="uploadTeamMediaBtn" type="button">Загрузить фото команды</button>
             </div>
             <p id="uploadTeamMsg" class="admin-hint"></p>
+          </div>
+
+          <div class="photo-manager">
+            <div class="admin-label">Загрузка голосовых поздравлений команды</div>
+            <div class="admin-row">
+              <div>
+                <label class="admin-label" for="teamAudioTarget">Слот команды</label>
+                <select class="admin-select" id="teamAudioTarget">
+                  <option value="0">Админ 1</option>
+                  <option value="1">Ведущий</option>
+                  <option value="2">Админ 2</option>
+                  <option value="3">Фейс 1</option>
+                  <option value="4">Фейс 2</option>
+                  <option value="5">Фейс 3</option>
+                </select>
+              </div>
+              <div>
+                <label class="admin-label" for="teamAudioFileInput">MP3 файл</label>
+                <input class="admin-input" id="teamAudioFileInput" type="file" accept="audio/mpeg,audio/*">
+              </div>
+            </div>
+            <div class="admin-actions">
+              <button class="admin-btn" id="uploadTeamAudioBtn" type="button">Загрузить голосовое</button>
+            </div>
+            <p id="uploadTeamAudioMsg" class="admin-hint"></p>
           </div>
 
           <div>
@@ -501,6 +534,7 @@
 <section id="invalidView" class="state hidden"><h2>Ключ недействителен</h2><p>Проверьте QR-ссылку. Такой ключ не найден.</p></section>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>

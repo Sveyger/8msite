@@ -67,12 +67,12 @@ const DEFAULT_CONTEST_WINNERS = [
 const DEFAULT_HAPTICS_ENABLED = true;
 const DEFAULT_GIRL_ROUTE_PASSWORD = '';
 const DEFAULT_TEAM_MEMBERS = [
-  { role: 'Админ', label: 'Админ 1', photo: '' },
-  { role: 'Ведущий', label: 'Ведущий', photo: '' },
-  { role: 'Админ', label: 'Админ 2', photo: '' },
-  { role: 'Фейс контроль', label: 'Фейс 1', photo: '' },
-  { role: 'Фейс контроль', label: 'Фейс 2', photo: '' },
-  { role: 'Фейс контроль', label: 'Фейс 3', photo: '' }
+  { role: 'Админ', label: 'Админ 1', photo: '', audio: '' },
+  { role: 'Ведущий', label: 'Ведущий', photo: '', audio: '' },
+  { role: 'Админ', label: 'Админ 2', photo: '', audio: '' },
+  { role: 'Фейс контроль', label: 'Фейс 1', photo: '', audio: '' },
+  { role: 'Фейс контроль', label: 'Фейс 2', photo: '', audio: '' },
+  { role: 'Фейс контроль', label: 'Фейс 3', photo: '', audio: '' }
 ];
 const DEFAULT_SECTION_VISIBILITY = {
   video: true,
@@ -147,7 +147,10 @@ const state = {
   selectedSurveyCode: null,
   backendFallbackReason: '',
   backendMode: 'local',
-  supabase: null
+  supabase: null,
+  teamAudioPlayer: null,
+  teamAudioUrl: '',
+  teamAudioCard: null
 };
 
 const params = new URLSearchParams(location.search);
@@ -1425,19 +1428,24 @@ function showSurveyAnswers() {
 function renderTeamGrid() {
   const wrap = document.getElementById('teamGrid');
   if (!wrap) return;
+  stopTeamAudioPlayback();
   const members = normalizeTeamMembers(state.globalSettings.teamMembers);
   const cropClass = state.globalSettings?.teamPhotoCrop ? ' team-photo-img--crop' : '';
   wrap.innerHTML = members.map((member, idx) => {
     const initials = makeInitials(member.label || member.role || String(idx + 1));
     const roleValue = String(member.role || '').trim().toLowerCase();
     const kickerClass = /админ|ведущ/.test(roleValue) ? ' team-card-kicker--dark' : '';
+    const hasAudio = !!member.audio;
+    const audioAttr = hasAudio ? ' data-team-audio="' + escapeHtml(member.audio) + '"' : '';
+    const audioClass = hasAudio ? ' team-card--audio' : '';
     const media = member.photo
       ? '<img class="team-photo-img' + cropClass + '" src="' + escapeHtml(member.photo) + '" alt="' + escapeHtml(member.label || member.role) + '">'
       : '<div class="team-photo-fallback">' + escapeHtml(initials) + '</div>';
     return [
-      '<article class="team-card">',
+      '<article class="team-card' + audioClass + '"' + audioAttr + '>',
       '<div class="team-photo-frame">',
       '<span class="team-card-kicker' + kickerClass + '">MARCH 8 PROJECT</span>',
+      hasAudio ? '<span class="team-card-audio-badge">Voice</span>' : '',
       media,
       '<div class="team-card-vignette"></div>',
       '<div class="team-card-caption">',
@@ -1448,6 +1456,63 @@ function renderTeamGrid() {
       '</article>'
     ].join('');
   }).join('');
+
+  wrap.querySelectorAll('[data-team-audio]').forEach((card) => {
+    card.addEventListener('click', () => toggleTeamAudio(card));
+  });
+}
+
+function stopTeamAudioPlayback() {
+  if (state.teamAudioPlayer) {
+    state.teamAudioPlayer.pause();
+    state.teamAudioPlayer.currentTime = 0;
+    state.teamAudioPlayer.onended = null;
+  }
+  if (state.teamAudioCard) {
+    state.teamAudioCard.classList.remove('is-playing');
+  }
+  state.teamAudioPlayer = null;
+  state.teamAudioUrl = '';
+  state.teamAudioCard = null;
+}
+
+function toggleTeamAudio(card) {
+  const url = String(card?.dataset?.teamAudio || '').trim();
+  if (!url) return;
+
+  if (state.teamAudioUrl === url && state.teamAudioPlayer) {
+    if (state.teamAudioPlayer.paused) {
+      state.teamAudioPlayer.play().then(() => {
+        card.classList.add('is-playing');
+        triggerHaptic(10);
+      }).catch((err) => console.error('Team audio resume failed.', err));
+      return;
+    }
+    state.teamAudioPlayer.pause();
+    card.classList.remove('is-playing');
+    triggerHaptic(8);
+    return;
+  }
+
+  stopTeamAudioPlayback();
+  const audio = new Audio(url);
+  audio.preload = 'auto';
+  audio.onended = () => {
+    if (state.teamAudioCard) state.teamAudioCard.classList.remove('is-playing');
+    state.teamAudioPlayer = null;
+    state.teamAudioUrl = '';
+    state.teamAudioCard = null;
+  };
+  state.teamAudioPlayer = audio;
+  state.teamAudioUrl = url;
+  state.teamAudioCard = card;
+  audio.play().then(() => {
+    card.classList.add('is-playing');
+    triggerHaptic([10, 18, 10]);
+  }).catch((err) => {
+    console.error('Team audio play failed.', err);
+    stopTeamAudioPlayback();
+  });
 }
 
 function getContestWinnerForProfile(profileId) {
@@ -1896,6 +1961,7 @@ function renderAdmin() {
   bindAdminEvents();
   fillGlobalForm();
   refreshList();
+  renderProfileQrCard();
   loadSurveyAdminData().catch((err) => {
     console.error(err);
     const detail = document.getElementById('surveyResponseDetail');
@@ -1921,6 +1987,11 @@ function bindAdminEvents() {
   const teamMediaInput = document.getElementById('teamMediaFileInput');
   const teamMediaTarget = document.getElementById('teamMediaTarget');
   const uploadTeamMsg = document.getElementById('uploadTeamMsg');
+  const uploadTeamAudioBtn = document.getElementById('uploadTeamAudioBtn');
+  const teamAudioInput = document.getElementById('teamAudioFileInput');
+  const teamAudioTarget = document.getElementById('teamAudioTarget');
+  const uploadTeamAudioMsg = document.getElementById('uploadTeamAudioMsg');
+  const downloadQrBtn = document.getElementById('downloadQrBtn');
   if (form.dataset.bound === '1') return;
   form.dataset.bound = '1';
 
@@ -2050,6 +2121,7 @@ function bindAdminEvents() {
     } else {
       document.getElementById('profileForm').reset();
       document.getElementById('profileLink').textContent = 'Профилей пока нет';
+      renderProfileQrCard();
       document.getElementById('adminPreview').innerHTML = '';
       renderPhotoManager();
     }
@@ -2071,6 +2143,11 @@ function bindAdminEvents() {
     if (!link) return;
     window.open(link, '_blank', 'noopener,noreferrer');
   };
+
+  if (downloadQrBtn && downloadQrBtn.dataset.bound !== '1') {
+    downloadQrBtn.dataset.bound = '1';
+    downloadQrBtn.addEventListener('click', () => downloadProfileQr());
+  }
 
   document.getElementById('logoutBtn').onclick = () => {
     if (state.backendMode === 'supabase' && state.supabase?.auth) {
@@ -2155,6 +2232,44 @@ function bindAdminEvents() {
         console.error(err);
         const reason = err?.message ? String(err.message) : 'Неизвестная ошибка';
         uploadTeamMsg.textContent = 'Ошибка загрузки: ' + reason + '. Проверь bucket "media" и Storage policy для anon.';
+      }
+    };
+  }
+
+  if (uploadTeamAudioBtn) {
+    uploadTeamAudioBtn.onclick = async () => {
+      const file = teamAudioInput?.files?.[0];
+      if (!file) {
+        uploadTeamAudioMsg.textContent = 'Выберите mp3 для загрузки.';
+        return;
+      }
+      if (state.backendMode !== 'supabase') {
+        const reason = state.backendFallbackReason ? (' Причина fallback: ' + state.backendFallbackReason + '.') : '';
+        uploadTeamAudioMsg.textContent = 'Сейчас включен localStorage.' + reason + ' Для загрузки голосовых нужен Supabase-режим.';
+        return;
+      }
+
+      uploadTeamAudioMsg.textContent = 'Загрузка...';
+      try {
+        const url = await uploadFileToStorage(file);
+        const members = collectTeamMembersFromManager();
+        const targetIndex = Number(teamAudioTarget?.value || 0);
+        if (Number.isFinite(targetIndex) && members[targetIndex]) {
+          members[targetIndex].audio = url;
+        }
+        const nextSettings = normalizeGlobalSettings({
+          ...state.globalSettings,
+          teamMembers: members
+        });
+        await upsertGlobalSettings(nextSettings);
+        renderTeamMembersManager();
+        renderTeamGrid();
+        teamAudioInput.value = '';
+        uploadTeamAudioMsg.textContent = 'Голосовое загружено, подставлено в слот и сохранено.';
+      } catch (err) {
+        console.error(err);
+        const reason = err?.message ? String(err.message) : 'Неизвестная ошибка';
+        uploadTeamAudioMsg.textContent = 'Ошибка загрузки: ' + reason + '. Проверь bucket "media" и Storage policy.';
       }
     };
   }
@@ -2262,6 +2377,7 @@ function selectProfile(key) {
   document.getElementById('showTeamInput').checked = vis.team;
   document.getElementById('showSecretInput').checked = vis.secret;
   document.getElementById('profileLink').textContent = currentProfileLink();
+  renderProfileQrCard();
   renderAdminPreview(p);
   renderPhotoManager();
 }
@@ -2328,6 +2444,7 @@ function renderTeamMembersManager() {
       '<input class="admin-input team-member-input" data-team-field="role" data-team-index="' + idx + '" value="' + escapeHtml(member.role) + '" placeholder="Роль">',
       '<input class="admin-input team-member-input" data-team-field="label" data-team-index="' + idx + '" value="' + escapeHtml(member.label) + '" placeholder="Имя/подпись">',
       '<input class="admin-input team-member-input" data-team-field="photo" data-team-index="' + idx + '" value="' + escapeHtml(member.photo) + '" placeholder="URL фото">',
+      '<input class="admin-input team-member-input" data-team-field="audio" data-team-index="' + idx + '" value="' + escapeHtml(member.audio) + '" placeholder="URL mp3 поздравления">',
       '</div>',
       '</div>'
     ].join('');
@@ -2387,9 +2504,11 @@ function collectTeamMembersFromManager() {
     const roleEl = wrap.querySelector('[data-team-field="role"][data-team-index="' + idx + '"]');
     const labelEl = wrap.querySelector('[data-team-field="label"][data-team-index="' + idx + '"]');
     const photoEl = wrap.querySelector('[data-team-field="photo"][data-team-index="' + idx + '"]');
+    const audioEl = wrap.querySelector('[data-team-field="audio"][data-team-index="' + idx + '"]');
     member.role = String(roleEl?.value || member.role).trim() || member.role;
     member.label = String(labelEl?.value || member.label).trim() || member.label;
     member.photo = String(photoEl?.value || '').trim();
+    member.audio = String(audioEl?.value || '').trim();
   });
   return normalizeTeamMembers(members);
 }
@@ -2414,6 +2533,104 @@ function makeInitials(name) {
 function currentProfileLink() {
   if (!state.selectedKey) return '';
   return getBaseUrl() + '?key=' + encodeURIComponent(state.selectedKey);
+}
+
+function renderProfileQrCard() {
+  const canvas = document.getElementById('profileQrCanvas');
+  const card = document.getElementById('publishQrCard');
+  if (!canvas || !card) return;
+
+  const ctx = canvas.getContext('2d');
+  const profile = state.selectedKey ? state.db.profiles[state.selectedKey] : null;
+  const link = profile ? currentProfileLink() : '';
+  const label = profile?.name || 'Выберите профиль';
+
+  const paintFallback = (message) => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#111111';
+    ctx.textAlign = 'center';
+    ctx.font = '700 24px Montserrat, sans-serif';
+    ctx.fillText(label, canvas.width / 2, 36);
+    ctx.fillStyle = '#69717a';
+    ctx.font = '400 14px Montserrat, sans-serif';
+    wrapCanvasText(ctx, message, canvas.width / 2, 182, 220, 20);
+  };
+
+  if (!link) {
+    card.classList.add('is-empty');
+    paintFallback('Сначала выберите профиль, затем QR появится здесь.');
+    return;
+  }
+
+  card.classList.remove('is-empty');
+  if (!window.QRCode?.toCanvas) {
+    paintFallback('Библиотека QR не загрузилась.');
+    return;
+  }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#111111';
+  ctx.textAlign = 'center';
+  ctx.font = '700 24px Montserrat, sans-serif';
+  ctx.fillText(label, canvas.width / 2, 36);
+  ctx.fillStyle = '#69717a';
+  ctx.font = '500 13px Montserrat, sans-serif';
+  ctx.fillText('Сканируй и открывай поздравление', canvas.width / 2, 60);
+
+  const qrCanvas = document.createElement('canvas');
+  window.QRCode.toCanvas(qrCanvas, link, {
+    width: 240,
+    margin: 1,
+    color: { dark: '#111111', light: '#ffffff' }
+  }, (err) => {
+    if (err) {
+      console.error('QR render failed.', err);
+      paintFallback('Не удалось собрать QR-код.');
+      return;
+    }
+    ctx.drawImage(qrCanvas, 40, 86, 240, 240);
+    ctx.strokeStyle = '#e5e8ec';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(39, 85, 242, 242);
+    ctx.fillStyle = '#111111';
+    ctx.font = '700 18px Montserrat, sans-serif';
+    ctx.fillText(label, canvas.width / 2, 356);
+    ctx.fillStyle = '#6d747c';
+    ctx.font = '400 11px Montserrat, sans-serif';
+    ctx.fillText((profile?.id || '').slice(0, 34), canvas.width / 2, 378);
+  });
+}
+
+function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = String(text || '').split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+  words.forEach((word) => {
+    const next = line ? line + ' ' + word : word;
+    if (ctx.measureText(next).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+      return;
+    }
+    line = next;
+  });
+  if (line) lines.push(line);
+  lines.forEach((item, idx) => ctx.fillText(item, x, y + (idx * lineHeight)));
+}
+
+function downloadProfileQr() {
+  const canvas = document.getElementById('profileQrCanvas');
+  const profile = state.selectedKey ? state.db.profiles[state.selectedKey] : null;
+  if (!canvas || !profile) return;
+  const link = document.createElement('a');
+  const safeName = String(profile.name || profile.id || 'qr').trim().replace(/[^\p{L}\p{N}_-]+/gu, '_');
+  link.href = canvas.toDataURL('image/png');
+  link.download = safeName + '_qr.png';
+  link.click();
 }
 
 function getBaseUrl() {
@@ -2492,7 +2709,8 @@ function normalizeTeamMembers(value) {
     return {
       role: String(current.role || item.role || '').trim() || item.role,
       label: String(current.label || item.label || '').trim() || item.label,
-      photo: String(current.photo || '').trim()
+      photo: String(current.photo || '').trim(),
+      audio: String(current.audio || '').trim()
     };
   });
 }
