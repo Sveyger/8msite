@@ -159,6 +159,18 @@
       </div>
     </section>
 
+    <section class="golden-frame-section reveal hidden" id="goldenFrameSection">
+      <div class="golden-frame-shell">
+        <div class="golden-frame-ornament golden-frame-ornament--tl"></div>
+        <div class="golden-frame-ornament golden-frame-ornament--tr"></div>
+        <div class="golden-frame-ornament golden-frame-ornament--bl"></div>
+        <div class="golden-frame-ornament golden-frame-ornament--br"></div>
+        <div class="golden-frame-inner">
+          <img id="goldenFrameImage" class="golden-frame-image hidden" alt="Фотография в золотой рамке">
+        </div>
+      </div>
+    </section>
+
     <div class="bottom-brand"><div class="bottom-brand-text">VOGUE</div></div>
   </div>
 </div>
@@ -316,6 +328,7 @@
                 <label class="admin-check"><input type="checkbox" id="showContestInput" checked> <span>Конкурс</span></label>
                 <label class="admin-check"><input type="checkbox" id="showTeamInput" checked> <span>Команда</span></label>
                 <label class="admin-check"><input type="checkbox" id="showSecretInput" checked> <span>Секрет</span></label>
+                <label class="admin-check"><input type="checkbox" id="showGoldenFrameInput"> <span>Золотая рамка</span></label>
               </div>
               <p class="admin-hint">Можно скрыть любые секции для конкретной девушки без удаления данных.</p>
             </div>
@@ -337,6 +350,10 @@
               </div>
             </div>
             <div>
+              <label class="admin-label" for="goldenFrameInput">Фото для золотой рамки</label>
+              <input class="admin-input" id="goldenFrameInput" placeholder="assets/golden-frame-photo.jpg">
+            </div>
+            <div>
               <label class="admin-label" for="photosInput">Фото (3 ссылки, по строкам)</label>
               <textarea class="admin-textarea" id="photosInput" placeholder="assets/photo1.jpg&#10;assets/photo2.jpg&#10;assets/photo3.jpg"></textarea>
             </div>
@@ -354,6 +371,7 @@
                 <select class="admin-select" id="mediaTarget">
                   <option value="video">Видео URL</option>
                   <option value="poster">Постер URL</option>
+                  <option value="goldenFrame">Золотая рамка</option>
                   <option value="gallery">Фото (добавить в список)</option>
                 </select>
               </div>

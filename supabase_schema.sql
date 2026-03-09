@@ -4,6 +4,7 @@
   theme text not null default 'warm',
   video_src text not null default '',
   poster_src text not null default '',
+  golden_frame_src text not null default '',
   photos jsonb not null default '[]'::jsonb,
   compliments jsonb not null default '[]'::jsonb,
   believes_predictions boolean not null default true,
@@ -25,6 +26,7 @@ alter table public.march8_profiles add column if not exists skeptic_answers_mess
 alter table public.march8_profiles add column if not exists survey_answers jsonb not null default '[]'::jsonb;
 alter table public.march8_profiles add column if not exists predictions_believe jsonb not null default '[]'::jsonb;
 alter table public.march8_profiles add column if not exists section_visibility jsonb not null default '{}'::jsonb;
+alter table public.march8_profiles add column if not exists golden_frame_src text not null default '';
 alter table public.march8_profiles drop column if exists predictions_skeptic;
 
 create table if not exists public.march8_global_settings (

@@ -1700,6 +1700,87 @@ body[data-theme='girl_white'] .contest-award-card {
   color: var(--accent);
 }
 
+.golden-frame-section {
+  padding: 2.4rem 0 1.2rem;
+  text-align: center;
+}
+
+.golden-frame-shell {
+  position: relative;
+  display: inline-block;
+  max-width: min(100%, 42rem);
+  padding: 18px;
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, #4b2c08 0%, #8a5b18 8%, #d7b45d 18%, #f3e7ab 28%, #b07a23 44%, #70440e 58%, #e6c86f 74%, #8c611d 88%, #3f2407 100%);
+  box-shadow:
+    0 12px 28px rgba(0,0,0,.28),
+    0 0 0 1px rgba(255, 235, 168, .24),
+    inset 0 0 0 2px rgba(77, 46, 8, .7),
+    inset 0 0 0 6px rgba(236, 209, 121, .28),
+    inset 0 0 24px rgba(255, 238, 170, .18);
+}
+
+.golden-frame-inner {
+  display: inline-block;
+  max-width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  background:
+    linear-gradient(135deg, rgba(74, 43, 8, .95), rgba(194, 151, 54, .88) 24%, rgba(244, 230, 171, .92) 50%, rgba(145, 102, 27, .92) 74%, rgba(68, 39, 8, .98));
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 239, 184, .26),
+    inset 0 0 0 5px rgba(100, 58, 12, .55);
+}
+
+.golden-frame-image {
+  display: block;
+  max-width: min(100%, 34rem);
+  width: auto;
+  height: auto;
+  border: 3px solid rgba(53, 31, 8, .82);
+  box-shadow:
+    0 8px 22px rgba(0,0,0,.22),
+    inset 0 0 0 1px rgba(255,255,255,.18);
+  background: #120d09;
+}
+
+.golden-frame-ornament {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 35%, rgba(255, 245, 196, .95), rgba(238, 205, 101, .72) 28%, rgba(129, 83, 18, .92) 68%, rgba(59, 31, 6, .98) 100%);
+  box-shadow:
+    0 0 0 2px rgba(86, 50, 8, .7),
+    0 0 0 5px rgba(234, 203, 111, .18);
+}
+
+.golden-frame-ornament--tl { top: 8px; left: 8px; }
+.golden-frame-ornament--tr { top: 8px; right: 8px; }
+.golden-frame-ornament--bl { bottom: 8px; left: 8px; }
+.golden-frame-ornament--br { bottom: 8px; right: 8px; }
+
+@media (max-width: 640px) {
+  .golden-frame-shell {
+    padding: 12px;
+  }
+
+  .golden-frame-inner {
+    padding: 6px;
+  }
+
+  .golden-frame-image {
+    max-width: 100%;
+  }
+
+  .golden-frame-ornament {
+    width: 18px;
+    height: 18px;
+  }
+}
+
 .credits {
   font-family: 'Montserrat', sans-serif;
   font-weight: 200;

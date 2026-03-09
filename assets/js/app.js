@@ -82,7 +82,8 @@ const DEFAULT_SECTION_VISIBILITY = {
   quote: true,
   contest: true,
   team: true,
-  secret: true
+  secret: true,
+  goldenFrame: false
 };
 
 const DEFAULT_PROFILE = {
@@ -90,6 +91,7 @@ const DEFAULT_PROFILE = {
   theme: 'warm',
   videoSrc: 'assets/kling-story.mp4',
   posterSrc: 'assets/poster.jpg',
+  goldenFrameSrc: '',
   photos: ['assets/photo1.jpg', 'assets/photo2.jpg', 'assets/photo3.jpg'],
   compliments: DEFAULT_COMPLIMENTS,
   believesPredictions: true,
@@ -739,6 +741,7 @@ function makeProfile(key, source) {
     theme: source.theme || 'warm',
     videoSrc: source.videoSrc || '',
     posterSrc: source.posterSrc || '',
+    goldenFrameSrc: source.goldenFrameSrc || '',
     photos: normalizeLines(source.photos),
     compliments: normalizeLines(source.compliments),
     believesPredictions: typeof source.believesPredictions === 'boolean' ? source.believesPredictions : true,
@@ -762,6 +765,7 @@ function rowToProfile(row) {
     theme: row.theme || 'warm',
     videoSrc: row.video_src || '',
     posterSrc: row.poster_src || '',
+    goldenFrameSrc: row.golden_frame_src || '',
     photos: normalizeLines(row.photos),
     compliments: normalizeLines(row.compliments),
     believesPredictions: typeof row.believes_predictions === 'boolean' ? row.believes_predictions : true,
@@ -785,6 +789,7 @@ function profileToRow(profile) {
     theme: profile.theme,
     video_src: profile.videoSrc,
     poster_src: profile.posterSrc,
+    golden_frame_src: profile.goldenFrameSrc || '',
     photos: normalizeLines(profile.photos),
     compliments: normalizeLines(profile.compliments),
     believes_predictions: !!profile.believesPredictions,
@@ -868,7 +873,8 @@ function normalizeSectionVisibility(source) {
     quote: s.quote !== false,
     contest: s.contest !== false,
     team: s.team !== false,
-    secret: s.secret !== false
+    secret: s.secret !== false,
+    goldenFrame: s.goldenFrame === true
   };
 }
 
@@ -1041,6 +1047,7 @@ function renderGirlPage(profile, options = {}) {
 
   renderMedia(profile);
   renderGallery(profile);
+  renderGoldenFrame(profile);
 
   complimentBtn.onclick = () => nextCompliment();
   const predictionBtn = document.getElementById('predictionBtn');
@@ -1303,6 +1310,25 @@ function nextCompliment() {
     btn.textContent = 'Еще комплимент \u2728';
     state.isAnimating = false;
   });
+}
+
+function renderGoldenFrame(profile) {
+  const section = document.getElementById('goldenFrameSection');
+  const image = document.getElementById('goldenFrameImage');
+  if (!section || !image) return;
+  const src = String(profile?.goldenFrameSrc || '').trim();
+  const visibility = normalizeSectionVisibility(profile?.sectionVisibility);
+  const shouldShow = !!src && visibility.goldenFrame;
+  section.classList.toggle('hidden', !shouldShow);
+  if (!shouldShow) {
+    image.classList.add('hidden');
+    image.removeAttribute('src');
+    updateMainDividers();
+    return;
+  }
+  image.src = src;
+  image.classList.remove('hidden');
+  updateMainDividers();
 }
 
 function initPredictionUi(profile) {
@@ -1573,7 +1599,8 @@ function applyProfileSectionVisibility(source) {
     quote: 'quoteSection',
     contest: 'contestSection',
     team: 'teamSection',
-    secret: 'secretSection'
+    secret: 'secretSection',
+    goldenFrame: 'goldenFrameSection'
   };
 
   Object.entries(map).forEach(([key, id]) => {
@@ -2074,6 +2101,7 @@ function bindAdminEvents() {
       theme: document.getElementById('themeInput').value || 'warm',
       videoSrc: document.getElementById('videoInput').value.trim(),
       posterSrc: document.getElementById('posterInput').value.trim(),
+      goldenFrameSrc: document.getElementById('goldenFrameInput').value.trim(),
       photos: normalizeLines(document.getElementById('photosInput').value),
       buttonLabel: document.getElementById('buttonInput').value.trim() || 'Узнать правду о себе',
       compliments: normalizeLines(document.getElementById('complimentsInput').value),
@@ -2090,7 +2118,8 @@ function bindAdminEvents() {
         quote: document.getElementById('showQuoteInput').checked,
         contest: document.getElementById('showContestInput').checked,
         team: document.getElementById('showTeamInput').checked,
-        secret: document.getElementById('showSecretInput').checked
+        secret: document.getElementById('showSecretInput').checked,
+        goldenFrame: document.getElementById('showGoldenFrameInput').checked
       },
       mediaTip: document.getElementById('tipInput').value.trim() || 'From little girl to cover star',
       quoteText: document.getElementById('quoteInput').value.trim() || DEFAULT_PROFILE.quoteText,
@@ -2183,6 +2212,8 @@ function bindAdminEvents() {
         document.getElementById('videoInput').value = urls[0];
       } else if (mediaTarget.value === 'poster') {
         document.getElementById('posterInput').value = urls[0];
+      } else if (mediaTarget.value === 'goldenFrame') {
+        document.getElementById('goldenFrameInput').value = urls[0];
       } else {
         const oldLines = normalizeLines(photosInput.value);
         photosInput.value = [...oldLines, ...urls].join('\n');
@@ -2357,6 +2388,7 @@ function selectProfile(key) {
   document.getElementById('themeInput').value = p.theme || 'warm';
   document.getElementById('videoInput').value = p.videoSrc || '';
   document.getElementById('posterInput').value = p.posterSrc || '';
+  document.getElementById('goldenFrameInput').value = p.goldenFrameSrc || '';
   document.getElementById('photosInput').value = normalizeLines(p.photos).join('\n');
   document.getElementById('buttonInput').value = p.buttonLabel || 'Узнать правду о себе';
   document.getElementById('complimentsInput').value = normalizeLines(p.compliments).join('\n');
@@ -2376,6 +2408,7 @@ function selectProfile(key) {
   document.getElementById('showContestInput').checked = vis.contest;
   document.getElementById('showTeamInput').checked = vis.team;
   document.getElementById('showSecretInput').checked = vis.secret;
+  document.getElementById('showGoldenFrameInput').checked = vis.goldenFrame;
   document.getElementById('profileLink').textContent = currentProfileLink();
   renderProfileQrCard();
   renderAdminPreview(p);
